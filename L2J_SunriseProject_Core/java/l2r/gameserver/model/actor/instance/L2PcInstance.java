@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EventListener;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,6 +45,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import l2r.Config;
 import l2r.L2DatabaseFactory;
@@ -186,6 +186,7 @@ import l2r.gameserver.model.base.ClassId;
 import l2r.gameserver.model.base.ClassLevel;
 import l2r.gameserver.model.base.PlayerClass;
 import l2r.gameserver.model.base.SubClass;
+import l2r.gameserver.model.cubic.CubicInstance;
 import l2r.gameserver.model.effects.EffectFlag;
 import l2r.gameserver.model.effects.EffectTemplate;
 import l2r.gameserver.model.effects.L2Effect;
@@ -384,6 +385,7 @@ public final class L2PcInstance extends L2Playable
 	private long _zoneRestartLimitTime = 0;
 	
 	private final ReentrantLock _subclassLock = new ReentrantLock();
+	public final ReentrantReadWriteLock _useItemLock = new ReentrantReadWriteLock();
 	protected int _baseClass;
 	protected int _activeClass;
 	protected int _classIndex = 0;
@@ -697,7 +699,7 @@ public final class L2PcInstance extends L2Playable
 	
 	public boolean _inventoryDisable = false;
 	
-	private final Map<Integer, L2CubicInstance> _cubics = new ConcurrentSkipListMap<>();
+	private final Map<Integer, CubicInstance> _cubics = new ConcurrentSkipListMap<>();
 	
 	/** Active shots. */
 	protected Set<Integer> _activeSoulShots = ConcurrentHashMap.newKeySet(1);
@@ -2149,9 +2151,9 @@ public final class L2PcInstance extends L2Playable
 			changed = true;
 		}
 		
-		if (changed && broadcast)
+		if (changed || broadcast)
 		{
-			sendPacket(new EtcStatusUpdate(this));
+			sendEtcStatusUpdate();
 		}
 	}
 	
@@ -3390,6 +3392,12 @@ public final class L2PcInstance extends L2Playable
 				_log.error("Item doesn't exist so cannot be added. Item ID: " + itemId);
 				return null;
 			}
+			
+			if (!item.isStackable() && !Config.MULTIPLE_ITEM_DROP)
+			{
+				count = 1;
+			}
+			
 			// Sends message to client if requested
 			if (sendMessage && ((!isCastingNow() && item.hasExImmediateEffect()) || !item.hasExImmediateEffect()))
 			{
@@ -4696,16 +4704,30 @@ public final class L2PcInstance extends L2Playable
 			// Check if a Party is in progress
 			if (isInParty())
 			{
-				getParty().distributeItem(this, target, false);
+				getParty().distributeItem(this, target, target.fromMob);
 			}
 			else if ((target.getId() == Inventory.ADENA_ID) && (getInventory().getAdenaInstance() != null))
 			{
-				addAdena("Pickup", target.getCount(), null, true);
+				long tempCount = target.getCount();
+				tempCount *= calcPremiumDropMultipliers(target.getId());
+				
+				addAdena("Pickup", target.fromMob && isPremium() ? tempCount : target.getCount(), null, true);
 				ItemData.getInstance().destroyItem("Pickup", target, this, null);
 			}
 			else
 			{
-				addItem("Pickup", target, null, true);
+				long tempCount = target.getCount();
+				tempCount *= calcPremiumDropMultipliers(target.getId());
+				
+				if (!target.isStackable())
+				{
+					addItem("Pickup", target, null, true);
+				}
+				else
+				{
+					addItem("Pickup", target.getId(), target.fromMob && isPremium() ? tempCount : target.getCount(), null, true);
+				}
+				
 				// Auto-Equip arrows/bolts if player has a bow/crossbow and player picks up arrows/bolts.
 				final L2ItemInstance weapon = getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
 				if (weapon != null)
@@ -5399,7 +5421,7 @@ public final class L2PcInstance extends L2Playable
 			}
 		}
 		
-		// Remove Cubics
+		// Remove cubics
 		stopCubics();
 		
 		if (_fusionSkill != null)
@@ -6916,6 +6938,7 @@ public final class L2PcInstance extends L2Playable
 		double percent = getMaxHp() / 100;
 		double _curHpPercent = curHp / percent;
 		double _newHpPercent = newHp / percent;
+		boolean needsUpdate = false;
 		
 		//@formatter:off
 		int[] _passive_skills_ids = { 290, 291 };
@@ -6932,10 +6955,12 @@ public final class L2PcInstance extends L2Playable
 				if ((_curHpPercent > _passive_skills_hp[i]) && (_newHpPercent <= _passive_skills_hp[i]))
 				{
 					sendPacket(SystemMessage.getSystemMessage(SystemMessageId.HP_DECREASED_EFFECT_S1_APPLIES).addSkillName(_passive_skills_ids[i]));
+					needsUpdate = true;
 				}
 				else if ((_curHpPercent <= _passive_skills_hp[i]) && (_newHpPercent > _passive_skills_hp[i]))
 				{
 					sendPacket(SystemMessage.getSystemMessage(SystemMessageId.HP_INCREASED_EFFECT_S1_DISAPPEARS).addSkillName(_passive_skills_ids[i]));
+					needsUpdate = true;
 				}
 			}
 		}
@@ -6948,12 +6973,19 @@ public final class L2PcInstance extends L2Playable
 				if ((_curHpPercent > _active_skills_hp[i]) && (_newHpPercent <= _active_skills_hp[i]))
 				{
 					sendPacket(SystemMessage.getSystemMessage(SystemMessageId.HP_DECREASED_EFFECT_S1_APPLIES).addSkillName(_active_skills_ids[i]));
+					needsUpdate = true;
 				}
 				else if ((_curHpPercent <= _active_skills_hp[i]) && (_newHpPercent > _active_skills_hp[i]))
 				{
 					sendPacket(SystemMessage.getSystemMessage(SystemMessageId.HP_INCREASED_EFFECT_S1_DISAPPEARS).addSkillName(_active_skills_ids[i]));
+					needsUpdate = true;
 				}
 			}
+		}
+		
+		if (needsUpdate)
+		{
+			broadcastUserInfo(false);
 		}
 	}
 	
@@ -6963,6 +6995,11 @@ public final class L2PcInstance extends L2Playable
 	private Future<?> _effectsUpdateTask;
 	protected Future<?> _userInfoTask;
 	protected Future<?> _charInfoTask;
+	
+	public void sendEtcStatusUpdate()
+	{
+		sendPacket(new EtcStatusUpdate(this));
+	}
 	
 	/**
 	 * Send packet StatusUpdate with current HP,MP and CP to the L2PcInstance and only current HP, MP and Level to all other L2PcInstance of the Party. <B><U> Actions</U> :</B>
@@ -8873,13 +8910,8 @@ public final class L2PcInstance extends L2Playable
 		{
 			if (!SunriseEvents.isInEvent(this) || SunriseEvents.removeCubics())
 			{
-				for (L2CubicInstance cubic : _cubics.values())
-				{
-					cubic.stopAction();
-					cubic.cancelDisappear();
-				}
+				_cubics.values().forEach(CubicInstance::deactivate);
 				_cubics.clear();
-				broadcastUserInfo();
 			}
 		}
 	}
@@ -8888,17 +8920,13 @@ public final class L2PcInstance extends L2Playable
 	{
 		if (!_cubics.isEmpty())
 		{
-			final Iterator<L2CubicInstance> iter = _cubics.values().iterator();
-			L2CubicInstance cubic;
 			boolean broadcast = false;
-			while (iter.hasNext())
+			for (CubicInstance cubic : _cubics.values())
 			{
-				cubic = iter.next();
-				if (cubic.givenByOther())
+				if (cubic.isGivenByOther())
 				{
-					cubic.stopAction();
-					cubic.cancelDisappear();
-					iter.remove();
+					cubic.deactivate();
+					_cubics.remove(cubic.getTemplate().getId());
 					broadcast = true;
 				}
 			}
@@ -8907,22 +8935,6 @@ public final class L2PcInstance extends L2Playable
 				broadcastUserInfo();
 			}
 		}
-	}
-	
-	public boolean stopCubicById(int cubicId)
-	{
-		if (!_cubics.isEmpty() && _cubics.containsKey(cubicId))
-		{
-			final L2CubicInstance cubic = _cubics.get(cubicId);
-			cubic.stopAction();
-			cubic.cancelDisappear();
-			_cubics.remove(cubicId);
-			broadcastUserInfo();
-			
-			return true;
-		}
-		
-		return false;
 	}
 	
 	/**
@@ -8968,26 +8980,20 @@ public final class L2PcInstance extends L2Playable
 	}
 	
 	/**
-	 * Add a L2CubicInstance to the L2PcInstance _cubics.
-	 * @param id
-	 * @param level
-	 * @param cubicPower
-	 * @param cubicDelay
-	 * @param cubicSkillChance
-	 * @param cubicMaxCount
-	 * @param cubicDuration
-	 * @param givenByOther
+	 * Add a cubic to this player.
+	 * @param cubic
+	 * @return the old cubic for this cubic ID if any, otherwise {@code null}
 	 */
-	public void addCubic(int id, int level, double cubicPower, int cubicDelay, int cubicSkillChance, int cubicMaxCount, int cubicDuration, boolean givenByOther)
+	public CubicInstance addCubic(CubicInstance cubic)
 	{
-		_cubics.put(id, new L2CubicInstance(this, id, level, (int) cubicPower, cubicDelay, cubicSkillChance, cubicMaxCount, cubicDuration, givenByOther));
+		return _cubics.put(cubic.getTemplate().getId(), cubic);
 	}
 	
 	/**
 	 * Get the player's cubics.
 	 * @return the cubics
 	 */
-	public Map<Integer, L2CubicInstance> getCubics()
+	public Map<Integer, CubicInstance> getCubics()
 	{
 		return _cubics;
 	}
@@ -8997,7 +9003,7 @@ public final class L2PcInstance extends L2Playable
 	 * @param cubicId the cubic ID
 	 * @return the cubic with the given cubic ID, {@code null} otherwise
 	 */
-	public L2CubicInstance getCubicById(int cubicId)
+	public CubicInstance getCubicById(int cubicId)
 	{
 		return _cubics.get(cubicId);
 	}
@@ -9449,7 +9455,7 @@ public final class L2PcInstance extends L2Playable
 	public void setMessageRefusal(boolean mode)
 	{
 		_messageRefusal = mode;
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 	}
 	
 	public void setDietMode(boolean mode)
@@ -10029,7 +10035,7 @@ public final class L2PcInstance extends L2Playable
 			
 			restoreEffects();
 			updateEffectIcons();
-			sendPacket(new EtcStatusUpdate(this));
+			sendEtcStatusUpdate();
 			
 			// if player has quest 422: Repent Your Sins, remove it
 			QuestState st = getQuestState(Quest.REPENT_YOUR_SINS);
@@ -10268,7 +10274,7 @@ public final class L2PcInstance extends L2Playable
 	{
 		super.doRevive();
 		updateEffectIcons();
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 		
 		if (isMounted())
 		{
@@ -11132,6 +11138,15 @@ public final class L2PcInstance extends L2Playable
 			OlympiadManager.getInstance().removeDisconnectedCompetitor(this);
 		}
 		
+		try
+		{
+			stopCubics();
+		}
+		catch (Exception e)
+		{
+			_log.error("deleteMe()", e);
+		}
+		
 		// If the L2PcInstance has Pet, unsummon it
 		if (hasSummon())
 		{
@@ -11640,7 +11655,7 @@ public final class L2PcInstance extends L2Playable
 		sm.addInt(_souls);
 		sendPacket(sm);
 		restartSoulTask();
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 	}
 	
 	/**
@@ -11667,7 +11682,7 @@ public final class L2PcInstance extends L2Playable
 			restartSoulTask();
 		}
 		
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 		return true;
 	}
 	
@@ -11678,7 +11693,7 @@ public final class L2PcInstance extends L2Playable
 	{
 		_souls = 0;
 		stopSoulTask();
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 	}
 	
 	/**
@@ -11769,7 +11784,7 @@ public final class L2PcInstance extends L2Playable
 		}
 		_deathPenaltyBuffLevel++;
 		addSkill(SkillData.getInstance().getInfo(5076, getDeathPenaltyBuffLevel()), false);
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 		SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.DEATH_PENALTY_LEVEL_S1_ADDED);
 		sm.addInt(getDeathPenaltyBuffLevel());
 		sendPacket(sm);
@@ -11794,14 +11809,14 @@ public final class L2PcInstance extends L2Playable
 		if (getDeathPenaltyBuffLevel() > 0)
 		{
 			addSkill(SkillData.getInstance().getInfo(5076, getDeathPenaltyBuffLevel()), false);
-			sendPacket(new EtcStatusUpdate(this));
+			sendEtcStatusUpdate();
 			SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.DEATH_PENALTY_LEVEL_S1_ADDED);
 			sm.addInt(getDeathPenaltyBuffLevel());
 			sendPacket(sm);
 		}
 		else
 		{
-			sendPacket(new EtcStatusUpdate(this));
+			sendEtcStatusUpdate();
 			sendPacket(SystemMessageId.DEATH_PENALTY_LIFTED);
 		}
 	}
@@ -12182,7 +12197,7 @@ public final class L2PcInstance extends L2Playable
 			sendPacket(sm);
 		}
 		
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 	}
 	
 	public boolean decreaseCharges(int count)
@@ -12202,14 +12217,14 @@ public final class L2PcInstance extends L2Playable
 			restartChargeTask();
 		}
 		
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 		return true;
 	}
 	
 	public void clearCharges()
 	{
 		_charges.set(0);
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 	}
 	
 	/**
@@ -12471,7 +12486,7 @@ public final class L2PcInstance extends L2Playable
 		{
 			_silenceModeExcluded.clear(); // Clear the excluded list on each setSilenceMode
 		}
-		sendPacket(new EtcStatusUpdate(this));
+		sendEtcStatusUpdate();
 	}
 	
 	/**

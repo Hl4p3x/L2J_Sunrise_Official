@@ -55,6 +55,7 @@ import l2r.gameserver.model.interfaces.IIdentifiable;
 import l2r.gameserver.model.quest.Quest;
 import l2r.gameserver.model.skills.L2Skill;
 import l2r.gameserver.network.SystemMessageId;
+import l2r.gameserver.network.serverpackets.DeleteObject;
 import l2r.gameserver.network.serverpackets.L2GameServerPacket;
 import l2r.gameserver.network.serverpackets.SystemMessage;
 import l2r.gameserver.util.Broadcast;
@@ -493,7 +494,17 @@ public final class TerritoryWarManager implements Siegable
 	{
 		if (clan.getCastleId() > 0)
 		{
-			_outposts.remove(clan.getCastleId());
+			final L2SiegeFlagInstance flag = _outposts.remove(clan.getCastleId());
+			if (flag != null)
+			{
+				flag.deleteMe();
+				L2World.getInstance().removeObject(flag);
+				Broadcast.toAllOnlinePlayers(new DeleteObject(flag.getObjectId()));
+			}
+			else
+			{
+				_log.warn("Flag does not exists in world.");
+			}
 		}
 	}
 	
@@ -1112,6 +1123,8 @@ public final class TerritoryWarManager implements Siegable
 		for (L2SiegeFlagInstance flag : _outposts.values())
 		{
 			flag.deleteMe();
+			L2World.getInstance().removeObject(flag);
+			Broadcast.toAllOnlinePlayers(new DeleteObject(flag.getObjectId()));
 		}
 		_outposts.clear();
 		

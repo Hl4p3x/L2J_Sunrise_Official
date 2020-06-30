@@ -276,9 +276,9 @@ public class L2BossZone extends L2ZoneType
 					// if inside zone isnt any player, force all boss instance return to its spawn points
 					if ((count == 0) && !getSettings().getRaidList().isEmpty())
 					{
-						for (int i = 0; i < getSettings().getRaidList().size(); i++)
+						for (L2Character creature : getSettings().getRaidList())
 						{
-							L2Attackable raid = (L2Attackable) getSettings().getRaidList().get(i);
+							final L2Attackable raid = (L2Attackable) creature;
 							if ((raid == null) || (raid.getSpawn() == null) || raid.isDead())
 							{
 								continue;

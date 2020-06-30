@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
+import l2r.Config;
 import l2r.gameserver.data.xml.impl.ItemData;
 import l2r.gameserver.handler.IAdminCommandHandler;
 import l2r.gameserver.model.L2World;
@@ -299,12 +300,18 @@ public class AdminCreateItem implements IAdminCommandHandler
 			return;
 		}
 		
+		if (!template.isStackable() && !Config.MULTIPLE_ITEM_DROP)
+		{
+			num = 1;
+		}
+		
 		target.getInventory().addItem("Admin", id, num, activeChar, null);
 		
 		if (activeChar != target)
 		{
 			target.sendMessage("Admin spawned " + num + " " + template.getName() + " in your inventory.");
 		}
+		
 		activeChar.sendMessage("You have spawned " + num + " " + template.getName() + "(" + id + ") in " + target.getName() + " inventory.");
 	}
 	

@@ -137,6 +137,12 @@ public final class RequestMagicSkillUse extends L2GameClientPacket
 			_log.info("Reusedelay:" + skill.getReuseDelay() + " hittime:" + skill.getHitTime());
 		}
 		
+		// Do not allow request magic skill if player is feared
+		if (activeChar.isAfraid())
+		{
+			return;
+		}
+		
 		// If Alternate rule Karma punishment is set to true, forbid skill Return to player with Karma
 		if ((skill.getSkillType() == L2SkillType.RECALL) && !Config.ALT_GAME_KARMA_PLAYER_CAN_TELEPORT && (activeChar.getKarma() > 0))
 		{

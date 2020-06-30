@@ -108,27 +108,17 @@ public class L2NpcAction implements IActionHandler
 			{
 				if (!GeoData.getInstance().canSeeTarget(activeChar, npc) && (Util.calculateDistance(activeChar, npc, true) > 80))
 				{
-					final Location destination = GeoData.getInstance().moveCheck(activeChar, npc);
-					activeChar.getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_AND_INTERACT, npc, destination);
+					activeChar.getAI().setIntention(CtrlIntention.AI_INTENTION_INTERACT, npc);
 					return true;
 				}
 				
 				// Verifies if the NPC can interact with the player.
 				if (!npc.canInteract(activeChar))
 				{
-					final Location destination = GeoData.getInstance().moveCheck(activeChar, npc);
-					activeChar.getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_AND_INTERACT, npc, destination);
+					activeChar.getAI().setIntention(CtrlIntention.AI_INTENTION_INTERACT, npc);
 				}
 				else
 				{
-					// vGodFather extra check if npc is walker interaction distance should be lower than normal.
-					if (!activeChar.isInsideRadius(npc, 60, true, false) && npc.isWalker())
-					{
-						final Location destination = GeoData.getInstance().moveCheck(activeChar, npc);
-						activeChar.getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_AND_INTERACT, npc, destination);
-						return true;
-					}
-					
 					if (npc.hasRandomAnimation())
 					{
 						npc.onRandomAnimation(Rnd.get(8));

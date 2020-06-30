@@ -22,15 +22,18 @@ import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_ATTACK;
 import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_FOLLOW;
 import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_IDLE;
 
+import java.util.List;
 import java.util.concurrent.Future;
 
 import l2r.gameserver.GameTimeController;
+import l2r.gameserver.GeoData;
 import l2r.gameserver.ThreadPoolManager;
 import l2r.gameserver.enums.CtrlEvent;
 import l2r.gameserver.enums.CtrlIntention;
 import l2r.gameserver.model.L2Object;
 import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.L2Character;
+import l2r.gameserver.model.actor.L2Npc;
 import l2r.gameserver.model.actor.L2Summon;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.skills.L2Skill;
@@ -42,7 +45,10 @@ import l2r.gameserver.network.serverpackets.MoveToLocation;
 import l2r.gameserver.network.serverpackets.StopMove;
 import l2r.gameserver.network.serverpackets.StopRotation;
 import l2r.gameserver.network.serverpackets.ValidateLocation;
+import l2r.gameserver.pathfinding.AbstractNodeLoc;
+import l2r.gameserver.pathfinding.PathFinding;
 import l2r.gameserver.taskmanager.AttackStanceTaskManager;
+import l2r.util.Rnd;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,8 +144,79 @@ public abstract class AbstractAI implements Ctrl
 		}
 	}
 	
+	protected void moveToPawn(L2Object followTarget, int _range)
+	{
+		moveToPawn(followTarget, _range, true);
+	}
+	
+	protected void moveToPawn(L2Object followTarget, int _range, boolean usePath)
+	{
+		if (((_range > 200) && GeoData.getInstance().canSeeTarget(_actor, followTarget)) || GeoData.getInstance().canMove(_actor, followTarget))
+		{
+			moveToObject(followTarget, _range);
+		}
+		else
+		{
+			movementCheck(_range, followTarget, usePath);
+		}
+	}
+	
+	// vGodFather this will fix mob-players stuck in walls when try to attack
+	private void movementCheck(int range, L2Object followTarget, boolean usePath)
+	{
+		if (usePath)
+		{
+			List<AbstractNodeLoc> path = PathFinding.getInstance().findPath(_actor.getX(), _actor.getY(), _actor.getZ(), followTarget.getX(), followTarget.getY(), followTarget.getZ(), followTarget.getInstanceId(), true);
+			if (path != null)
+			{
+				for (AbstractNodeLoc point : path)
+				{
+					if (GeoData.getInstance().canMove(point, followTarget))
+					{
+						moveTo(point.getX(), point.getY(), point.getZ());
+						_onFailedPath = 0;
+						return;
+					}
+					
+					_onFailedPath++;
+					if (_onFailedPath >= _maxFailedPath)
+					{
+						Location loc = GeoData.getInstance().moveCheck(_actor.getX() + Rnd.get(-100, +100), _actor.getY() + Rnd.get(-100, +100), _actor.getZ(), followTarget.getX() + Rnd.get(-100, +100), followTarget.getY() + Rnd.get(-100, +100), followTarget.getZ(), _actor.getInstanceId());
+						moveTo(loc);
+						_onFailedPath = 0;
+						return;
+					}
+				}
+			}
+			else
+			{
+				final Location destination = GeoData.getInstance().moveCheck(_actor, followTarget);
+				moveTo(destination);
+			}
+		}
+		else
+		{
+			final Location destination = GeoData.getInstance().moveCheck(_actor, followTarget);
+			moveTo(destination);
+		}
+	}
+	
+	// vGodFather addon
+	protected boolean checkDistanceAndMove(L2Object target)
+	{
+		if (_actor.calculateDistance(target, false, false) > L2Npc.INTERACTION_DISTANCE)
+		{
+			changeIntention(CtrlIntention.AI_INTENTION_INTERACT, target, null);
+			return true;
+		}
+		return false;
+	}
+	
 	/** The character that this AI manages */
 	protected final L2Character _actor;
+	
+	protected int _maxFailedPath = 20;
+	protected int _onFailedPath = 0;
 	
 	/** Current long-term intention */
 	protected CtrlIntention _intention = AI_INTENTION_IDLE;
@@ -303,10 +380,6 @@ public abstract class AbstractAI implements Ctrl
 				break;
 			case AI_INTENTION_INTERACT:
 				onIntentionInteract((L2Object) arg0);
-				break;
-			// vGodFather addon
-			case AI_INTENTION_MOVE_AND_INTERACT:
-				onIntentionMoveAndInteract((L2Object) arg0, (Location) arg1);
 				break;
 		}
 		
@@ -508,9 +581,6 @@ public abstract class AbstractAI implements Ctrl
 	
 	protected abstract void onEvtAfraid(L2Character effector, boolean start);
 	
-	// vGodFather addon
-	protected abstract void onIntentionMoveAndInteract(L2Object object, Location loc);
-	
 	/**
 	 * Cancel action client side by sending Server->Client packet ActionFailed to the L2PcInstance actor. <FONT COLOR=#FF0000><B> <U>Caution</U> : Low level function, used by AI subclasses</B></FONT>
 	 */
@@ -528,7 +598,7 @@ public abstract class AbstractAI implements Ctrl
 	 * @param pawn
 	 * @param offset
 	 */
-	protected void moveToPawn(L2Object pawn, int offset)
+	protected void moveToObject(L2Object pawn, int offset)
 	{
 		// Check if actor can move
 		if (!_actor.isMovementDisabled())
@@ -643,11 +713,6 @@ public abstract class AbstractAI implements Ctrl
 			
 			// Send a Server->Client packet CharMoveToLocation to the actor and all L2PcInstance in its _knownPlayers
 			_actor.broadcastPacket(new MoveToLocation(_actor));
-			
-			if (_actor.isNpc())
-			{
-				_actor.broadcastPacket(new ValidateLocation(_actor));
-			}
 		}
 		else
 		{

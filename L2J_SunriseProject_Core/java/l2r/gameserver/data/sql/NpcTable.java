@@ -213,8 +213,8 @@ public class NpcTable implements IXmlReader
 												set.set("reuseDelay", parseInteger(attrs, "reuseDelay"));// TODO: Implement me
 												set.set("baseAtkType", parseString(attrs, "type"));
 												set.set("baseAtkRange", parseInteger(attrs, "range"));
-												set.set("distance", parseInteger(attrs, "distance"));// TODO: Implement me
-												set.set("width", parseInteger(attrs, "width"));// TODO: Implement me
+												set.set("distance", parseInteger(attrs, "distance"));
+												set.set("width", parseInteger(attrs, "width"));
 												break;
 											}
 											case "defence":

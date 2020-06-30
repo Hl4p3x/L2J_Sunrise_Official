@@ -49,7 +49,7 @@ public final class ClanHallManager
 	private final Map<Integer, AuctionableHall> _clanHall = new ConcurrentHashMap<>();
 	private final Map<Integer, AuctionableHall> _freeClanHall = new ConcurrentHashMap<>();
 	private final Map<Integer, AuctionableHall> _allAuctionableClanHalls = new HashMap<>();
-	private static Map<Integer, ClanHall> _allClanHalls = new HashMap<>();
+	private final Map<Integer, ClanHall> _allClanHalls = new HashMap<>();
 	private boolean _loaded = false;
 	
 	public boolean loaded()
@@ -114,7 +114,7 @@ public final class ClanHallManager
 		}
 	}
 	
-	public static final Map<Integer, ClanHall> getAllClanHalls()
+	public final Map<Integer, ClanHall> getAllClanHalls()
 	{
 		return _allClanHalls;
 	}
@@ -143,7 +143,7 @@ public final class ClanHallManager
 		return _allAuctionableClanHalls;
 	}
 	
-	public static final void addClanHall(ClanHall hall)
+	public final void addClanHall(ClanHall hall)
 	{
 		_allClanHalls.put(hall.getId(), hall);
 	}

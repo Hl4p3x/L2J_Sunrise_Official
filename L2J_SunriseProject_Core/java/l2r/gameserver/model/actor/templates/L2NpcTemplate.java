@@ -101,6 +101,10 @@ public final class L2NpcTemplate extends L2CharTemplate implements IIdentifiable
 	private double _collisionRadiusGrown;
 	private double _collisionHeightGrown;
 	
+	private int _width;
+	private int _range;
+	private int _distance;
+	
 	private final List<ClassId> _teachInfo = new ArrayList<>();
 	
 	private final Map<Integer, L2Skill> _skills = new ConcurrentHashMap<>();
@@ -196,6 +200,10 @@ public final class L2NpcTemplate extends L2CharTemplate implements IIdentifiable
 		
 		_collisionRadiusGrown = set.getDouble("collisionRadiusGrown", 0);
 		_collisionHeightGrown = set.getDouble("collisionHeightGrown", 0);
+		
+		_width = set.getInt("width", 120);
+		_range = set.getInt("range", 40);
+		_distance = set.getInt("distance", 80);
 	}
 	
 	@Override
@@ -999,5 +1007,20 @@ public final class L2NpcTemplate extends L2CharTemplate implements IIdentifiable
 			default:
 				return null;
 		}
+	}
+	
+	public int getDistance()
+	{
+		return _distance;
+	}
+	
+	public int getRange()
+	{
+		return _range;
+	}
+	
+	public int getWidth()
+	{
+		return _width;
 	}
 }

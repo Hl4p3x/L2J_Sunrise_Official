@@ -5,6 +5,7 @@
 package l2r.gameserver.model.actor;
 
 import l2r.Config;
+import l2r.gameserver.GeoData;
 import l2r.gameserver.ai.L2CharacterAI;
 import l2r.gameserver.ai.L2SummonAI;
 import l2r.gameserver.data.xml.impl.ExperienceData;
@@ -808,6 +809,17 @@ public abstract class L2Summon extends L2Playable
 	public void doCast(L2Skill skill)
 	{
 		final L2PcInstance actingPlayer = getActingPlayer();
+		
+		final L2Object target = getOwner().getTarget();
+		if (target != null)
+		{
+			if (!GeoData.getInstance().canSeeTarget(this, target))
+			{
+				// Send a System Message to the L2PcInstance
+				actingPlayer.sendPacket(SystemMessageId.CANT_SEE_TARGET);
+				return;
+			}
+		}
 		if (!actingPlayer.checkPvpSkill(getTarget(), skill, true) && !actingPlayer.getAccessLevel().allowPeaceAttack())
 		{
 			// Send a System Message to the L2PcInstance

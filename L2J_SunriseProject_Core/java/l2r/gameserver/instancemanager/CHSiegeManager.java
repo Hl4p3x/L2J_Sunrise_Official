@@ -78,7 +78,7 @@ public final class CHSiegeManager
 				set.set("scheduleConfig", rs.getString("schedule_config"));
 				SiegableHall hall = new SiegableHall(set);
 				_siegableHalls.put(id, hall);
-				ClanHallManager.addClanHall(hall);
+				ClanHallManager.getInstance().addClanHall(hall);
 			}
 			_log.info(getClass().getSimpleName() + ": Loaded " + _siegableHalls.size() + " conquerable clan halls.");
 		}

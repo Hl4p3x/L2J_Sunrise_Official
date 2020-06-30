@@ -60,6 +60,10 @@ public class ObjectKnownList
 		// Check if already know object
 		if (knowsObject(object))
 		{
+			if (!object.isVisible())
+			{
+				removeKnownObject(object);
+			}
 			return false;
 		}
 		

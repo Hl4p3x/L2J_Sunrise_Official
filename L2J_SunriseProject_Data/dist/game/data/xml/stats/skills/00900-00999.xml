@@ -2137,7 +2137,7 @@
 		<set name="targetType" val="ONE" />
 		<cond msgId="113" addName="1">
 			<and>
-				<using kind="DAGGER,DUALDAGGER,SWORD,BLUNT,FIST" />
+				<using kind="DAGGER,DUALDAGGER,SWORD,BLUNT,FIST,POLE" />
 				<target mindistance="400" />
 			</and>
 		</cond>

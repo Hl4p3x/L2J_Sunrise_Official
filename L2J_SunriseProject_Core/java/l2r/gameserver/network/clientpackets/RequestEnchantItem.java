@@ -68,6 +68,12 @@ public final class RequestEnchantItem extends L2GameClientPacket
 			return;
 		}
 		
+		// Flood protect drop to avoid packet lag
+		if (!getClient().getFloodProtectors().getEnchantItem().tryPerformAction("enchant item"))
+		{
+			return;
+		}
+		
 		if (!activeChar.isOnline() || getClient().isDetached())
 		{
 			activeChar.setActiveEnchantItemId(L2PcInstance.ID_NONE);

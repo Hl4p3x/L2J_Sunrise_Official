@@ -116,18 +116,6 @@ public class ItemSkillsTemplate implements IItemHandler
 					playable.sendPacket(sm);
 				}
 				
-				if (itemSkill.isSimultaneousCast() || ((item.getItem().hasImmediateEffect() || item.getItem().hasExImmediateEffect()) && itemSkill.isStatic()))
-				{
-					playable.doSimultaneousCast(itemSkill);
-				}
-				else
-				{
-					if (!playable.useMagic(itemSkill, forceUse, false))
-					{
-						return false;
-					}
-				}
-				
 				if (itemSkill.getReuseDelay() > 0)
 				{
 					playable.addTimeStamp(itemSkill, itemSkill.getReuseDelay());
@@ -143,6 +131,18 @@ public class ItemSkillsTemplate implements IItemHandler
 						reUseDelay += 86400000;
 					}
 					playable.addTimeStamp(itemSkill, reUseDelay - System.currentTimeMillis());
+				}
+				
+				if (itemSkill.isSimultaneousCast() || ((item.getItem().hasImmediateEffect() || item.getItem().hasExImmediateEffect()) && itemSkill.isStatic()))
+				{
+					playable.doSimultaneousCast(itemSkill);
+				}
+				else
+				{
+					if (!playable.useMagic(itemSkill, forceUse, false))
+					{
+						return false;
+					}
 				}
 			}
 		}

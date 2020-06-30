@@ -1414,6 +1414,20 @@ public class CharEffectList
 	}
 	
 	/**
+	 * Gets the debuff skills count.<br>
+	 * Prevents initialization.
+	 * @return the number of debuff effects in this creature effect list
+	 */
+	public int getDebuffCount()
+	{
+		if (_debuffs == null)
+		{
+			_debuffs = new CopyOnWriteArrayList<>();
+		}
+		return _debuffs.size();
+	}
+	
+	/**
 	 * Gets passive skills.
 	 * @return the passive skills
 	 */

@@ -25,7 +25,6 @@ import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.punishment.PunishmentTask;
 import l2r.gameserver.model.punishment.PunishmentType;
 import l2r.gameserver.network.L2GameClient;
-import l2r.gameserver.network.serverpackets.EtcStatusUpdate;
 import l2r.gameserver.util.Util;
 
 /**
@@ -143,7 +142,7 @@ public class ChatBanHandler implements IPunishmentHandler
 		{
 			player.sendMessage("You've been chat banned forever.");
 		}
-		player.sendPacket(new EtcStatusUpdate(player));
+		player.sendEtcStatusUpdate();
 	}
 	
 	/**
@@ -153,7 +152,7 @@ public class ChatBanHandler implements IPunishmentHandler
 	private static void removeFromPlayer(L2PcInstance player)
 	{
 		player.sendMessage("Your Chat ban has been lifted");
-		player.sendPacket(new EtcStatusUpdate(player));
+		player.sendEtcStatusUpdate();
 	}
 	
 	@Override

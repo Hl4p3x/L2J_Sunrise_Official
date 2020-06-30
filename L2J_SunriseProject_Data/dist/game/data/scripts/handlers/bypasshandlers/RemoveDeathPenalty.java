@@ -23,7 +23,6 @@ import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.L2Npc;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.network.SystemMessageId;
-import l2r.gameserver.network.serverpackets.EtcStatusUpdate;
 import l2r.gameserver.network.serverpackets.NpcHtmlMessage;
 import l2r.util.StringUtil;
 
@@ -82,7 +81,7 @@ public class RemoveDeathPenalty implements IBypassHandler
 							}
 							activeChar.setDeathPenaltyBuffLevel(activeChar.getDeathPenaltyBuffLevel() - 1);
 							activeChar.sendPacket(SystemMessageId.DEATH_PENALTY_LIFTED);
-							activeChar.sendPacket(new EtcStatusUpdate(activeChar));
+							activeChar.sendEtcStatusUpdate();
 							return true;
 						}
 						replyMSG.append("The wound you have received from death's touch is too deep to be healed for the money you have to give me. Find more money if you wish death's mark to be fully removed from you.");

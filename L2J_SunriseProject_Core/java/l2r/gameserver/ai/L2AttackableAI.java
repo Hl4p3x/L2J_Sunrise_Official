@@ -64,6 +64,7 @@ import l2r.gameserver.model.events.impl.character.npc.attackable.OnAttackableHat
 import l2r.gameserver.model.events.returns.TerminateReturn;
 import l2r.gameserver.model.skills.L2Skill;
 import l2r.gameserver.model.skills.targets.L2TargetType;
+import l2r.gameserver.pathfinding.PathFinding;
 import l2r.gameserver.util.Util;
 import l2r.util.Rnd;
 
@@ -2524,13 +2525,21 @@ public class L2AttackableAI extends L2CharacterAI implements Runnable
 			if (npc.getSpawn() != null)
 			{
 				npc.setisReturningToSpawnPoint(true);
-				if (GeoData.getInstance().canMove(npc.getX(), npc.getY(), npc.getZ(), npc.getSpawn().getX(), npc.getSpawn().getY(), npc.getSpawn().getZ(), npc.getInstanceId()))
+				
+				if (Config.PATHFINDING > 0)
 				{
-					moveTo(npc.getSpawn().getX(), npc.getSpawn().getY(), npc.getSpawn().getZ());
+					if (PathFinding.getInstance().findPath(npc.getX(), npc.getY(), npc.getZ(), npc.getSpawn().getX(), npc.getSpawn().getY(), npc.getSpawn().getZ(), npc.getInstanceId(), true) != null)
+					{
+						moveTo(npc.getSpawn().getLocation());
+					}
+					else
+					{
+						npc.returnHome(true);
+					}
 				}
 				else
 				{
-					npc.returnHome(true);
+					moveTo(npc.getSpawn().getX(), npc.getSpawn().getY(), npc.getSpawn().getZ());
 				}
 			}
 		}

@@ -342,7 +342,6 @@ public class CharStatus
 		if (hpWasChanged && getActiveChar().isPlayer())
 		{
 			getActiveChar().getActingPlayer().checkHpMessages(currentHp, _currentHp);
-			getActiveChar().getActingPlayer().broadcastUserInfo();
 		}
 		
 		return hpWasChanged;

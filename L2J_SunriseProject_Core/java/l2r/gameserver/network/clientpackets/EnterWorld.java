@@ -61,7 +61,6 @@ import l2r.gameserver.model.skills.CommonSkill;
 import l2r.gameserver.network.SystemMessageId;
 import l2r.gameserver.network.serverpackets.ActionFailed;
 import l2r.gameserver.network.serverpackets.Die;
-import l2r.gameserver.network.serverpackets.EtcStatusUpdate;
 import l2r.gameserver.network.serverpackets.ExBasicActionList;
 import l2r.gameserver.network.serverpackets.ExGetBookMarkInfoPacket;
 import l2r.gameserver.network.serverpackets.ExNoticePostArrived;
@@ -408,7 +407,7 @@ public class EnterWorld extends L2GameClientPacket
 		
 		activeChar.entering = false;
 		activeChar.broadcastUserInfo();
-		activeChar.sendPacket(new EtcStatusUpdate(activeChar));
+		activeChar.sendEtcStatusUpdate();
 		
 		activeChar.spawnMe(activeChar.getX(), activeChar.getY(), activeChar.getZ());
 		

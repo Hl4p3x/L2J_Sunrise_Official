@@ -34,7 +34,7 @@ public class Pinger
 			int mtu = _player.getQuickVarI(QuickVarType.MTU.getCommand(), -1);
 			if ((ping > -1) && (mtu > -1))
 			{
-				_player.sendMessage("Staus: PING: " + ping + " ms/MTU: " + mtu);
+				_player.sendMessage("Status: PING: " + ping + " ms/MTU: " + mtu);
 			}
 			else
 			{

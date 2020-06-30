@@ -62,7 +62,7 @@ public class ConditionPlayerCanTakeFort extends Condition
 			env.getPlayer().sendPacket(SystemMessageId.INCORRECT_TARGET);
 			canTakeFort = false;
 		}
-		else if (!Util.checkIfInRange(200, env.getPlayer(), env.getTarget(), true))
+		else if (!Util.checkIfInRange(env.getSkill().getCastRange(), env.getPlayer(), env.getTarget(), true))
 		{
 			env.getPlayer().sendPacket(SystemMessageId.DIST_TOO_FAR_CASTING_STOPPED);
 			canTakeFort = false;

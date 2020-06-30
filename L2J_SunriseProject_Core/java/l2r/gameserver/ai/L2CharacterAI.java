@@ -325,6 +325,13 @@ public class L2CharacterAI extends AbstractAI
 			return;
 		}
 		
+		if (_actor.isAfraid())
+		{
+			clientActionFailed();
+			_actor.setIsCastingNow(false);
+			return;
+		}
+		
 		final long nextAttack = TimeUnit.MILLISECONDS.convert(_actor.getAttackEndTime() - System.nanoTime(), TimeUnit.NANOSECONDS);
 		if (_actor.isAttackingNow())
 		{
@@ -758,7 +765,7 @@ public class L2CharacterAI extends AbstractAI
 			if (_actor.isSummon() && (_actor.getAI().getIntention() == CtrlIntention.AI_INTENTION_IDLE) && !GeoData.getInstance().canMove(_actor, getCastTarget()))
 			{
 				((L2Summon) _actor).setFollowStatus(true);
-				_actor.sendPacket(SystemMessageId.INCORRECT_TARGET);
+				_actor.sendPacket(SystemMessageId.TARGET_TOO_FAR);
 			}
 			return;
 		}
@@ -768,7 +775,7 @@ public class L2CharacterAI extends AbstractAI
 			if (!GeoData.getInstance().canMove(_actor, getCastTarget()))
 			{
 				setIntention(CtrlIntention.AI_INTENTION_IDLE);
-				_actor.sendPacket(SystemMessageId.INCORRECT_TARGET);
+				_actor.sendPacket(SystemMessageId.TARGET_TOO_FAR);
 			}
 		}
 		
@@ -1723,51 +1730,5 @@ public class L2CharacterAI extends AbstractAI
 	public boolean isParty(L2Skill sk)
 	{
 		return (sk.getTargetType() == L2TargetType.PARTY);
-	}
-	
-	// vGodFather addon
-	protected boolean checkDistanceAndMove(L2Object target)
-	{
-		if ((int) _actor.calculateDistance(target, false, false) > 150)
-		{
-			final Location destination = GeoData.getInstance().moveCheck(_actor, target);
-			changeIntention(CtrlIntention.AI_INTENTION_MOVE_AND_INTERACT, target, destination);
-			return true;
-		}
-		return false;
-	}
-	
-	// vGodFather addon
-	@Override
-	protected void onIntentionMoveAndInteract(L2Object object, Location loc)
-	{
-		if (getIntention() == AI_INTENTION_REST)
-		{
-			// Cancel action client side by sending Server->Client packet ActionFailed to the L2PcInstance actor
-			clientActionFailed();
-			return;
-		}
-		
-		if (_actor.isAllSkillsDisabled() || _actor.isCastingNow())
-		{
-			// Cancel action client side by sending Server->Client packet ActionFailed to the L2PcInstance actor
-			clientActionFailed();
-			return;
-		}
-		
-		// Set the Intention of this AbstractAI to AI_INTENTION_MOVE_TO
-		changeIntention(CtrlIntention.AI_INTENTION_MOVE_AND_INTERACT, object, loc);
-		
-		// Stop the actor auto-attack client side by sending Server->Client packet AutoAttackStop (broadcast)
-		clientStopAutoAttack();
-		
-		// Abort the attack of the L2Character and send Server->Client ActionFailed packet
-		_actor.abortAttack();
-		
-		// Set the AI interact target
-		setTarget(object);
-		
-		// Move the actor to Location (x,y,z) server side AND client side by sending Server->Client packet CharMoveToLocation (broadcast)
-		moveTo(loc, 20);
 	}
 }

@@ -25,8 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import l2r.gameserver.ThreadPoolManager;
 import l2r.gameserver.model.actor.L2Character;
-import l2r.gameserver.model.actor.instance.L2CubicInstance;
-import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.network.serverpackets.AutoAttackStop;
 
 import org.slf4j.Logger;
@@ -58,17 +56,6 @@ public class AttackStanceTaskManager
 	{
 		if (actor != null)
 		{
-			if (actor.isPlayable())
-			{
-				final L2PcInstance player = actor.getActingPlayer();
-				for (L2CubicInstance cubic : player.getCubics().values())
-				{
-					if (cubic.getId() != L2CubicInstance.LIFE_CUBIC)
-					{
-						cubic.doAction();
-					}
-				}
-			}
 			_attackStanceTasks.put(actor, System.currentTimeMillis());
 		}
 	}

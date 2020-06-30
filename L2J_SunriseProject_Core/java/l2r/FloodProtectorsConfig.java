@@ -34,6 +34,7 @@ public final class FloodProtectorsConfig
 	// --------------------------------------------------
 	// FloodProtector Settings
 	// --------------------------------------------------
+	public static FloodProtectorConfig FLOOD_PROTECTOR_ENCHANT_ITEM;
 	public static FloodProtectorConfig FLOOD_PROTECTOR_USE_ITEM;
 	public static FloodProtectorConfig FLOOD_PROTECTOR_ENCHANT_SKILL;
 	public static FloodProtectorConfig FLOOD_PROTECTOR_ROLL_DICE;
@@ -58,6 +59,7 @@ public final class FloodProtectorsConfig
 	
 	public static void load()
 	{
+		FLOOD_PROTECTOR_ENCHANT_ITEM = new FloodProtectorConfig("EnchantItemFloodProtector");
 		FLOOD_PROTECTOR_USE_ITEM = new FloodProtectorConfig("UseItemFloodProtector");
 		FLOOD_PROTECTOR_ENCHANT_SKILL = new FloodProtectorConfig("EnchantSkillFloodProtector");
 		FLOOD_PROTECTOR_ROLL_DICE = new FloodProtectorConfig("RollDiceFloodProtector");
@@ -92,6 +94,7 @@ public final class FloodProtectorsConfig
 	 */
 	private static void loadFloodProtectorConfigs(final PropertiesParser properties)
 	{
+		loadFloodProtectorConfig(properties, FLOOD_PROTECTOR_ENCHANT_ITEM, "EnchantItem", 4);
 		loadFloodProtectorConfig(properties, FLOOD_PROTECTOR_USE_ITEM, "UseItem", 4);
 		loadFloodProtectorConfig(properties, FLOOD_PROTECTOR_ENCHANT_SKILL, "EnchantSkill", 4);
 		loadFloodProtectorConfig(properties, FLOOD_PROTECTOR_ROLL_DICE, "RollDice", 42);

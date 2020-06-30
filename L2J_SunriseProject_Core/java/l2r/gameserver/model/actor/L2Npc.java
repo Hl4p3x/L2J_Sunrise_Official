@@ -1893,7 +1893,7 @@ public class L2Npc extends L2Character
 	 */
 	public L2ItemInstance dropItem(L2PcInstance player, ItemHolder item)
 	{
-		return dropItem(player, item.getId(), item.getCount());
+		return dropItem(player, item.getId(), item.getCount(), item.isFromMob());
 	}
 	
 	@Override

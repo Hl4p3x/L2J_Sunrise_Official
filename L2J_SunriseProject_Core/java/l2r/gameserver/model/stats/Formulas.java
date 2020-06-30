@@ -41,9 +41,9 @@ import l2r.gameserver.model.StatsSet;
 import l2r.gameserver.model.actor.L2Attackable;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.L2Npc;
-import l2r.gameserver.model.actor.instance.L2CubicInstance;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.actor.instance.L2PetInstance;
+import l2r.gameserver.model.cubic.CubicInstance;
 import l2r.gameserver.model.effects.EffectTemplate;
 import l2r.gameserver.model.effects.L2Effect;
 import l2r.gameserver.model.effects.L2EffectType;
@@ -1072,7 +1072,7 @@ public final class Formulas
 		return damage;
 	}
 	
-	public static final double calcMagicDam(L2CubicInstance attacker, L2Character target, L2Skill skill, boolean mcrit, byte shld)
+	public static final double calcMagicDam(CubicInstance attacker, L2Character target, L2Skill skill, boolean mcrit, byte shld)
 	{
 		double mDef = target.getMDef(attacker.getOwner(), skill);
 		switch (shld)
@@ -1084,7 +1084,7 @@ public final class Formulas
 				return 1;
 		}
 		
-		int mAtk = attacker.getCubicPower();
+		double mAtk = attacker.getTemplate().getPower();
 		final boolean isPvP = target.isPlayable();
 		final boolean isPvE = target.isAttackable();
 		
@@ -1092,7 +1092,7 @@ public final class Formulas
 		double damage = 91 * ((mAtk + skill.getPower(isPvP, isPvE)) / mDef);
 		
 		// Failure calculation
-		L2PcInstance owner = attacker.getOwner();
+		L2PcInstance owner = attacker.getOwner().getActingPlayer();
 		if (Config.ALT_GAME_MAGICFAILURES && !calcMagicSuccess(owner, target, skill))
 		{
 			if (calcMagicSuccess(owner, target, skill) && ((target.getLevel() - skill.getMagicLevel()) <= 9))
@@ -1907,7 +1907,7 @@ public final class Formulas
 		return result;
 	}
 	
-	public static boolean calcCubicSkillSuccess(L2CubicInstance attacker, L2Character target, L2Skill skill, byte shld)
+	public static boolean calcCubicSkillSuccess(CubicInstance attacker, L2Character target, L2Skill skill, byte shld)
 	{
 		if (skill.isDebuff())
 		{

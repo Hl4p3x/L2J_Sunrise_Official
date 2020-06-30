@@ -28,6 +28,10 @@ import l2r.gameserver.network.L2GameClient;
 public final class FloodProtectors
 {
 	/**
+	 * Enchant-item flood protector.
+	 */
+	private final FloodProtectorAction _enchantItem;
+	/**
 	 * Use-item flood protector.
 	 */
 	private final FloodProtectorAction _useItem;
@@ -119,6 +123,7 @@ public final class FloodProtectors
 	public FloodProtectors(final L2GameClient client)
 	{
 		super();
+		_enchantItem = new FloodProtectorAction(client, FloodProtectorsConfig.FLOOD_PROTECTOR_ENCHANT_ITEM);
 		_useItem = new FloodProtectorAction(client, FloodProtectorsConfig.FLOOD_PROTECTOR_USE_ITEM);
 		_enchantSkill = new FloodProtectorAction(client, FloodProtectorsConfig.FLOOD_PROTECTOR_ENCHANT_SKILL);
 		_rollDice = new FloodProtectorAction(client, FloodProtectorsConfig.FLOOD_PROTECTOR_ROLL_DICE);
@@ -328,5 +333,14 @@ public final class FloodProtectors
 	public FloodProtectorAction getAllyChat()
 	{
 		return _allyChat;
+	}
+	
+	/**
+	 * Returns {@link #_enchantItem}.
+	 * @return {@link #_enchantItem}
+	 */
+	public FloodProtectorAction getEnchantItem()
+	{
+		return _enchantItem;
 	}
 }

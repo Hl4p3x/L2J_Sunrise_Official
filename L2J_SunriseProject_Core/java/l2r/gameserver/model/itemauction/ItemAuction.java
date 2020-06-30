@@ -285,7 +285,6 @@ public final class ItemAuction
 			{
 				if (!reduceItemCount(player, newBid))
 				{
-					player.sendPacket(SystemMessageId.NOT_ENOUGH_ADENA_FOR_THIS_BID);
 					return;
 				}
 				
@@ -304,13 +303,11 @@ public final class ItemAuction
 					
 					if (!reduceItemCount(player, newBid - bid.getLastBid()))
 					{
-						player.sendPacket(SystemMessageId.NOT_ENOUGH_ADENA_FOR_THIS_BID);
 						return;
 					}
 				}
 				else if (!reduceItemCount(player, newBid))
 				{
-					player.sendPacket(SystemMessageId.NOT_ENOUGH_ADENA_FOR_THIS_BID);
 					return;
 				}
 				

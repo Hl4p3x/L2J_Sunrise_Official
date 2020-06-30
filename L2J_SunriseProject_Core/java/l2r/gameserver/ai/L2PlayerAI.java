@@ -352,29 +352,6 @@ public class L2PlayerAI extends L2PlayableAI
 		setIntention(AI_INTENTION_IDLE);
 	}
 	
-	// vGodFather addon
-	private void thinkMoveAndInteract()
-	{
-		if (_actor.isAllSkillsDisabled() || _actor.isCastingNow())
-		{
-			return;
-		}
-		L2Object target = getTarget();
-		if (checkTargetLost(target))
-		{
-			return;
-		}
-		if (checkDistanceAndMove(target))
-		{
-			return;
-		}
-		if (!(target instanceof L2StaticObjectInstance))
-		{
-			_actor.getActingPlayer().doInteract((L2Character) target);
-		}
-		setIntention(AI_INTENTION_IDLE);
-	}
-	
 	@Override
 	protected void onEvtThink()
 	{
@@ -401,11 +378,6 @@ public class L2PlayerAI extends L2PlayableAI
 			else if (getIntention() == AI_INTENTION_INTERACT)
 			{
 				thinkInteract();
-			}
-			// vGodFather addon
-			else if (getIntention() == CtrlIntention.AI_INTENTION_MOVE_AND_INTERACT)
-			{
-				thinkMoveAndInteract();
 			}
 		}
 		finally

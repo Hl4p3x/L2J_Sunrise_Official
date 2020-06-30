@@ -22,7 +22,6 @@ import l2r.gameserver.model.actor.L2Npc;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.itemcontainer.Inventory;
 import l2r.gameserver.network.SystemMessageId;
-import l2r.gameserver.network.serverpackets.EtcStatusUpdate;
 
 import ai.npc.AbstractNpcAI;
 
@@ -73,7 +72,7 @@ public class BlackJudge extends AbstractNpcAI
 						takeItems(player, Inventory.ADENA_ID, cost);
 						player.setDeathPenaltyBuffLevel(player.getDeathPenaltyBuffLevel() - 1);
 						player.sendPacket(SystemMessageId.DEATH_PENALTY_LIFTED);
-						player.sendPacket(new EtcStatusUpdate(player));
+						player.sendEtcStatusUpdate();
 					}
 					else
 					{

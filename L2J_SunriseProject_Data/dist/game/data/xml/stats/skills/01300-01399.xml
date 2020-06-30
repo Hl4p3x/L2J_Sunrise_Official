@@ -642,11 +642,13 @@
 	</skill>
 	<skill id="1328" levels="8" name="Mass Summon Storm Cubic" enchantGroup1="2">
 		<!-- Confirmed CT2.5 -->
+		<table name="#cubicLevel"> 1 2 3 4 5 6 7 8 </table>
 		<table name="#cubicPower"> 282 434 677 919 1141 1394 1673 1975 </table>
 		<table name="#itemConsumeCount"> 16 20 26 29 36 39 42 46 </table>
 		<table name="#magicLvl"> 40 46 52 58 62 66 70 74 </table>
 		<table name="#mpConsume"> 111 130 150 170 183 195 207 217 </table>
 		<table name="#mpInitialConsume"> 28 33 38 43 46 49 52 55 </table>
+		<table name="#ench1cubicLvl"> 101 101 101 101 102 102 102 102 103 103 103 103 104 104 104 104 105 105 105 105 106 106 106 106 107 107 107 107 108 108 </table>
 		<table name="#ench1Power"> 2081 2133 2184 2234 2283 2331 2378 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 </table>
 		<table name="#enchMagicLvl"> 76 76 76 77 77 77 78 78 78 79 79 79 80 80 80 81 81 81 82 82 82 83 83 83 84 84 84 85 85 85 </table>
 		<set name="affectRange" val="1000" />
@@ -664,22 +666,24 @@
 		<enchant1 name="magicLvl" val="#enchMagicLvl" />
 		<for>
 			<effect name="SummonCubic" noicon="1">
-				<param cubicId="1" cubicDelay="10" cubicDuration="900" cubicMaxCount="30" cubicSkillChance="12" cubicPower="#cubicPower" />
+				<param cubicId="1" cubicLvl="#cubicLevel" />
 			</effect>
 		</for>
 		<enchant1for>
 			<effect name="SummonCubic" noicon="1">
-				<param cubicId="1" cubicDelay="10" cubicDuration="900" cubicMaxCount="30" cubicSkillChance="12" cubicPower="#ench1Power" />
+				<param cubicId="1" cubicLvl="#ench1cubicLvl" />
 			</effect>
 		</enchant1for>
 	</skill>
 	<skill id="1329" levels="9" name="Mass Summon Aqua Cubic" enchantGroup1="2">
 		<!-- Confirmed CT2.5 -->
+		<table name="#cubicLevel"> 1 2 3 4 5 6 7 8 9 </table>
 		<table name="#cubicPower"> 282 377 497 644 820 1141 1394 1673 1975 </table>
 		<table name="#itemConsumeCount"> 7 10 10 13 13 16 20 20 23 </table>
 		<table name="#magicLvl"> 40 44 48 52 56 62 66 70 74 </table>
 		<table name="#mpConsume"> 111 123 137 150 163 183 195 207 217 </table>
 		<table name="#mpInitialConsume"> 28 31 35 38 41 46 49 52 55 </table>
+		<table name="#ench1cubicLvl"> 101 101 101 101 102 102 102 102 103 103 103 103 104 104 104 104 105 105 105 105 106 106 106 106 107 107 107 107 108 108 </table>
 		<table name="#ench1Power"> 2081 2133 2184 2234 2283 2331 2378 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 </table>
 		<table name="#enchMagicLvl"> 76 76 76 77 77 77 78 78 78 79 79 79 80 80 80 81 81 81 82 82 82 83 83 83 84 84 84 85 85 85 </table>
 		<set name="affectRange" val="1000" />
@@ -697,22 +701,24 @@
 		<enchant1 name="magicLvl" val="#enchMagicLvl" />
 		<for>
 			<effect name="SummonCubic" noicon="1">
-				<param cubicId="7" cubicDelay="30" cubicDuration="900" cubicMaxCount="10" cubicSkillChance="30" cubicPower="#cubicPower" />
+				<param cubicId="7" cubicLvl="#cubicLevel" />
 			</effect>
 		</for>
 		<enchant1for>
 			<effect name="SummonCubic" noicon="1">
-				<param cubicId="7" cubicDelay="30" cubicDuration="900" cubicMaxCount="10" cubicSkillChance="30" cubicPower="#ench1Power" />
+				<param cubicId="7" cubicLvl="#ench1cubicLvl" />
 			</effect>
 		</enchant1for>
 	</skill>
 	<skill id="1330" levels="8" name="Mass Summon Phantom Cubic" enchantGroup1="2">
 		<!-- Confirmed CT2.5 -->
+		<table name="#cubicLevel"> 1 2 3 4 5 6 7 8 </table>
 		<table name="#cubicPower"> 282 434 644 919 1141 1394 1673 1975 </table>
 		<table name="#itemConsumeCount"> 7 10 13 13 16 20 20 23 </table>
 		<table name="#magicLvl"> 40 46 52 58 62 66 70 74 </table>
 		<table name="#mpConsume"> 111 130 150 170 183 195 207 217 </table>
 		<table name="#mpInitialConsume"> 28 33 38 43 46 49 52 55 </table>
+		<table name="#ench1cubicLvl"> 101 101 101 101 102 102 102 102 103 103 103 103 104 104 104 104 105 105 105 105 106 106 106 106 107 107 107 107 108 108 </table>
 		<table name="#ench1Power"> 2081 2133 2184 2234 2283 2331 2378 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 2423 </table>
 		<table name="#enchMagicLvl"> 76 76 76 77 77 77 78 78 78 79 79 79 80 80 80 81 81 81 82 82 82 83 83 83 84 84 84 85 85 85 </table>
 		<set name="affectRange" val="1000" />
@@ -730,14 +736,12 @@
 		<enchant1 name="magicLvl" val="#enchMagicLvl" />
 		<for>
 			<effect name="SummonCubic" noicon="1">
-				<param cubicId="5" cubicDelay="8" cubicDuration="900" cubicMaxCount="30" cubicSkillChance="30" cubicPower="#cubicPower" />
-				<param cubicSkill1Chance="33" cubicSkill2Chance="33" cubicSkill3Chance="33" />
+				<param cubicId="5" cubicLvl="#cubicLevel" />
 			</effect>
 		</for>
 		<enchant1for>
 			<effect name="SummonCubic" noicon="1">
-				<param cubicId="5" cubicDelay="8" cubicDuration="900" cubicMaxCount="30" cubicSkillChance="30" cubicPower="#ench1Power" />
-				<param cubicSkill1Chance="33" cubicSkill2Chance="33" cubicSkill3Chance="33" />
+				<param cubicId="5" cubicLvl="#ench1cubicLvl" />
 			</effect>
 		</enchant1for>
 	</skill>

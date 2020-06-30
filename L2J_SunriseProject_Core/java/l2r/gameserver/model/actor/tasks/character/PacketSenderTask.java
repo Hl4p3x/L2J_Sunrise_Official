@@ -24,7 +24,6 @@ import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.entity.olympiad.OlympiadGameManager;
 import l2r.gameserver.model.entity.olympiad.tasks.OlympiadGameTask;
 import l2r.gameserver.network.serverpackets.CharInfo;
-import l2r.gameserver.network.serverpackets.EtcStatusUpdate;
 import l2r.gameserver.network.serverpackets.ExBrExtraUserInfo;
 import l2r.gameserver.network.serverpackets.ExDominionWarStart;
 import l2r.gameserver.network.serverpackets.ExDuelUpdateUserInfo;
@@ -76,7 +75,7 @@ public class PacketSenderTask
 		{
 			player.sendUserInfo(true);
 		}
-		player.sendPacket(new EtcStatusUpdate(player));
+		player.sendEtcStatusUpdate();
 	}
 	
 	public static void broadcastUserInfo(L2PcInstance player, boolean force)

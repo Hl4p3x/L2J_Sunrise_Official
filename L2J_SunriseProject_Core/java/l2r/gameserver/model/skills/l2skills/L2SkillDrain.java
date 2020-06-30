@@ -28,8 +28,8 @@ import l2r.gameserver.model.L2Object;
 import l2r.gameserver.model.StatsSet;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.L2Npc;
-import l2r.gameserver.model.actor.instance.L2CubicInstance;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
+import l2r.gameserver.model.cubic.CubicInstance;
 import l2r.gameserver.model.effects.L2Effect;
 import l2r.gameserver.model.skills.L2Skill;
 import l2r.gameserver.model.skills.targets.L2TargetType;
@@ -204,7 +204,7 @@ public class L2SkillDrain extends L2Skill
 		activeChar.setChargedShot(bss ? ShotType.BLESSED_SPIRITSHOTS : ShotType.SPIRITSHOTS, false);
 	}
 	
-	public void useCubicSkill(L2CubicInstance activeCubic, L2Object[] targets)
+	public void useCubicSkill(CubicInstance activeCubic, L2Object[] targets)
 	{
 		if (Config.DEBUG)
 		{
@@ -228,7 +228,7 @@ public class L2SkillDrain extends L2Skill
 			}
 			
 			double hpAdd = _absorbAbs + (_absorbPart * damage);
-			L2PcInstance owner = activeCubic.getOwner();
+			L2PcInstance owner = activeCubic.getOwner().getActingPlayer();
 			double hp = ((owner.getCurrentHp() + hpAdd) > owner.getMaxHp() ? owner.getMaxHp() : (owner.getCurrentHp() + hpAdd));
 			
 			owner.setCurrentHp(hp);

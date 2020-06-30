@@ -23,7 +23,6 @@ import l2r.gameserver.model.actor.L2Playable;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.items.instance.L2ItemInstance;
 import l2r.gameserver.network.SystemMessageId;
-import l2r.gameserver.network.serverpackets.EtcStatusUpdate;
 import l2r.gameserver.network.serverpackets.SystemMessage;
 
 /**
@@ -82,7 +81,7 @@ public class CharmOfCourage implements IItemHandler
 		if (activeChar.destroyItemWithoutTrace("Consume", item.getObjectId(), 1, null, false))
 		{
 			activeChar.setCharmOfCourage(true);
-			activeChar.sendPacket(new EtcStatusUpdate(activeChar));
+			activeChar.sendEtcStatusUpdate();
 			return true;
 		}
 		return false;

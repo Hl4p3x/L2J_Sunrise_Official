@@ -209,18 +209,14 @@ public final class Say2 extends L2GameClientPacket
 			if (activeChar.getFirstEffect(L2EffectType.CHAT_BLOCK) != null)
 			{
 				activeChar.sendPacket(SystemMessageId.YOU_HAVE_BEEN_REPORTED_SO_CHATTING_NOT_ALLOWED);
+				return;
 			}
-			else
+			
+			if (Util.contains(Config.BAN_CHAT_CHANNELS, _type))
 			{
-				for (int chatId : Config.BAN_CHAT_CHANNELS)
-				{
-					if (_type == chatId)
-					{
-						activeChar.sendPacket(SystemMessageId.CHATTING_IS_CURRENTLY_PROHIBITED);
-					}
-				}
+				activeChar.sendPacket(SystemMessageId.CHATTING_IS_CURRENTLY_PROHIBITED);
+				return;
 			}
-			return;
 		}
 		
 		if (PremiumServiceConfigs.ALLOW_PREMIUM_CHAT && activeChar.isPremium() && _text.startsWith(PremiumServiceConfigs.PREMIUM_CHAT_PREFIX))

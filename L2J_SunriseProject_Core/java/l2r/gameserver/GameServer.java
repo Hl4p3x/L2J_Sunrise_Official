@@ -54,6 +54,7 @@ import l2r.gameserver.data.xml.impl.AugmentationData;
 import l2r.gameserver.data.xml.impl.BuyListData;
 import l2r.gameserver.data.xml.impl.CategoryData;
 import l2r.gameserver.data.xml.impl.ClassListData;
+import l2r.gameserver.data.xml.impl.CubicData;
 import l2r.gameserver.data.xml.impl.DoorData;
 import l2r.gameserver.data.xml.impl.EnchantItemData;
 import l2r.gameserver.data.xml.impl.EnchantItemGroupsData;
@@ -225,6 +226,7 @@ public class GameServer
 		printSection("Data");
 		ActionData.getInstance();
 		CategoryData.getInstance();
+		CubicData.getInstance();
 		SecondaryAuthData.getInstance();
 		
 		printSection("Effects");

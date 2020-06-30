@@ -21,7 +21,6 @@ import l2r.gameserver.model.events.impl.character.OnCreatureKill;
 import l2r.gameserver.model.events.returns.TerminateReturn;
 import l2r.gameserver.model.quest.QuestState;
 import l2r.gameserver.model.skills.L2Skill;
-import l2r.gameserver.network.serverpackets.EtcStatusUpdate;
 
 /**
  * This class represents all Playable characters in the world.<br>
@@ -144,7 +143,7 @@ public abstract class L2Playable extends L2Character
 					getActingPlayer().reviveRequest(getActingPlayer(), null, false, 0);
 				}
 				activeChar.setCharmOfCourage(false);
-				activeChar.sendPacket(new EtcStatusUpdate(activeChar));
+				activeChar.sendEtcStatusUpdate();
 			}
 		}
 		

@@ -46,11 +46,11 @@ import l2r.gameserver.model.actor.L2Attackable;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.L2Playable;
 import l2r.gameserver.model.actor.L2Summon;
-import l2r.gameserver.model.actor.instance.L2CubicInstance;
 import l2r.gameserver.model.actor.instance.L2DoorInstance;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.actor.instance.L2SiegeFlagInstance;
 import l2r.gameserver.model.conditions.Condition;
+import l2r.gameserver.model.cubic.CubicInstance;
 import l2r.gameserver.model.effects.EffectTemplate;
 import l2r.gameserver.model.effects.L2Effect;
 import l2r.gameserver.model.effects.L2EffectType;
@@ -1804,7 +1804,7 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 	 * @param env
 	 * @return
 	 */
-	public final L2Effect[] getEffects(L2CubicInstance effector, L2Character effected, Env env)
+	public final L2Effect[] getEffects(CubicInstance effector, L2Character effected, Env env)
 	{
 		// vGodFather: this will prevent debuffs apply on dead characters
 		if (effected == null)

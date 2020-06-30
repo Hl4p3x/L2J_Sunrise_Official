@@ -33,7 +33,6 @@ import l2r.gameserver.model.skills.L2Skill;
 import l2r.gameserver.model.zone.AbstractZoneSettings;
 import l2r.gameserver.model.zone.L2ZoneType;
 import l2r.gameserver.model.zone.TaskZoneSettings;
-import l2r.gameserver.network.serverpackets.EtcStatusUpdate;
 import l2r.util.Rnd;
 import l2r.util.StringUtil;
 
@@ -170,7 +169,7 @@ public class L2EffectZone extends L2ZoneType
 			if (_isShowDangerIcon)
 			{
 				character.setInsideZone(ZoneIdType.DANGER_AREA, true);
-				character.sendPacket(new EtcStatusUpdate(character.getActingPlayer()));
+				character.getActingPlayer().sendEtcStatusUpdate();
 			}
 		}
 	}
@@ -186,7 +185,7 @@ public class L2EffectZone extends L2ZoneType
 				character.setInsideZone(ZoneIdType.DANGER_AREA, false);
 				if (!character.isInsideZone(ZoneIdType.DANGER_AREA))
 				{
-					character.sendPacket(new EtcStatusUpdate(character.getActingPlayer()));
+					character.getActingPlayer().sendEtcStatusUpdate();
 				}
 			}
 		}

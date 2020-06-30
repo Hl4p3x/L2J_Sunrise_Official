@@ -72,6 +72,7 @@ import l2r.gameserver.model.actor.tasks.character.NotifyAITask;
 import l2r.gameserver.model.actor.tasks.character.PacketSenderTask;
 import l2r.gameserver.model.actor.tasks.character.QueuedMagicUseTask;
 import l2r.gameserver.model.actor.templates.L2CharTemplate;
+import l2r.gameserver.model.actor.templates.L2NpcTemplate;
 import l2r.gameserver.model.actor.transform.Transform;
 import l2r.gameserver.model.actor.transform.TransformTemplate;
 import l2r.gameserver.model.effects.AbnormalEffect;
@@ -370,6 +371,9 @@ public abstract class L2Character extends L2Object implements ISkillsHolder
 		{
 			_zones[zone.ordinal()]--;
 		}
+		
+		// vGodFather broadcast new status
+		broadcastInfo();
 	}
 	
 	/**
@@ -1443,7 +1447,20 @@ public abstract class L2Character extends L2Object implements ISkillsHolder
 		// if (angleChar <= 0) angleChar += 360;
 		double attackpercent = 85;
 		
-		final int[] _fanRange = getActiveWeaponItem().getDamageRange();
+		int[] _fanRange = null;
+		if ((getActiveWeaponItem() == null) || (getActiveWeaponItem().getDamageRange() == null))
+		{
+			_fanRange = new int[4];
+			_fanRange[0] = 0;
+			_fanRange[1] = isMonster() ? ((L2NpcTemplate) getTemplate()).getDistance() : 80; // direction
+			_fanRange[2] = isMonster() ? ((L2NpcTemplate) getTemplate()).getRange() : getStat().getPhysicalAttackRange(); // length
+			_fanRange[3] = isMonster() ? ((L2NpcTemplate) getTemplate()).getWidth() : 120; // angle or width
+		}
+		else
+		{
+			_fanRange = getActiveWeaponItem().getDamageRange();
+		}
+		
 		if (_fanRange != null)
 		{
 			final Collection<L2Character> objs = getKnownList().getKnownCharactersInRadius(_fanRange[2]);
@@ -1782,7 +1799,7 @@ public abstract class L2Character extends L2Object implements ISkillsHolder
 	
 	private void checkNextActionAttack(SkillUseHolder skillUseHolder, L2Object target)
 	{
-		if ((target == null) || !target.isCharacter())
+		if ((target == null) || !target.isCharacter() || (skillUseHolder == null))
 		{
 			return;
 		}
@@ -7161,6 +7178,11 @@ public abstract class L2Character extends L2Object implements ISkillsHolder
 		return getStatus().getCurrentCp();
 	}
 	
+	public final int getCurrentCpPercent()
+	{
+		return (int) ((getCurrentCp() * 100) / getMaxCp());
+	}
+	
 	public final void setCurrentCp(Double newCp)
 	{
 		setCurrentCp((double) newCp);
@@ -7176,6 +7198,11 @@ public abstract class L2Character extends L2Object implements ISkillsHolder
 		return getStatus().getCurrentHp();
 	}
 	
+	public final int getCurrentHpPercent()
+	{
+		return (int) ((getCurrentHp() * 100) / getMaxHp());
+	}
+	
 	public final void setCurrentHp(double newHp)
 	{
 		getStatus().setCurrentHp(newHp);
@@ -7189,6 +7216,11 @@ public abstract class L2Character extends L2Object implements ISkillsHolder
 	public final double getCurrentMp()
 	{
 		return getStatus().getCurrentMp();
+	}
+	
+	public final int getCurrentMpPercent()
+	{
+		return (int) ((getCurrentMp() * 100) / getMaxMp());
 	}
 	
 	public final void setCurrentMp(Double newMp)

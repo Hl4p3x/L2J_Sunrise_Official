@@ -59,311 +59,320 @@ public final class UseItem extends L2GameClientPacket
 			return;
 		}
 		
-		if (Config.DEBUG)
-		{
-			_log.info(activeChar + ": use item " + _objectId);
-		}
+		activeChar._useItemLock.writeLock().lock();
 		
-		// Flood protect UseItem
-		if (!getClient().getFloodProtectors().getUseItem().tryPerformAction("use item"))
+		try
 		{
-			return;
-		}
-		
-		if (activeChar.getActiveTradeList() != null)
-		{
-			activeChar.cancelActiveTrade();
-		}
-		
-		if (activeChar.isInStoreMode())
-		{
-			activeChar.sendPacket(SystemMessageId.CANNOT_TRADE_DISCARD_DROP_ITEM_WHILE_IN_SHOPMODE);
-			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
-			return;
-		}
-		
-		final L2ItemInstance item = activeChar.getInventory().getItemByObjectId(_objectId);
-		if (item == null)
-		{
-			return;
-		}
-		
-		if (item.getItem().getType2() == L2Item.TYPE2_QUEST)
-		{
-			activeChar.sendPacket(SystemMessageId.CANNOT_USE_QUEST_ITEMS);
-			return;
-		}
-		
-		// No UseItem is allowed while the player is in special conditions
-		if (activeChar.isStunned() || activeChar.isParalyzed() || activeChar.isSleeping() || activeChar.isAfraid() || activeChar.isAlikeDead())
-		{
-			return;
-		}
-		
-		_itemId = item.getId();
-		
-		// Char cannot use item when dead
-		if (activeChar.isDead() || !activeChar.getInventory().canManipulateWithItemId(_itemId))
-		{
-			final SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.S1_CANNOT_BE_USED);
-			sm.addItemName(item);
-			activeChar.sendPacket(sm);
-			return;
-		}
-		
-		if (SunriseEvents.isInEvent(activeChar))
-		{
-			if (!SunriseEvents.canUseItem(activeChar, item))
+			if (Config.DEBUG)
+			{
+				_log.info(activeChar + ": use item " + _objectId);
+			}
+			
+			// Flood protect UseItem
+			if (!getClient().getFloodProtectors().getUseItem().tryPerformAction("use item"))
 			{
 				return;
 			}
-		}
-		
-		if (!item.isEquipped() && !item.getItem().checkCondition(activeChar, activeChar, true))
-		{
-			return;
-		}
-		
-		if (activeChar.getFishingEx().isFishing() && ((_itemId < 6535) || (_itemId > 6540)))
-		{
-			// You cannot do anything else while fishing
-			activeChar.sendPacket(SystemMessageId.CANNOT_DO_WHILE_FISHING_3);
-			return;
-		}
-		
-		if (!Config.ALT_GAME_KARMA_PLAYER_CAN_TELEPORT && (activeChar.getKarma() > 0))
-		{
-			for (SkillHolder sHolder : item.getItem().getSkills())
+			
+			if (activeChar.getActiveTradeList() != null)
 			{
-				L2Skill skill = sHolder.getSkill();
-				if ((skill != null) && ((skill.getSkillType() == L2SkillType.TELEPORT) || (skill.getSkillType() == L2SkillType.RECALL)))
+				activeChar.cancelActiveTrade();
+			}
+			
+			if (activeChar.isInStoreMode())
+			{
+				activeChar.sendPacket(SystemMessageId.CANNOT_TRADE_DISCARD_DROP_ITEM_WHILE_IN_SHOPMODE);
+				activeChar.sendPacket(ActionFailed.STATIC_PACKET);
+				return;
+			}
+			
+			final L2ItemInstance item = activeChar.getInventory().getItemByObjectId(_objectId);
+			if (item == null)
+			{
+				return;
+			}
+			
+			if (item.getItem().getType2() == L2Item.TYPE2_QUEST)
+			{
+				activeChar.sendPacket(SystemMessageId.CANNOT_USE_QUEST_ITEMS);
+				return;
+			}
+			
+			// No UseItem is allowed while the player is in special conditions
+			if (activeChar.isStunned() || activeChar.isParalyzed() || activeChar.isSleeping() || activeChar.isAfraid() || activeChar.isAlikeDead())
+			{
+				return;
+			}
+			
+			_itemId = item.getId();
+			
+			// Char cannot use item when dead
+			if (activeChar.isDead() || !activeChar.getInventory().canManipulateWithItemId(_itemId))
+			{
+				final SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.S1_CANNOT_BE_USED);
+				sm.addItemName(item);
+				activeChar.sendPacket(sm);
+				return;
+			}
+			
+			if (SunriseEvents.isInEvent(activeChar))
+			{
+				if (!SunriseEvents.canUseItem(activeChar, item))
 				{
 					return;
 				}
 			}
-		}
-		
-		// If the item has reuse time and it has not passed.
-		// Message from reuse delay must come from item.
-		final int reuseDelay = item.getReuseDelay();
-		final int sharedReuseGroup = item.getSharedReuseGroup();
-		if (reuseDelay > 0)
-		{
-			final long reuse = activeChar.getItemRemainingReuseTime(item.getObjectId());
-			if (reuse > 0)
-			{
-				reuseData(activeChar, item, reuse);
-				sendSharedGroupUpdate(activeChar, sharedReuseGroup, reuse, reuseDelay);
-				return;
-			}
 			
-			final long reuseOnGroup = activeChar.getReuseDelayOnGroup(sharedReuseGroup);
-			if (reuseOnGroup > 0)
-			{
-				reuseData(activeChar, item, reuseOnGroup);
-				sendSharedGroupUpdate(activeChar, sharedReuseGroup, reuseOnGroup, reuseDelay);
-				return;
-			}
-		}
-		
-		if (item.isEquipable())
-		{
-			// over enchanted item precaution
-			if (!activeChar.isGM() && (item.getEnchantLevel() > SecuritySystemConfigs.MAX_ENCHANT_LEVEL) && (SecuritySystemConfigs.MAX_ENCHANT_LEVEL > 0))
-			{
-				activeChar.sendMessage("You will be kicked for using overenchanted item!");
-				Util.handleIllegalPlayerAction(activeChar, "Player " + activeChar.getName() + " has overenchanted item.", Config.DEFAULT_PUNISH);
-				return;
-			}
-			
-			// Don't allow to put formal wear while a cursed weapon is equipped.
-			if (activeChar.isCursedWeaponEquipped() && (_itemId == 6408))
+			if (!item.isEquipped() && !item.getItem().checkCondition(activeChar, activeChar, true))
 			{
 				return;
 			}
 			
-			// Equip or unEquip
-			if (FortSiegeManager.getInstance().isCombat(_itemId))
+			if (activeChar.getFishingEx().isFishing() && ((_itemId < 6535) || (_itemId > 6540)))
 			{
-				return; // no message
-			}
-			
-			if (activeChar.isCombatFlagEquipped())
-			{
+				// You cannot do anything else while fishing
+				activeChar.sendPacket(SystemMessageId.CANNOT_DO_WHILE_FISHING_3);
 				return;
 			}
 			
-			switch (item.getItem().getBodyPart())
+			if (!Config.ALT_GAME_KARMA_PLAYER_CAN_TELEPORT && (activeChar.getKarma() > 0))
 			{
-				case L2Item.SLOT_LR_HAND:
-				case L2Item.SLOT_L_HAND:
-				case L2Item.SLOT_R_HAND:
+				for (SkillHolder sHolder : item.getItem().getSkills())
 				{
-					// Prevent players to equip weapon while wearing combat flag
-					if ((activeChar.getActiveWeaponItem() != null) && (activeChar.getActiveWeaponItem().getId() == 9819))
-					{
-						activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
-						return;
-					}
-					
-					if (activeChar.isMounted())
-					{
-						activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
-						return;
-					}
-					if (activeChar.isDisarmed())
-					{
-						activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
-						return;
-					}
-					
-					// Don't allow weapon/shield equipment if a cursed weapon is equipped.
-					if (activeChar.isCursedWeaponEquipped())
+					L2Skill skill = sHolder.getSkill();
+					if ((skill != null) && ((skill.getSkillType() == L2SkillType.TELEPORT) || (skill.getSkillType() == L2SkillType.RECALL)))
 					{
 						return;
 					}
-					
-					// Don't allow other Race to Wear Kamael exclusive Weapons.
-					if (!item.isEquipped() && item.isWeapon() && !activeChar.canOverrideCond(PcCondOverride.ITEM_CONDITIONS))
+				}
+			}
+			
+			// If the item has reuse time and it has not passed.
+			// Message from reuse delay must come from item.
+			final int reuseDelay = item.getReuseDelay();
+			final int sharedReuseGroup = item.getSharedReuseGroup();
+			if (reuseDelay > 0)
+			{
+				final long reuse = activeChar.getItemRemainingReuseTime(item.getObjectId());
+				if (reuse > 0)
+				{
+					reuseData(activeChar, item, reuse);
+					sendSharedGroupUpdate(activeChar, sharedReuseGroup, reuse, reuseDelay);
+					return;
+				}
+				
+				final long reuseOnGroup = activeChar.getReuseDelayOnGroup(sharedReuseGroup);
+				if (reuseOnGroup > 0)
+				{
+					reuseData(activeChar, item, reuseOnGroup);
+					sendSharedGroupUpdate(activeChar, sharedReuseGroup, reuseOnGroup, reuseDelay);
+					return;
+				}
+			}
+			
+			if (item.isEquipable())
+			{
+				// over enchanted item precaution
+				if (!activeChar.isGM() && (item.getEnchantLevel() > SecuritySystemConfigs.MAX_ENCHANT_LEVEL) && (SecuritySystemConfigs.MAX_ENCHANT_LEVEL > 0))
+				{
+					activeChar.sendMessage("You will be kicked for using overenchanted item!");
+					Util.handleIllegalPlayerAction(activeChar, "Player " + activeChar.getName() + " has overenchanted item.", Config.DEFAULT_PUNISH);
+					return;
+				}
+				
+				// Don't allow to put formal wear while a cursed weapon is equipped.
+				if (activeChar.isCursedWeaponEquipped() && (_itemId == 6408))
+				{
+					return;
+				}
+				
+				// Equip or unEquip
+				if (FortSiegeManager.getInstance().isCombat(_itemId))
+				{
+					return; // no message
+				}
+				
+				if (activeChar.isCombatFlagEquipped())
+				{
+					return;
+				}
+				
+				switch (item.getItem().getBodyPart())
+				{
+					case L2Item.SLOT_LR_HAND:
+					case L2Item.SLOT_L_HAND:
+					case L2Item.SLOT_R_HAND:
 					{
-						L2Weapon wpn = (L2Weapon) item.getItem();
-						
-						switch (activeChar.getRace())
+						// Prevent players to equip weapon while wearing combat flag
+						if ((activeChar.getActiveWeaponItem() != null) && (activeChar.getActiveWeaponItem().getId() == 9819))
 						{
-							case KAMAEL:
+							activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
+							return;
+						}
+						
+						if (activeChar.isMounted())
+						{
+							activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
+							return;
+						}
+						if (activeChar.isDisarmed())
+						{
+							activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
+							return;
+						}
+						
+						// Don't allow weapon/shield equipment if a cursed weapon is equipped.
+						if (activeChar.isCursedWeaponEquipped())
+						{
+							return;
+						}
+						
+						// Don't allow other Race to Wear Kamael exclusive Weapons.
+						if (!item.isEquipped() && item.isWeapon() && !activeChar.canOverrideCond(PcCondOverride.ITEM_CONDITIONS))
+						{
+							L2Weapon wpn = (L2Weapon) item.getItem();
+							
+							switch (activeChar.getRace())
 							{
-								switch (wpn.getItemType())
+								case KAMAEL:
 								{
-									case NONE:
-										activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
-										return;
+									switch (wpn.getItemType())
+									{
+										case NONE:
+											activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
+											return;
+									}
+									break;
 								}
-								break;
-							}
-							case HUMAN:
-							case DWARF:
-							case ELF:
-							case DARK_ELF:
-							case ORC:
-							{
-								switch (wpn.getItemType())
+								case HUMAN:
+								case DWARF:
+								case ELF:
+								case DARK_ELF:
+								case ORC:
 								{
-									case RAPIER:
-									case CROSSBOW:
-									case ANCIENTSWORD:
-										activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
-										return;
+									switch (wpn.getItemType())
+									{
+										case RAPIER:
+										case CROSSBOW:
+										case ANCIENTSWORD:
+											activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
+											return;
+									}
+									break;
 								}
-								break;
 							}
 						}
+						break;
 					}
-					break;
-				}
-				case L2Item.SLOT_CHEST:
-				case L2Item.SLOT_BACK:
-				case L2Item.SLOT_GLOVES:
-				case L2Item.SLOT_FEET:
-				case L2Item.SLOT_HEAD:
-				case L2Item.SLOT_FULL_ARMOR:
-				case L2Item.SLOT_LEGS:
-				{
-					if ((activeChar.getRace() == Race.KAMAEL) && ((item.getItem().getItemType() == ArmorType.HEAVY) || (item.getItem().getItemType() == ArmorType.MAGIC)))
+					case L2Item.SLOT_CHEST:
+					case L2Item.SLOT_BACK:
+					case L2Item.SLOT_GLOVES:
+					case L2Item.SLOT_FEET:
+					case L2Item.SLOT_HEAD:
+					case L2Item.SLOT_FULL_ARMOR:
+					case L2Item.SLOT_LEGS:
 					{
-						activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
-						return;
+						if ((activeChar.getRace() == Race.KAMAEL) && ((item.getItem().getItemType() == ArmorType.HEAVY) || (item.getItem().getItemType() == ArmorType.MAGIC)))
+						{
+							activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
+							return;
+						}
+						break;
 					}
-					break;
-				}
-				case L2Item.SLOT_DECO:
-				{
-					if (!item.isEquipped() && (activeChar.getInventory().getTalismanSlots() == 0))
+					case L2Item.SLOT_DECO:
 					{
-						activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
-						return;
+						if (!item.isEquipped() && (activeChar.getInventory().getTalismanSlots() == 0))
+						{
+							activeChar.sendPacket(SystemMessageId.CANNOT_EQUIP_ITEM_DUE_TO_BAD_CONDITION);
+							return;
+						}
 					}
 				}
-			}
-			
-			if (activeChar.isCastingNow() || activeChar.isCastingSimultaneouslyNow())
-			{
-				// Creating next action class.
-				final NextAction nextAction = new NextAction(CtrlEvent.EVT_FINISH_CASTING, CtrlIntention.AI_INTENTION_CAST, (NextActionCallback) () -> activeChar.useEquippableItem(item, true));
 				
-				// Binding next action to AI.
-				activeChar.getAI().setNextAction(nextAction);
-			}
-			else if (activeChar.isAttackingNow())
-			{
-				ThreadPoolManager.getInstance().scheduleGeneral(new WeaponEquipTask(item.getObjectId(), activeChar), TimeUnit.MILLISECONDS.convert(activeChar.getAttackEndTime() - System.nanoTime(), TimeUnit.NANOSECONDS));
+				if (activeChar.isCastingNow() || activeChar.isCastingSimultaneouslyNow())
+				{
+					// Creating next action class.
+					final NextAction nextAction = new NextAction(CtrlEvent.EVT_FINISH_CASTING, CtrlIntention.AI_INTENTION_CAST, (NextActionCallback) () -> activeChar.useEquippableItem(item, true));
+					
+					// Binding next action to AI.
+					activeChar.getAI().setNextAction(nextAction);
+				}
+				else if (activeChar.isAttackingNow())
+				{
+					ThreadPoolManager.getInstance().scheduleGeneral(new WeaponEquipTask(item.getObjectId(), activeChar), TimeUnit.MILLISECONDS.convert(activeChar.getAttackEndTime() - System.nanoTime(), TimeUnit.NANOSECONDS));
+				}
+				else
+				{
+					activeChar.useEquippableItem(item, true);
+				}
 			}
 			else
 			{
-				activeChar.useEquippableItem(item, true);
-			}
-		}
-		else
-		{
-			if (activeChar.isCastingNow() && !(item.isPotion() || item.isElixir()))
-			{
-				return;
-			}
-			
-			final L2Weapon weaponItem = activeChar.getActiveWeaponItem();
-			if (((weaponItem != null) && (weaponItem.getItemType() == WeaponType.FISHINGROD)) && (((_itemId >= 6519) && (_itemId <= 6527)) || ((_itemId >= 7610) && (_itemId <= 7613)) || ((_itemId >= 7807) && (_itemId <= 7809)) || ((_itemId >= 8484) && (_itemId <= 8486)) || ((_itemId >= 8505) && (_itemId <= 8513)) || (_itemId == 8548)))
-			{
-				activeChar.getInventory().setPaperdollItem(Inventory.PAPERDOLL_LHAND, item);
-				activeChar.broadcastUserInfo();
-				// Send a Server->Client packet ItemList to this L2PcINstance to update left hand equipment.
-				activeChar.sendItemList(false);
-				return;
-			}
-			
-			final L2EtcItem etcItem = item.getEtcItem();
-			final IItemHandler handler = ItemHandler.getInstance().getHandler(etcItem);
-			if (handler == null)
-			{
-				if ((etcItem != null) && (etcItem.getHandlerName() != null))
+				if (activeChar.isCastingNow() && !(item.isPotion() || item.isElixir()))
 				{
-					_log.warn("Unmanaged Item handler: " + etcItem.getHandlerName() + " for Item Id: " + _itemId + "!");
+					return;
 				}
-				else if (Config.DEBUG)
+				
+				final L2Weapon weaponItem = activeChar.getActiveWeaponItem();
+				if (((weaponItem != null) && (weaponItem.getItemType() == WeaponType.FISHINGROD)) && (((_itemId >= 6519) && (_itemId <= 6527)) || ((_itemId >= 7610) && (_itemId <= 7613)) || ((_itemId >= 7807) && (_itemId <= 7809)) || ((_itemId >= 8484) && (_itemId <= 8486)) || ((_itemId >= 8505) && (_itemId <= 8513)) || (_itemId == 8548)))
 				{
-					_log.warn("No Item handler registered for Item Id: " + _itemId + "!");
+					activeChar.getInventory().setPaperdollItem(Inventory.PAPERDOLL_LHAND, item);
+					activeChar.broadcastUserInfo();
+					// Send a Server->Client packet ItemList to this L2PcINstance to update left hand equipment.
+					activeChar.sendItemList(false);
+					return;
 				}
-				return;
-			}
-			
-			// Item reuse time should be added if the item is successfully used.
-			// Skill reuse delay is done at handlers.itemhandlers.ItemSkillsTemplate;
-			if (handler.useItem(activeChar, item, _ctrlPressed))
-			{
-				if (reuseDelay > 0)
+				
+				final L2EtcItem etcItem = item.getEtcItem();
+				final IItemHandler handler = ItemHandler.getInstance().getHandler(etcItem);
+				if (handler == null)
 				{
-					activeChar.addTimeStampItem(item, reuseDelay);
-					sendSharedGroupUpdate(activeChar, sharedReuseGroup, reuseDelay, reuseDelay);
-				}
-				else if (item.getItem().isReuseDaily())
-				{
-					Calendar reUse = Calendar.getInstance();
-					reUse.set(Calendar.HOUR_OF_DAY, 6);
-					reUse.set(Calendar.MINUTE, 30);
-					long reUseDelay = reUse.getTimeInMillis();
-					if (reUseDelay < System.currentTimeMillis())
+					if ((etcItem != null) && (etcItem.getHandlerName() != null))
 					{
-						reUseDelay += 86400000;
+						_log.warn("Unmanaged Item handler: " + etcItem.getHandlerName() + " for Item Id: " + _itemId + "!");
 					}
-					
-					int delay = (int) (reUseDelay - System.currentTimeMillis());
-					activeChar.addTimeStampItem(item, delay);
-					sendSharedGroupUpdate(activeChar, sharedReuseGroup, delay, delay);
+					else if (Config.DEBUG)
+					{
+						_log.warn("No Item handler registered for Item Id: " + _itemId + "!");
+					}
+					return;
+				}
+				
+				// Item reuse time should be added if the item is successfully used.
+				// Skill reuse delay is done at handlers.itemhandlers.ItemSkillsTemplate;
+				if (handler.useItem(activeChar, item, _ctrlPressed))
+				{
+					if (reuseDelay > 0)
+					{
+						activeChar.addTimeStampItem(item, reuseDelay);
+						sendSharedGroupUpdate(activeChar, sharedReuseGroup, reuseDelay, reuseDelay);
+					}
+					else if (item.getItem().isReuseDaily())
+					{
+						Calendar reUse = Calendar.getInstance();
+						reUse.set(Calendar.HOUR_OF_DAY, 6);
+						reUse.set(Calendar.MINUTE, 30);
+						long reUseDelay = reUse.getTimeInMillis();
+						if (reUseDelay < System.currentTimeMillis())
+						{
+							reUseDelay += 86400000;
+						}
+						
+						int delay = (int) (reUseDelay - System.currentTimeMillis());
+						activeChar.addTimeStampItem(item, delay);
+						sendSharedGroupUpdate(activeChar, sharedReuseGroup, delay, delay);
+					}
 				}
 			}
+			
+			if (SunriseEvents.isInEvent(activeChar))
+			{
+				SunriseEvents.onUseItem(activeChar, item);
+			}
 		}
-		
-		if (SunriseEvents.isInEvent(activeChar))
+		finally
 		{
-			SunriseEvents.onUseItem(activeChar, item);
+			activeChar._useItemLock.writeLock().unlock();
 		}
 	}
 	
