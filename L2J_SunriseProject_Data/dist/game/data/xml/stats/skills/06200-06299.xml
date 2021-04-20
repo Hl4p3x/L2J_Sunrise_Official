@@ -669,28 +669,48 @@
 		<set name="abnormalLvl" val="1" />
 		<set name="abnormalTime" val="2" />
 		<set name="abnormalType" val="stun" />
+		<set name="abnormalVisualEffect" val="stun" />
+		<set name="activateRate" val="80" />
+		<set name="basicProperty" val="CON" />
 		<set name="coolTime" val="500" />
+		<set name="affectRange" val="100" />
+		<set name="aggroPoints" val="-100" />
+		<set name="hitTime" val="2000" />
+		<set name="icon" val="icon.skill0100" />
+		<set name="isDebuff" val="true" />
 		<set name="lvlBonusRate" val="1" />
+		<set name="magicLvl" val="77" />
+		<set name="mpConsume2" val="78" />
 		<set name="operateType" val="A2" />
 		<set name="reuseDelay" val="30000" />
-		<set name="basicProperty" val="CON" />
-		<set name="skillType" val="NOTDONE" />
-		<set name="targetType" val="NONE" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="AURA" />
 		<set name="trait" val="SHOCK" />
+		<set name="skillType" val="PDAM" />
+		<set name="power" val="2959" />
+		<for>
+			<effect name="Stun" abnormalTime="2" effectPower="80" abnormalLvl="1" abnormalType="stun" />
+		</for>
 	</skill>
 	<skill id="6264" levels="1" name="Golem Boom">
 		<set name="coolTime" val="500" />
+		<set name="aggroPoints" val="-689" />
+		<set name="magicLvl" val="75" />
 		<set name="operateType" val="A1" />
 		<set name="reuseDelay" val="3000" />
-		<set name="skillType" val="NOTDONE" />
+		<set name="rideState" val="NONE" />
 		<set name="targetType" val="NONE" />
 	</skill>
 	<skill id="6265" levels="1" name="Smoke">
+		<set name="hitTime" val="1000" />
 		<set name="coolTime" val="500" />
+		<set name="aggroPoints" val="-689" />
+		<set name="magicLvl" val="75" />
 		<set name="operateType" val="A1" />
 		<set name="reuseDelay" val="3000" />
-		<set name="skillType" val="NOTDONE" />
-		<set name="targetType" val="NONE" />
+		<set name="rideState" val="NONE" />
+		<set name="targetType" val="AURA" />
+		<set name="affectRange" val="50" />
 	</skill>
 	<skill id="6266" levels="1" name="Shock">
 		<set name="abnormalLvl" val="1" />

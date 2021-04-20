@@ -596,7 +596,7 @@ INSERT INTO `teleport` VALUES
 ('Ketra teleport - Town of Aden',10030,146783,25808,-2000,10000,0,57),
 ('Ketra teleport - Wall of Argos',10031,165054,-47861,-3560,4200,0,57),
 ('Ketra teleport - Hot Springs',10032,144880,-113468,-2560,5400,0,57),
-('Varka teleport - Town of Goddard',10033,148024,-47749,-2728,4000,0,57),
+('Varka teleport - Town of Goddard',10033,148024,-55281,-2728,4000,0,57),
 ('Varka teleport - Rune Township',10034,43835,-47877,-792,6400,0,57),
 ('Varka teleport - Town of Aden',10035,146783,25808,-2000,8700,0,57),
 ('Varka teleport - Wall of Argos',10036,165054,-47861,-3560,6800,0,57),

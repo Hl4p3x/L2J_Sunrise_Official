@@ -18,21 +18,46 @@
  */
 package l2r.gameserver.network.serverpackets;
 
+import l2r.Config;
+import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.L2Character;
 
 public final class MoveToLocation extends L2GameServerPacket
 {
-	private final int _charObjId, _x, _y, _z, _xDst, _yDst, _zDst;
+	private final int _charObjId;
+	
+	private int _client_z_shift;
+	
+	private final Location _current;
+	private Location _destination;
 	
 	public MoveToLocation(L2Character cha)
 	{
 		_charObjId = cha.getObjectId();
-		_x = cha.getX();
-		_y = cha.getY();
-		_z = cha.getZ();
-		_xDst = cha.getXdestination();
-		_yDst = cha.getYdestination();
-		_zDst = cha.getZdestination();
+		
+		_current = cha.getLocation();
+		_destination = cha.getDestination();
+		
+		if (!cha.isFlying())
+		{
+			_client_z_shift = Config.CLIENT_SHIFTZ;
+		}
+		if (cha.isInWater())
+		{
+			_client_z_shift += Config.CLIENT_SHIFTZ;
+		}
+		
+		if (_destination == null)
+		{
+			_destination = _current;
+		}
+	}
+	
+	public MoveToLocation(int objectId, Location from, Location to)
+	{
+		_charObjId = objectId;
+		_current = from;
+		_destination = to;
 	}
 	
 	@Override
@@ -42,12 +67,12 @@ public final class MoveToLocation extends L2GameServerPacket
 		
 		writeD(_charObjId);
 		
-		writeD(_xDst);
-		writeD(_yDst);
-		writeD(_zDst);
+		writeD(_destination.getX());
+		writeD(_destination.getY());
+		writeD(_destination.getZ() + _client_z_shift);
 		
-		writeD(_x);
-		writeD(_y);
-		writeD(_z);
+		writeD(_current.getX());
+		writeD(_current.getY());
+		writeD(_current.getZ() + _client_z_shift);
 	}
 }

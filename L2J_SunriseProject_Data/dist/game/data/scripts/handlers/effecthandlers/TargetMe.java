@@ -18,9 +18,9 @@
  */
 package handlers.effecthandlers;
 
-import l2r.gameserver.enums.Race;
 import l2r.gameserver.model.actor.L2Playable;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
+import l2r.gameserver.model.actor.instance.L2SiegeSummonInstance;
 import l2r.gameserver.model.effects.EffectTemplate;
 import l2r.gameserver.model.effects.L2Effect;
 import l2r.gameserver.model.stats.Env;
@@ -40,7 +40,7 @@ public class TargetMe extends L2Effect
 	{
 		if (getEffected().isPlayable())
 		{
-			if (getEffected().getTemplate().getRace() == Race.SIEGE_WEAPON)
+			if (getEffected() instanceof L2SiegeSummonInstance)
 			{
 				return false;
 			}

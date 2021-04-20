@@ -23,11 +23,8 @@ import l2r.gameserver.instancemanager.BoatManager;
 import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.instance.L2BoatInstance;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
-import l2r.gameserver.model.items.type.WeaponType;
 import l2r.gameserver.network.SystemMessageId;
 import l2r.gameserver.network.serverpackets.ActionFailed;
-import l2r.gameserver.network.serverpackets.MoveToLocationInVehicle;
-import l2r.gameserver.network.serverpackets.StopMoveInVehicle;
 
 public final class RequestMoveToLocationInVehicle extends L2GameClientPacket
 {
@@ -69,63 +66,16 @@ public final class RequestMoveToLocationInVehicle extends L2GameClientPacket
 			return;
 		}
 		
-		if ((_targetX == _originX) && (_targetY == _originY) && (_targetZ == _originZ))
-		{
-			activeChar.sendPacket(new StopMoveInVehicle(activeChar, _boatId));
-			return;
-		}
-		
-		if (activeChar.isAttackingNow() && (activeChar.getActiveWeaponItem() != null) && (activeChar.getActiveWeaponItem().getItemType() == WeaponType.BOW))
+		final L2BoatInstance boat = BoatManager.getInstance().getBoat(_boatId);
+		if (boat == null)
 		{
 			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
 			return;
-		}
-		
-		if (activeChar.isSitting() || activeChar.isMovementDisabled())
-		{
-			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
-			return;
-		}
-		
-		if (activeChar.hasSummon())
-		{
-			activeChar.sendPacket(SystemMessageId.RELEASE_PET_ON_BOAT);
-			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
-			return;
-		}
-		
-		if (activeChar.isTransformed())
-		{
-			activeChar.sendPacket(SystemMessageId.CANT_POLYMORPH_ON_BOAT);
-			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
-			return;
-		}
-		
-		final L2BoatInstance boat;
-		if (activeChar.isInBoat())
-		{
-			boat = activeChar.getBoat();
-			if (boat.getObjectId() != _boatId)
-			{
-				activeChar.sendPacket(ActionFailed.STATIC_PACKET);
-				return;
-			}
-		}
-		else
-		{
-			boat = BoatManager.getInstance().getBoat(_boatId);
-			if ((boat == null) || !boat.isInsideRadius(activeChar, 300, true, false))
-			{
-				activeChar.sendPacket(ActionFailed.STATIC_PACKET);
-				return;
-			}
-			activeChar.setVehicle(boat);
 		}
 		
 		final Location pos = new Location(_targetX, _targetY, _targetZ);
 		final Location originPos = new Location(_originX, _originY, _originZ);
-		activeChar.setInVehiclePosition(pos);
-		activeChar.broadcastPacket(new MoveToLocationInVehicle(activeChar, pos, originPos));
+		boat.moveInBoat(activeChar, originPos, pos);
 	}
 	
 	@Override

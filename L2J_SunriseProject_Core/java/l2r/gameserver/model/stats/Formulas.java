@@ -268,10 +268,7 @@ public final class Formulas
 	{
 		double init = cha.isPlayer() ? cha.getActingPlayer().getTemplate().getBaseHpRegen(cha.getLevel()) : cha.getTemplate().getBaseHpReg();
 		double hpRegenMultiplier = cha.isRaid() ? Config.RAID_HP_REGEN_MULTIPLIER : Config.HP_REGEN_MULTIPLIER;
-		double sHpPropHpRate = cha.calcStat(Stats.S_HP_PROP_HP_RATE, cha.getTemplate().getNpcPropHpRate());
 		double hpRegenBonus = 0;
-		
-		hpRegenMultiplier *= sHpPropHpRate;
 		
 		if (Config.L2JMOD_CHAMPION_ENABLE && cha.isChampion())
 		{
@@ -859,7 +856,7 @@ public final class Formulas
 				case GIANT:
 					damage *= attacker.getPAtkGiants(target);
 					break;
-				case CONSTRUCT:
+				case MAGICCREATURE:
 					damage *= attacker.getPAtkMagicCreatures(target);
 					break;
 				default:
@@ -2446,6 +2443,17 @@ public final class Formulas
 		{
 			return 0;
 		}
+		
+		if (cha.isInsideZone(ZoneIdType.WATER))
+		{
+			return 0;
+		}
+		
+		if (cha.isPlayer() && cha.getActingPlayer().isInOlympiadMode())
+		{
+			return 0;
+		}
+		
 		final double damage = cha.calcStat(Stats.FALL, (fallHeight * cha.getMaxHp()) / 1000.0, null, null);
 		return damage;
 	}
@@ -2555,14 +2563,21 @@ public final class Formulas
 			}
 			case "debuff":
 			{
-				for (L2Effect info : target.getAllEffects())
+				final List<L2Effect> debuffs = new ArrayList<>(target.getEffectList().getDebuffs());
+				for (int i = debuffs.size() - 1; i >= 0; i--)
 				{
-					if ((info == null) || !info.getSkill().isOffensive() || !info.getSkill().canBeDispeled())
+					final L2Effect info = debuffs.get(i);
+					if (info.getEffectType() == L2EffectType.BUFF)
 					{
 						continue;
 					}
 					
-					if (Rnd.get(100) <= rate)
+					if (!info.getSkill().isDebuff() && !info.getSkill().isOffensive())
+					{
+						continue;
+					}
+					
+					if (info.getSkill().canBeDispeled() && (Rnd.get(1000) <= (rate * 10)))
 					{
 						canceled.add(info);
 						if (canceled.size() >= max)
@@ -2604,7 +2619,11 @@ public final class Formulas
 	 */
 	public static boolean calcProbability(double baseChance, L2Character attacker, L2Character target, L2Skill skill)
 	{
-		return Rnd.get(100) < ((((((skill.getMagicLevel() + baseChance) - target.getLevel()) + 30) - target.getINT()) * calcAttributeBonus(attacker, target, skill)) * calcValakasTrait(attacker, target, skill));
+		if (baseChance == -1)
+		{
+			return true;
+		}
+		return Rnd.get(1000) < ((((((skill.getMagicLevel() + baseChance) - target.getLevel()) + 30) - target.getINT()) * calcAttributeBonus(attacker, target, skill)) * calcValakasTrait(attacker, target, skill) * 10);
 	}
 	
 	/**

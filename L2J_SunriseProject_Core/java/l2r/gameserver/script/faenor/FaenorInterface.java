@@ -22,6 +22,10 @@ import java.util.List;
 
 import l2r.gameserver.data.EventDroplist;
 import l2r.gameserver.data.sql.AnnouncementsTable;
+import l2r.gameserver.data.sql.NpcTable;
+import l2r.gameserver.model.L2DropCategory;
+import l2r.gameserver.model.L2DropData;
+import l2r.gameserver.model.actor.templates.L2NpcTemplate;
 import l2r.gameserver.model.announce.EventAnnouncement;
 import l2r.gameserver.script.DateRange;
 import l2r.gameserver.script.EngineInterface;
@@ -46,10 +50,70 @@ public class FaenorInterface implements EngineInterface
 		return null;
 	}
 	
+	/**
+	 * Adds a new Quest Drop to an NPC
+	 */
+	@Override
+	public void addQuestDrop(int npcID, int itemID, int min, int max, int chance, String questID, String[] states)
+	{
+		L2NpcTemplate npc = NpcTable.getInstance().getTemplate(npcID);
+		if (npc == null)
+		{
+			throw new NullPointerException();
+		}
+		L2DropData drop = new L2DropData();
+		drop.setItemId(itemID);
+		drop.setMinDrop(min);
+		drop.setMaxDrop(max);
+		drop.setChance(chance);
+		drop.setQuestID(questID);
+		drop.addStates(states);
+		addDrop(npc, drop, false);
+	}
+	
+	/**
+	 * Adds a new drop to an NPC. If the drop is sweep, it adds it to the NPC's Sweep category If the drop is non-sweep, it creates a new category for this drop.
+	 * @param npc
+	 * @param drop
+	 * @param sweep
+	 */
+	public void addDrop(L2NpcTemplate npc, L2DropData drop, boolean sweep)
+	{
+		if (sweep)
+		{
+			addDrop(npc, drop, -1);
+		}
+		else
+		{
+			int maxCategory = -1;
+			
+			for (L2DropCategory cat : npc.getDropData())
+			{
+				if (maxCategory < cat.getCategoryType())
+				{
+					maxCategory = cat.getCategoryType();
+				}
+			}
+			maxCategory++;
+			npc.addDropData(drop, maxCategory);
+		}
+	}
+	
+	/**
+	 * Adds a new drop to an NPC, in the specified category. If the category does not exist, it is created.
+	 * @param npc
+	 * @param drop
+	 * @param category
+	 */
+	public void addDrop(L2NpcTemplate npc, L2DropData drop, int category)
+	{
+		npc.addDropData(drop, category);
+	}
+	
 	@Override
 	public void addEventDrop(int[] items, int[] count, double chance, DateRange range)
 	{
-		EventDroplist.getInstance().addGlobalDrop(items, count, (int) (chance * 1000000), range);
+		EventDroplist.getInstance().addGlobalDrop(items, count, (int) (chance * L2DropData.MAX_CHANCE), range);
 	}
 	
 	@Override

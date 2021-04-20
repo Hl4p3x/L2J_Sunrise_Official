@@ -35,6 +35,7 @@ import l2r.gameserver.network.L2GameClient;
 import l2r.gameserver.network.SystemMessageId;
 import l2r.gameserver.network.serverpackets.ShowBoard;
 
+import gr.sr.advancedBuffer.SchemeBufferBBSManager;
 import gr.sr.configsEngine.configs.impl.CommunityDonateConfigs;
 import gr.sr.interf.SunriseEvents;
 
@@ -54,6 +55,12 @@ public class BoardsManager
 		
 		if (SunriseEvents.cbBypass(activeChar, command))
 		{
+			return;
+		}
+		
+		if (command.startsWith("_bbsbufferbypass"))
+		{
+			SchemeBufferBBSManager.onBypass(activeChar, command.substring("_bbsbufferbypass_".length()));
 			return;
 		}
 		

@@ -22,9 +22,11 @@ import l2r.gameserver.model.L2World;
 import l2r.gameserver.model.TradeItem;
 import l2r.gameserver.model.TradeList;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
+import l2r.gameserver.model.items.instance.L2ItemInstance;
 import l2r.gameserver.network.SystemMessageId;
 import l2r.gameserver.network.serverpackets.TradeOtherAdd;
 import l2r.gameserver.network.serverpackets.TradeOwnAdd;
+import l2r.gameserver.network.serverpackets.TradeUpdate;
 
 /**
  * This class ...
@@ -94,11 +96,16 @@ public final class AddTradeItem extends L2GameClientPacket
 			return;
 		}
 		
-		final TradeItem item = trade.addItem(_objectId, _count);
-		if (item != null)
+		final L2ItemInstance item = player.getInventory().getItemByObjectId(_objectId);
+		final TradeItem tradeItem = trade.addItem(_objectId, _count);
+		if (tradeItem != null)
 		{
-			player.sendPacket(new TradeOwnAdd(item));
-			trade.getPartner().sendPacket(new TradeOtherAdd(item));
+			player.sendPacket(new TradeOwnAdd(tradeItem));
+			trade.getPartner().sendPacket(new TradeOtherAdd(tradeItem));
+			
+			// Finally update trade window
+			final TradeItem temp = new TradeItem(tradeItem, item.getCount() - tradeItem.getCount(), tradeItem.getPrice());
+			player.sendPacket(new TradeUpdate(temp));
 		}
 	}
 	

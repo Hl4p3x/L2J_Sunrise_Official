@@ -35,7 +35,7 @@ public class SummonCubic extends L2Effect
 	@Override
 	public boolean onStart()
 	{
-		if ((getEffected() == null) || !getEffected().isPlayer() || getEffected().isAlikeDead() || getEffected().getActingPlayer().inObserverMode())
+		if ((getEffected() == null) || !getEffected().isPlayer() || !getEffector().isPlayer() || getEffected().isAlikeDead() || getEffected().getActingPlayer().inObserverMode())
 		{
 			return false;
 		}
@@ -87,7 +87,7 @@ public class SummonCubic extends L2Effect
 		}
 		
 		// Adding a new cubic.
-		player.addCubic(new CubicInstance(player, player, template));
+		player.addCubic(new CubicInstance(getEffector().getActingPlayer(), player, template));
 		player.broadcastUserInfo();
 		return true;
 	}

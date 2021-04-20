@@ -10,7 +10,7 @@
 			</skill>
 			<skill id="4051" level="1" triggerRate="30" successRate="30" target="HEAL"> <!-- Cubic Heal -->
 				<conditions>
-					<hp type="GREATER" percent="80" />
+					<hp type="LESSER" percent="80" /> <!-- retail typo must be lesser -->
 					<range value="3000" />
 				</conditions>
 			</skill>

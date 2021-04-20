@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 import l2r.gameserver.ThreadPoolManager;
 import l2r.gameserver.data.xml.impl.FishingMonstersData;
 import l2r.gameserver.enums.audio.Music;
+import l2r.gameserver.instancemanager.FishingChampionshipManager;
 import l2r.gameserver.model.actor.L2Npc;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.events.AbstractScript;
@@ -91,7 +92,7 @@ public class L2Fishing implements Runnable
 		_isUpperGrade = isUpperGrade;
 		if (isUpperGrade)
 		{
-			_deceptiveMode = Rnd.get(100) >= 90 ? 1 : 0;
+			_deceptiveMode = Rnd.chance(fish.getCheatingProb()) ? 1 : 0;
 			_lureType = 2;
 		}
 		else
@@ -163,6 +164,7 @@ public class L2Fishing implements Runnable
 				{
 					_fisher.sendPacket(SystemMessageId.YOU_CAUGHT_SOMETHING);
 					_fisher.addItem("Fishing", _fishId, 1, null, true);
+					FishingChampionshipManager.getInstance().newFish(_fisher, _fisher.getFishingEx().getLure().getId());
 					
 					if (LeaderboardsConfigs.RANK_FISHERMAN_ENABLED)
 					{

@@ -23,6 +23,7 @@ import java.util.List;
 import l2r.Config;
 import l2r.gameserver.data.xml.impl.SkillData;
 import l2r.gameserver.data.xml.impl.SkillTreesData;
+import l2r.gameserver.instancemanager.FishingChampionshipManager;
 import l2r.gameserver.model.L2SkillLearn;
 import l2r.gameserver.model.actor.L2Npc;
 import l2r.gameserver.model.actor.instance.L2MerchantInstance;
@@ -90,7 +91,30 @@ public class Fisherman extends AbstractNpcAI
 			}
 			case "fishing_championship.htm":
 			{
-				htmltext = event;
+				if (Config.ALT_FISH_CHAMPIONSHIP_ENABLED)
+				{
+					FishingChampionshipManager.getInstance().showChampScreen(player, npc);
+					return null;
+				}
+				return "no_fish_event001.htm";
+			}
+			case "FishingReward":
+			{
+				if (Config.ALT_FISH_CHAMPIONSHIP_ENABLED)
+				{
+					if (FishingChampionshipManager.getInstance().isWinner(player.getName()))
+					{
+						FishingChampionshipManager.getInstance().getReward(player);
+					}
+					else
+					{
+						return "no_fish_event_reward001.htm";
+					}
+				}
+				else
+				{
+					return "no_fish_event001.htm";
+				}
 				break;
 			}
 			case "BuySellRefund":

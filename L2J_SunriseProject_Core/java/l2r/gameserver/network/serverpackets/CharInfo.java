@@ -82,14 +82,14 @@ public class CharInfo extends L2GameServerPacket
 		{
 			_x = _activeChar.getInVehiclePosition().getX();
 			_y = _activeChar.getInVehiclePosition().getY();
-			_z = _activeChar.getInVehiclePosition().getZ();
+			_z = _activeChar.getInVehiclePosition().getZ() + Config.CLIENT_SHIFTZ;
 			_vehicleId = _activeChar.getVehicle().getObjectId();
 		}
 		else
 		{
 			_x = _activeChar.getX();
 			_y = _activeChar.getY();
-			_z = _activeChar.getZ();
+			_z = _activeChar.getZ() + Config.CLIENT_SHIFTZ;
 		}
 		_heading = _activeChar.getHeading();
 		_mAtkSpd = _activeChar.getMAtkSpd();
@@ -206,8 +206,8 @@ public class CharInfo extends L2GameServerPacket
 				writeD(0x00);
 				
 				writeD(0x00); // CT1.5 Pet form and skills, Color effect
-				writeC(template.isTargetable() ? 1 : 0); // targetable
-				writeC(template.isShowName() ? 1 : 0); // show name
+				writeC(template.isTargetable() ? 0x01 : 0x00); // targetable
+				writeC(template.getAIDataStatic().isShowName() ? 0x01 : 0x00); // show name
 				writeC(_activeChar.getSpecialEffect());
 				writeD(0x00);
 			}

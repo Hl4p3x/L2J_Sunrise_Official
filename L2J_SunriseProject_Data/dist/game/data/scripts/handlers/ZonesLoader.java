@@ -14,6 +14,9 @@ import ai.zone.DragonValley.ShadowSummoner;
 import ai.zone.FantasyIsle.HandysBlockCheckerEvent;
 import ai.zone.FantasyIsle.MC_Show;
 import ai.zone.FantasyIsle.Parade;
+import ai.zone.LairOfAntharas.BloodyBerserker;
+import ai.zone.LairOfAntharas.BloodyKarik;
+import ai.zone.LairOfAntharas.BloodyKarinness;
 import ai.zone.LairOfAntharas.LairOfAntharas;
 import ai.zone.PavelRuins.PavelArchaic;
 import ai.zone.PlainsOfLizardman.PlainsOfLizardman;
@@ -50,6 +53,9 @@ public final class ZonesLoader extends ABLoader
 		Parade.class,
 		
 		// Antharas Lair
+		BloodyBerserker.class,
+		BloodyKarik.class,
+		BloodyKarinness.class,
 		LairOfAntharas.class,
 		
 		// Pavel Ruins

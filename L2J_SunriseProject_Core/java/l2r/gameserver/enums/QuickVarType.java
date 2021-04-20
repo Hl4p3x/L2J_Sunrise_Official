@@ -15,7 +15,8 @@ public enum QuickVarType implements IFQuickVar
 	PING("ping"),
 	MTU("mtu"),
 	PORTAL_WH("portalWh"),
-	COMMUNITY_SELL("communitySell");
+	COMMUNITY_SELL("communitySell"),
+	KRATEI_CUBE_LVL("KRATEI_CUBE_LVL");
 	
 	private String _command;
 	

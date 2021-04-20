@@ -31,11 +31,13 @@ import l2r.gameserver.instancemanager.FortSiegeManager;
 import l2r.gameserver.instancemanager.ZoneManager;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
+import l2r.gameserver.model.actor.instance.L2SiegeSummonInstance;
 import l2r.gameserver.model.effects.L2Effect;
 import l2r.gameserver.model.entity.Fort;
 import l2r.gameserver.model.entity.FortSiege;
 import l2r.gameserver.model.entity.Siegable;
 import l2r.gameserver.model.entity.clanhall.SiegableHall;
+import l2r.gameserver.model.skills.CommonSkill;
 import l2r.gameserver.model.skills.L2Skill;
 import l2r.gameserver.model.zone.AbstractZoneSettings;
 import l2r.gameserver.model.zone.L2ZoneType;
@@ -238,6 +240,11 @@ public class L2SiegeZone extends L2ZoneType
 				}
 			}
 		}
+		
+		if (character instanceof L2SiegeSummonInstance)
+		{
+			((L2SiegeSummonInstance) character).unSummon(((L2SiegeSummonInstance) character).getOwner());
+		}
 	}
 	
 	@Override
@@ -249,13 +256,13 @@ public class L2SiegeZone extends L2ZoneType
 			if (character.isPlayer() && character.getActingPlayer().isRegisteredOnThisSiegeField(getSettings().getSiegeableId()))
 			{
 				int lvl = 1;
-				final L2Effect e = character.getFirstEffect(5660);
+				final L2Effect e = character.getFirstEffect(CommonSkill.BATTLEFIELD_DEATH_SYNDROME.getId());
 				if (e != null)
 				{
 					lvl = Math.min(lvl + e.getLevel(), 5);
 				}
 				
-				final L2Skill skill = SkillData.getInstance().getInfo(5660, lvl);
+				final L2Skill skill = SkillData.getInstance().getInfo(CommonSkill.BATTLEFIELD_DEATH_SYNDROME.getId(), lvl);
 				if (skill != null)
 				{
 					skill.getEffects(character, character);
@@ -304,6 +311,10 @@ public class L2SiegeZone extends L2ZoneType
 					{
 						player.exitedNoLanding();
 					}
+				}
+				if (character instanceof L2SiegeSummonInstance)
+				{
+					((L2SiegeSummonInstance) character).unSummon(((L2SiegeSummonInstance) character).getOwner());
 				}
 			}
 		}

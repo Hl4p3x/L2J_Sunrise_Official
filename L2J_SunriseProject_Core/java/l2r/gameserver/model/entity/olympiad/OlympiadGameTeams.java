@@ -1081,6 +1081,23 @@ public class OlympiadGameTeams extends AbstractOlympiadGame
 	}
 	
 	@Override
+	public List<Participant> getParticipants()
+	{
+		List<Participant> _l = new ArrayList<>();
+		for (Participant p : _teamOne)
+		{
+			_l.add(p);
+		}
+		
+		for (Participant p : _teamTwo)
+		{
+			_l.add(p);
+		}
+		
+		return _l;
+	}
+	
+	@Override
 	public final boolean checkDefaulted()
 	{
 		try

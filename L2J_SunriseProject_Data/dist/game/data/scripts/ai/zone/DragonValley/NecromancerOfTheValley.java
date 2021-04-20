@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2017 L2J DataPack
+ * Copyright (C) 2004-2021 L2J DataPack
  * 
  * This file is part of L2J DataPack.
  * 
@@ -18,6 +18,7 @@
  */
 package ai.zone.DragonValley;
 
+import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.L2Npc;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.holders.SkillHolder;
@@ -28,7 +29,8 @@ import ai.npc.AbstractNpcAI;
 /**
  * Necromancer of the Valley AI.
  * @author Adry_85
- * @since 2.6.0.0
+ * @author Maneco2
+ * @since 2.6.2.0
  */
 public class NecromancerOfTheValley extends AbstractNpcAI
 {
@@ -38,6 +40,8 @@ public class NecromancerOfTheValley extends AbstractNpcAI
 	private static final int NECROMANCER_OF_THE_VALLEY = 22858;
 	// Skill
 	private static final SkillHolder SELF_DESTRUCTION = new SkillHolder(6850);
+	// Variable
+	private static final String MID_HP_FLAG = "MID_HP_FLAG";
 	// Misc
 	private static final double HP_PERCENTAGE = 0.60;
 	
@@ -45,30 +49,35 @@ public class NecromancerOfTheValley extends AbstractNpcAI
 	{
 		super(NecromancerOfTheValley.class.getSimpleName(), "ai/zone/DragonValley");
 		addAttackId(NECROMANCER_OF_THE_VALLEY);
+		addSpawnId(EXPLODING_ORC_GHOST);
 		addSpellFinishedId(EXPLODING_ORC_GHOST);
 	}
 	
 	@Override
 	public String onAttack(L2Npc npc, L2PcInstance attacker, int damage, boolean isSummon)
 	{
-		if ((npc.getCurrentHp() < (npc.getMaxHp() * HP_PERCENTAGE)))
+		if (npc.getCurrentHp() < (npc.getMaxHp() * HP_PERCENTAGE))
 		{
-			if (getRandom(10) < 1)
+			if ((getRandom(100) < 10) && !npc.getVariables().getBoolean(MID_HP_FLAG, false))
 			{
-				if (getRandomBoolean())
-				{
-					final L2Npc explodingOrcGhost = addSpawn(EXPLODING_ORC_GHOST, npc.getX(), npc.getY(), npc.getZ(), 0, false, 0, false);
-					addAttackDesire(explodingOrcGhost, attacker, 10000);
-					addSkillCastDesire(npc, attacker, SELF_DESTRUCTION, 999999999L);
-				}
-				else
-				{
-					final L2Npc wrathfulOrcGhost = addSpawn(WRATHFUL_ORC_GHOST, npc.getX(), npc.getY(), npc.getZ(), 0, false, 0, false);
-					addAttackDesire(wrathfulOrcGhost, attacker, 10000);
-				}
+				npc.getVariables().set(MID_HP_FLAG, true);
+				addAttackDesire(addSpawn((getRandomBoolean() ? EXPLODING_ORC_GHOST : WRATHFUL_ORC_GHOST), npc, true), attacker);
 			}
 		}
 		return super.onAttack(npc, attacker, damage, isSummon);
+	}
+	
+	@Override
+	public String onSpawn(L2Npc npc)
+	{
+		for (L2Character obj : npc.getKnownList().getKnownCharactersInRadius(200))
+		{
+			if (obj.isPlayer() && !obj.isDead())
+			{
+				addSkillCastDesire(npc, obj, SELF_DESTRUCTION, 1000000L);
+			}
+		}
+		return super.onSpawn(npc);
 	}
 	
 	@Override

@@ -56,7 +56,7 @@ public class EnchantFormatter extends Formatter
 					StringUtil.append(output, "Character:", player.getName(), " [" + String.valueOf(player.getObjectId()) + "] Account:", player.getAccountName());
 					if ((player.getClient() != null) && !player.getClient().isDetached())
 					{
-						StringUtil.append(output, " IP:", player.getClient().getConnection().getInetAddress().getHostAddress());
+						StringUtil.append(output, " IP:", player.getClient().getInetAddress().getHostAddress());
 					}
 				}
 				else if (p instanceof L2ItemInstance)
@@ -113,7 +113,7 @@ public class EnchantFormatter extends Formatter
 					StringUtil.append(output, "Character:", player.getName(), "[" + String.valueOf(player.getObjectId()) + "] Account:", player.getAccountName());
 					if ((player.getClient() != null) && !player.getClient().isDetached())
 					{
-						StringUtil.append(output, " IP:", player.getClient().getConnection().getInetAddress().getHostAddress());
+						StringUtil.append(output, " IP:", player.getClient().getInetAddress().getHostAddress());
 					}
 				}
 				else if (p instanceof L2ItemInstance)

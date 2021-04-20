@@ -1,28 +1,17 @@
-/*
- * Copyright (C) 2004-2015 L2J Server
- * 
- * This file is part of L2J Server.
- * 
- * L2J Server is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * L2J Server is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
 package l2r.gameserver.model.actor.instance;
 
-import l2r.gameserver.ai.L2BoatAI;
 import l2r.gameserver.enums.InstanceType;
 import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.L2Vehicle;
 import l2r.gameserver.model.actor.templates.L2CharTemplate;
+import l2r.gameserver.network.serverpackets.GetOffVehicle;
+import l2r.gameserver.network.serverpackets.GetOnVehicle;
+import l2r.gameserver.network.serverpackets.L2GameServerPacket;
+import l2r.gameserver.network.serverpackets.MoveToLocationInVehicle;
+import l2r.gameserver.network.serverpackets.StopMove;
+import l2r.gameserver.network.serverpackets.StopMoveInVehicle;
+import l2r.gameserver.network.serverpackets.ValidateLocationInVehicle;
+import l2r.gameserver.network.serverpackets.VehicleCheckLocation;
 import l2r.gameserver.network.serverpackets.VehicleDeparture;
 import l2r.gameserver.network.serverpackets.VehicleInfo;
 import l2r.gameserver.network.serverpackets.VehicleStarted;
@@ -31,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author Maktakien, reworked by DS
+ * @author vGodFather
  */
 public class L2BoatInstance extends L2Vehicle
 {
@@ -45,7 +34,6 @@ public class L2BoatInstance extends L2Vehicle
 	{
 		super(template);
 		setInstanceType(InstanceType.L2BoatInstance);
-		setAI(new L2BoatAI(this));
 	}
 	
 	@Override
@@ -61,45 +49,62 @@ public class L2BoatInstance extends L2Vehicle
 	}
 	
 	@Override
-	public boolean moveToNextRoutePoint()
+	public L2GameServerPacket movePacket()
 	{
-		final boolean result = super.moveToNextRoutePoint();
-		if (result)
-		{
-			broadcastPacket(new VehicleDeparture(this));
-		}
-		
-		return result;
+		return new VehicleDeparture(this);
 	}
 	
 	@Override
-	public void oustPlayer(L2PcInstance player)
+	public L2GameServerPacket stopMovePacket()
 	{
-		super.oustPlayer(player);
-		
-		final Location loc = getOustLoc();
-		if (player.isOnline())
-		{
-			player.teleToLocation(loc.getX(), loc.getY(), loc.getZ());
-		}
-		else
-		{
-			player.setXYZInvisible(loc.getX(), loc.getY(), loc.getZ()); // disconnects handling
-		}
+		return new StopMove(this);
 	}
 	
 	@Override
-	public void stopMove(Location pos, boolean updateKnownObjects)
+	public L2GameServerPacket validateLocationPacket(L2PcInstance player)
 	{
-		super.stopMove(pos, updateKnownObjects);
-		
-		broadcastPacket(new VehicleStarted(this, 0));
-		broadcastPacket(new VehicleInfo(this));
+		return new ValidateLocationInVehicle(player);
 	}
 	
 	@Override
-	public void sendInfo(L2PcInstance activeChar)
+	public L2GameServerPacket getOnPacket(final L2PcInstance player, final Location location)
 	{
-		activeChar.sendPacket(new VehicleInfo(this));
+		return new GetOnVehicle(player.getObjectId(), getObjectId(), location);
+	}
+	
+	@Override
+	public L2GameServerPacket getOffPacket(final L2PcInstance player, final Location location)
+	{
+		return new GetOffVehicle(player.getObjectId(), getObjectId(), location.getX(), location.getY(), location.getZ());
+	}
+	
+	@Override
+	public L2GameServerPacket inMovePacket(final L2PcInstance player, final Location src, final Location desc)
+	{
+		return new MoveToLocationInVehicle(player, src, desc);
+	}
+	
+	@Override
+	public L2GameServerPacket inStopMovePacket(final L2PcInstance player)
+	{
+		return new StopMoveInVehicle(player, getObjectId());
+	}
+	
+	@Override
+	public L2GameServerPacket startPacket()
+	{
+		return new VehicleStarted(this, _runState);
+	}
+	
+	@Override
+	public L2GameServerPacket checkLocationPacket()
+	{
+		return new VehicleCheckLocation(this);
+	}
+	
+	@Override
+	public L2GameServerPacket infoPacket()
+	{
+		return new VehicleInfo(this);
 	}
 }

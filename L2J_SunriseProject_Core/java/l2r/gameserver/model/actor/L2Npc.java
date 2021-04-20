@@ -142,6 +142,11 @@ public class L2Npc extends L2Character
 	private FakePc _fakePc = null;
 	private boolean _isRunner = false;
 	
+	/**
+	 * The character that summons this NPC.
+	 */
+	private L2Character _summoner = null;
+	
 	private boolean _tempInvis = false;
 	
 	private int _shotsMask = 0;
@@ -155,26 +160,66 @@ public class L2Npc extends L2Character
 		return _fakePc;
 	}
 	
+	public int getSoulShotChance()
+	{
+		return getTemplate().getSoulShotChance();
+	}
+	
+	public int getSpiritShotChance()
+	{
+		return getTemplate().getSpiritShotChance();
+	}
+	
+	public int getEnemyRange()
+	{
+		return getTemplate().getEnemyRange();
+	}
+	
+	public String getEnemyClan()
+	{
+		return getTemplate().getEnemyClan();
+	}
+	
+	public int getClanHelpRange()
+	{
+		return getTemplate().getClanHelpRange();
+	}
+	
+	public String getClan()
+	{
+		return getTemplate().getClan();
+	}
+	
+	public int getMinSkillChance()
+	{
+		return getTemplate().getMinSkillChance();
+	}
+	
+	public int getMaxSkillChance()
+	{
+		return getTemplate().getMaxSkillChance();
+	}
+	
 	/**
 	 * Verifies if the NPC can cast a skill given the minimum and maximum skill chances.
 	 * @return {@code true} if the NPC has chances of casting a skill
 	 */
 	public boolean hasSkillChance()
 	{
-		return Rnd.get(100) < Rnd.get(getTemplate().getMinSkillChance(), getTemplate().getMaxSkillChance());
+		return Rnd.get(100) < Rnd.get(getMinSkillChance(), getMaxSkillChance());
 	}
 	
-	public boolean canMove()
+	public int getCanMove()
 	{
-		return getTemplate().canMove();
+		return getTemplate().getCanMove();
 	}
 	
-	public boolean isChaos()
+	public int isChaos()
 	{
 		return getTemplate().isChaos();
 	}
 	
-	public int getDodge()
+	public int getCanDodge()
 	{
 		return getTemplate().getDodge();
 	}
@@ -189,9 +234,9 @@ public class L2Npc extends L2Character
 		return getTemplate().getShortRangeSkills();
 	}
 	
-	public boolean hasSSkill()
+	public int getSwitchRangeChance()
 	{
-		return getTemplate().getShortRangeSkillId() > 0;
+		return getTemplate().getSwitchRangeChance();
 	}
 	
 	/** Task launching the function onRandomAnimation() */
@@ -396,6 +441,21 @@ public class L2Npc extends L2Character
 	}
 	
 	/**
+	 * <B><U> Concept</U> :</B><br>
+	 * If a NPC belongs to a Faction, other NPC of the faction inside the Faction range will help it if it's attacked
+	 * @return the faction Identifier of this L2NpcInstance contained in the L2NpcTemplate.
+	 */
+	public final String getFactionId()
+	{
+		return getClan();
+	}
+	
+	public final String getClans()
+	{
+		return getClan();
+	}
+	
+	/**
 	 * Return the Level of this L2NpcInstance contained in the L2NpcTemplate.
 	 */
 	@Override
@@ -430,12 +490,20 @@ public class L2Npc extends L2Character
 			return 0;
 		}
 		
-		return hasAIValue("aggroRange") ? getAIValue("aggroRange") : getTemplate().getAggroRange();
+		return getTemplate().getAggroRange();
+	}
+	
+	/**
+	 * @return the Faction Range of this L2NpcInstance contained in the L2NpcTemplate.
+	 */
+	public int getFactionRange()
+	{
+		return getClanHelpRange();
 	}
 	
 	public boolean isInMyClan(L2Npc npc)
 	{
-		return getTemplate().isClan(npc.getTemplate().getClans());
+		return (npc.getFactionId() != null) && !npc.getFactionId().equals(getFactionId());
 	}
 	
 	/**
@@ -461,22 +529,7 @@ public class L2Npc extends L2Character
 	public void updateAbnormalEffect()
 	{
 		// Send a Server->Client packet NpcInfo with state of abnormal effect to all L2PcInstance in the _KnownPlayers of the L2NpcInstance
-		Collection<L2PcInstance> plrs = getKnownList().getKnownPlayers().values();
-		for (L2PcInstance player : plrs)
-		{
-			if ((player == null) || !isVisibleFor(player))
-			{
-				continue;
-			}
-			if (getRunSpeed() == 0)
-			{
-				player.sendPacket(new ServerObjectInfo(this, player));
-			}
-			else
-			{
-				player.sendPacket(new AbstractNpcInfo.NpcInfo(this, player));
-			}
-		}
+		broadcastInfo();
 	}
 	
 	@Override
@@ -790,7 +843,7 @@ public class L2Npc extends L2Character
 	@Override
 	public L2Weapon getActiveWeaponItem()
 	{
-		// Get the weapon identifier equipped in the right hand of the L2NpcInstance
+		// Get the weapon identifier equiped in the right hand of the L2NpcInstance
 		int weaponId = getTemplate().getRHandId();
 		
 		if (weaponId < 1)
@@ -798,7 +851,7 @@ public class L2Npc extends L2Character
 			return null;
 		}
 		
-		// Get the weapon item equipped in the right hand of the L2NpcInstance
+		// Get the weapon item equiped in the right hand of the L2NpcInstance
 		L2Item item = ItemData.getInstance().getTemplate(getTemplate().getRHandId());
 		
 		if (!(item instanceof L2Weapon))
@@ -825,14 +878,15 @@ public class L2Npc extends L2Character
 	@Override
 	public L2Weapon getSecondaryWeaponItem()
 	{
-		// Get the weapon identifier equipped in the right hand of the L2NpcInstance
+		// Get the weapon identifier equiped in the right hand of the L2NpcInstance
 		int weaponId = getTemplate().getLHandId();
+		
 		if (weaponId < 1)
 		{
 			return null;
 		}
 		
-		// Get the weapon item equipped in the right hand of the L2NpcInstance
+		// Get the weapon item equiped in the right hand of the L2NpcInstance
 		L2Item item = ItemData.getInstance().getTemplate(getTemplate().getLHandId());
 		
 		if (!(item instanceof L2Weapon))
@@ -1186,9 +1240,9 @@ public class L2Npc extends L2Character
 	{
 		if (isPremium)
 		{
-			return (int) ((getLevel() * getLevel() * getTemplate().getExpRate()) * PremiumServiceConfigs.PREMIUM_RATE_XP);
+			return (int) (getTemplate().getRewardExp() * PremiumServiceConfigs.PREMIUM_RATE_XP);
 		}
-		return (int) (getLevel() * getLevel() * getTemplate().getExpRate() * Config.RATE_XP);
+		return (int) (getTemplate().getRewardExp() * Config.RATE_XP);
 	}
 	
 	/**
@@ -1199,9 +1253,9 @@ public class L2Npc extends L2Character
 	{
 		if (isPremium)
 		{
-			return (int) (getTemplate().getSP() * PremiumServiceConfigs.PREMIUM_RATE_SP);
+			return (int) (getTemplate().getRewardSp() * PremiumServiceConfigs.PREMIUM_RATE_SP);
 		}
-		return (int) (getTemplate().getSP() * Config.RATE_SP);
+		return (int) (getTemplate().getRewardSp() * Config.RATE_SP);
 	}
 	
 	/**
@@ -1490,6 +1544,11 @@ public class L2Npc extends L2Character
 			{
 				activeChar.sendPacket(new AbstractNpcInfo.NpcInfo(this, activeChar));
 			}
+			
+			if (isMoving)
+			{
+				activeChar.sendPacket(this.movePacket());
+			}
 		}
 	}
 	
@@ -1550,7 +1609,7 @@ public class L2Npc extends L2Character
 	@Override
 	public boolean isMovementDisabled()
 	{
-		return super.isMovementDisabled() || !canMove() || getAiType().equals(AIType.CORPSE);
+		return super.isMovementDisabled() || (getCanMove() == 0) || getAiType().equals(AIType.CORPSE);
 	}
 	
 	public AIType getAiType()
@@ -1607,6 +1666,22 @@ public class L2Npc extends L2Character
 	public void broadcastNpcSay(int messageType, String text)
 	{
 		broadcastPacket(new NpcSay(getObjectId(), messageType, getId(), text));
+	}
+	
+	/**
+	 * @return the character that summoned this NPC.
+	 */
+	public L2Character getSummoner()
+	{
+		return _summoner;
+	}
+	
+	/**
+	 * @param summoner the summoner of this NPC.
+	 */
+	public void setSummoner(L2Character summoner)
+	{
+		_summoner = summoner;
 	}
 	
 	@Override
@@ -1668,7 +1743,7 @@ public class L2Npc extends L2Character
 		{
 			if (physical)
 			{
-				if ((_soulshotamount == 0) || (Rnd.get(100) > getTemplate().getSoulShotChance()))
+				if ((_soulshotamount == 0) || (Rnd.get(100) > getSoulShotChance()))
 				{
 					return;
 				}
@@ -1678,7 +1753,7 @@ public class L2Npc extends L2Character
 			}
 			if (magic)
 			{
-				if ((_spiritshotamount == 0) || (Rnd.get(100) > getTemplate().getSpiritShotChance()))
+				if ((_spiritshotamount == 0) || (Rnd.get(100) > getSpiritShotChance()))
 				{
 					return;
 				}

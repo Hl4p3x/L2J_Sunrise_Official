@@ -46,6 +46,35 @@ public final class L2World
 {
 	private static Logger _log = LoggerFactory.getLogger(L2World.class);
 	
+	/** Map dimensions */
+	// public static final int MAP_MIN_X = Config.GEO_X_FIRST - 20 << 15;
+	// public static final int MAP_MAX_X = (Config.GEO_X_LAST - 19 << 15) - 1;
+	// public static final int MAP_MIN_Y = Config.GEO_Y_FIRST - 18 << 15;
+	// public static final int MAP_MAX_Y = (Config.GEO_Y_LAST - 17 << 15) - 1;
+	public static final int MAP_MIN_Z = Config.MAP_MIN_Z;
+	public static final int MAP_MAX_Z = Config.MAP_MAX_Z;
+	
+	public static final int MAP_MIN_X = (Config.GEO_X_FIRST - 20) << 15;
+	public static final int MAP_MAX_X = (((Config.GEO_X_LAST - 20) + 1) << 15) - 1;
+	public static final int MAP_MIN_Y = (Config.GEO_Y_FIRST - 18) << 15;
+	public static final int MAP_MAX_Y = (((Config.GEO_Y_LAST - 18) + 1) << 15) - 1;
+	// public static final int MAP_MIN_Z = -16384;
+	// public static final int MAP_MAX_Z = 16383;
+	
+	public static final int WORLD_SIZE_X = (Config.GEO_X_LAST - Config.GEO_X_FIRST) + 1;
+	public static final int WORLD_SIZE_Y = (Config.GEO_Y_LAST - Config.GEO_Y_FIRST) + 1;
+	
+	public static final int SHIFT_BY = Config.SHIFT_BY;
+	public static final int SHIFT_BY_Z = Config.SHIFT_BY_Z;
+	
+	/** calculated offset used so top left region is 0,0 */
+	public static final int OFFSET_X = Math.abs(MAP_MIN_X >> SHIFT_BY);
+	public static final int OFFSET_Y = Math.abs(MAP_MIN_Y >> SHIFT_BY);
+	public static final int OFFSET_Z = Math.abs(MAP_MIN_Z >> SHIFT_BY_Z);
+	
+	private static final int REGIONS_X = (MAP_MAX_X >> SHIFT_BY) + OFFSET_X;
+	private static final int REGIONS_Y = (MAP_MAX_Y >> SHIFT_BY) + OFFSET_Y;
+	
 	/**
 	 * Gracia border Flying objects not allowed to the east of it.
 	 */
@@ -56,31 +85,7 @@ public final class L2World
 	/*
 	 * biteshift, defines number of regions note, shifting by 15 will result in regions corresponding to map tiles shifting by 12 divides one tile to 8x8 regions
 	 */
-	public static final int SHIFT_BY = 12;
-	
-	private static final int TILE_SIZE = 32768;
-	
-	/** Map dimensions */
-	public static final int TILE_X_MIN = 11;
-	public static final int TILE_Y_MIN = 10;
-	public static final int TILE_X_MAX = 26;
-	public static final int TILE_Y_MAX = 26;
-	public static final int TILE_ZERO_COORD_X = 20;
-	public static final int TILE_ZERO_COORD_Y = 18;
-	
-	public static final int MAP_MIN_X = (TILE_X_MIN - TILE_ZERO_COORD_X) * TILE_SIZE;
-	public static final int MAP_MIN_Y = (TILE_Y_MIN - TILE_ZERO_COORD_Y) * TILE_SIZE;
-	
-	public static final int MAP_MAX_X = ((TILE_X_MAX - TILE_ZERO_COORD_X) + 1) * TILE_SIZE;
-	public static final int MAP_MAX_Y = ((TILE_Y_MAX - TILE_ZERO_COORD_Y) + 1) * TILE_SIZE;
-	
-	/** calculated offset used so top left region is 0,0 */
-	public static final int OFFSET_X = Math.abs(MAP_MIN_X >> SHIFT_BY);
-	public static final int OFFSET_Y = Math.abs(MAP_MIN_Y >> SHIFT_BY);
-	
-	/** number of regions */
-	private static final int REGIONS_X = (MAP_MAX_X >> SHIFT_BY) + OFFSET_X;
-	private static final int REGIONS_Y = (MAP_MAX_Y >> SHIFT_BY) + OFFSET_Y;
+	public static final int SHIFT_BY_FOR_Z = 9;
 	
 	// private FastMap<String, L2PcInstance> _allGms;
 	
@@ -598,7 +603,7 @@ public final class L2World
 	 * Returns the whole 2d array containing the world regions used by ZoneData.java to setup zones inside the world regions
 	 * @return
 	 */
-	public L2WorldRegion[][] getWorldRegions()
+	public L2WorldRegion[][] getAllWorldRegions()
 	{
 		return _worldRegions;
 	}

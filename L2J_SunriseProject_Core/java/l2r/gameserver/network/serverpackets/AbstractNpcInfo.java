@@ -484,10 +484,15 @@ public abstract class AbstractNpcInfo extends L2GameServerPacket
 		private final int _val;
 		private final boolean _isSummoned;
 		
+		// vGodFather crest on summons
+		private int _clanCrest = 0;
+		private int _allyCrest = 0;
+		private int _allyId = 0;
+		private int _clanId = 0;
+		
 		public SummonInfo(L2Summon cha, L2Character attacker, int val)
 		{
 			super(cha);
-			
 			_summon = cha;
 			_val = val;
 			_form = cha.getFormId();
@@ -504,7 +509,21 @@ public abstract class AbstractNpcInfo extends L2GameServerPacket
 			_idTemplate = cha.getTemplate().getDisplayId();
 			_collisionHeight = cha.getTemplate().getfCollisionHeight();
 			_collisionRadius = cha.getTemplate().getfCollisionRadius();
-			setInvisible(cha.isInvisible());
+			
+			// vGodFather crest on summons
+			if (cha.getOwner() != null)
+			{
+				L2Clan clan = cha.getOwner().getClan();
+				if (clan != null)
+				{
+					_clanCrest = clan.getCrestId();
+					_clanId = clan.getId();
+					_allyCrest = clan.getAllyCrestId();
+					_allyId = clan.getAllyId();
+				}
+			}
+			
+			_invisible = cha.isInvisible();
 		}
 		
 		@Override
@@ -562,10 +581,12 @@ public abstract class AbstractNpcInfo extends L2GameServerPacket
 			
 			writeD(gmSeeInvis ? _summon.getAbnormalEffect() | AbnormalEffect.STEALTH.getMask() : _summon.getAbnormalEffect());
 			
-			writeD(0x00); // clan id
-			writeD(0x00); // crest id
-			writeD(0x00); // C2
-			writeD(0x00); // C2
+			// vGodFather crest on summons
+			writeD(_clanId); // clan id
+			writeD(_clanCrest); // crest id
+			writeD(_allyId); // ally id
+			writeD(_allyCrest); // all crest
+			
 			writeC(_summon.isInsideZone(ZoneIdType.WATER) ? 1 : _summon.isFlying() ? 2 : 0); // C2
 			
 			writeC(_summon.getTeam().getId());

@@ -50,6 +50,7 @@ public class L2NpcAIData
 	private int _aggroRange;
 	private boolean _showName;
 	private boolean _targetable;
+	private boolean _undying;
 	
 	public void setPrimarySkillId(int primarySkillId)
 	{
@@ -195,6 +196,11 @@ public class L2NpcAIData
 		_showName = val;
 	}
 	
+	public void setUndying(boolean val)
+	{
+		_undying = val;
+	}
+	
 	public int getPrimarySkillId()
 	{
 		return _primarySkillId;
@@ -260,7 +266,7 @@ public class L2NpcAIData
 		return _switchRangeChance;
 	}
 	
-	public int getIsChaos()
+	public int isChaos()
 	{
 		return _isChaos;
 	}
@@ -270,7 +276,7 @@ public class L2NpcAIData
 		return _clan;
 	}
 	
-	public int getClanRange()
+	public int getClanHelpRange()
 	{
 		return _clanRange;
 	}
@@ -303,7 +309,7 @@ public class L2NpcAIData
 	/**
 	 * @return {@code true} if the NPC name should shows above NPC, {@code false} otherwise.
 	 */
-	public boolean showName()
+	public boolean isShowName()
 	{
 		return _showName;
 	}
@@ -314,5 +320,10 @@ public class L2NpcAIData
 	public boolean isTargetable()
 	{
 		return _targetable;
+	}
+	
+	public boolean isUndying()
+	{
+		return _undying;
 	}
 }

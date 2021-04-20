@@ -84,7 +84,7 @@ public class PlayableStat extends CharStat
 		}
 		if ((level != getLevel()) && (level >= minimumLevel))
 		{
-			addLevel((byte) (level - getLevel()));
+			addLevel((byte) (level - getLevel()), value);
 		}
 		
 		return true;
@@ -118,7 +118,7 @@ public class PlayableStat extends CharStat
 		}
 		if ((level != getLevel()) && (level >= minimumLevel))
 		{
-			addLevel((byte) (level - getLevel()));
+			addLevel((byte) (level - getLevel()), value);
 		}
 		return true;
 	}
@@ -157,6 +157,11 @@ public class PlayableStat extends CharStat
 	
 	public boolean addLevel(byte value)
 	{
+		return addLevel(value, 0);
+	}
+	
+	public boolean addLevel(byte value, long exp)
+	{
 		if ((getLevel() + value) > (getMaxLevel() - 1))
 		{
 			if (getLevel() < (getMaxLevel() - 1))
@@ -169,9 +174,19 @@ public class PlayableStat extends CharStat
 			}
 		}
 		
+		byte tmpLvl = getActiveChar().isPlayer() && !getActiveChar().isGM() ? getLevel() : -1;
+		
 		boolean levelIncreased = ((getLevel() + value) > getLevel());
 		value += getLevel();
 		setLevel(value);
+		
+		// vGodFather: just in case to see what happens
+		if ((tmpLvl > 84) && (getLevel() <= 2))
+		{
+			_log.warn("Player: " + getActiveChar().getName() + " abnormally deleveled to: " + getLevel() + "(" + exp + ")", new IllegalArgumentException());
+			setLevel(tmpLvl);
+			return false;
+		}
 		
 		// Sync up exp with current level
 		if ((getExp() >= getExpForLevel(getLevel() + 1)) || (getExpForLevel(getLevel()) > getExp()))

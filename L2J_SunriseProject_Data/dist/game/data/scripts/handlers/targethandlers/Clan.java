@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015 L2J DataPack
+ * Copyright (C) 2004-2013 L2J DataPack
  * 
  * This file is part of L2J DataPack.
  * 
@@ -134,7 +134,7 @@ public class Clan implements ITargetTypeHandler
 		{
 			// for buff purposes, returns friendly mobs nearby and mob itself
 			final L2Npc npc = (L2Npc) activeChar;
-			if ((npc.getTemplate().getClans() == null) || npc.getTemplate().getClans().isEmpty())
+			if ((npc.getFactionId() == null) || npc.getFactionId().isEmpty())
 			{
 				return new L2Character[]
 				{
@@ -148,14 +148,14 @@ public class Clan implements ITargetTypeHandler
 			int maxTargets = skill.getAffectLimit();
 			for (L2Object newTarget : objs)
 			{
-				if (newTarget.isNpc() && npc.isInMyClan((L2Npc) newTarget))
+				if (newTarget.isNpc() && npc.getFactionId().equals(((L2Npc) newTarget).getFactionId()))
 				{
 					if (!Util.checkIfInRange(skill.getCastRange(), activeChar, newTarget, true))
 					{
 						continue;
 					}
 					
-					if ((maxTargets > 0) && (targetList.size() >= maxTargets))
+					if (targetList.size() >= maxTargets)
 					{
 						break;
 					}

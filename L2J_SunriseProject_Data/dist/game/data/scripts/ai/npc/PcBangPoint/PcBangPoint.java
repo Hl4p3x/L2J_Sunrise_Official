@@ -263,7 +263,7 @@ public class PcBangPoint extends AbstractNpcAI
 				player.sendPacket(smsgpc);
 				player.sendPacket(new ExPCCafePointInfo(player.getPcBangPoints(), POINTSSKILL.get(event)[2], false, false, 1));
 				npc.setTarget(player);
-				npc.doCast(SkillData.getInstance().getInfo(POINTSSKILL.get(event)[0], POINTSSKILL.get(event)[1]));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(POINTSSKILL.get(event)[0], POINTSSKILL.get(event)[1]));
 				return "Individual_skill_info.htm";
 			}
 			else
@@ -286,7 +286,7 @@ public class PcBangPoint extends AbstractNpcAI
 				player.sendPacket(smsgpc);
 				player.sendPacket(new ExPCCafePointInfo(player.getPcBangPoints(), PETSKILL.get(event)[2], false, false, 1));
 				npc.setTarget(player.getSummon());
-				npc.doCast(SkillData.getInstance().getInfo(PETSKILL.get(event)[0], PETSKILL.get(event)[1]));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(PETSKILL.get(event)[0], PETSKILL.get(event)[1]));
 				return "Individual_pet_skill_info.htm";
 			}
 			else
@@ -354,19 +354,19 @@ public class PcBangPoint extends AbstractNpcAI
 				player.sendPacket(smsgpc);
 				player.sendPacket(new ExPCCafePointInfo(player.getPcBangPoints(), 5600, false, false, 1));
 				npc.setTarget(player);
-				npc.doCast(SkillData.getInstance().getInfo(4397, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4393, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4392, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4391, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4404, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4396, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4405, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4403, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4398, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4394, 4));
-				npc.doCast(SkillData.getInstance().getInfo(4402, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4406, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4399, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4397, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4393, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4392, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4391, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4404, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4396, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4405, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4403, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4398, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4394, 4));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4402, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4406, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4399, 3));
 				htmltext = "skill_info.htm";
 			}
 			else
@@ -389,19 +389,19 @@ public class PcBangPoint extends AbstractNpcAI
 				player.sendPacket(smsgpc);
 				player.sendPacket(new ExPCCafePointInfo(player.getPcBangPoints(), 4000, false, false, 1));
 				npc.setTarget(player.getSummon());
-				npc.doCast(SkillData.getInstance().getInfo(4397, 1));
-				npc.doCast(SkillData.getInstance().getInfo(4393, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4392, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4391, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4404, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4396, 1));
-				npc.doCast(SkillData.getInstance().getInfo(4405, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4403, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4398, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4394, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4402, 1));
-				npc.doCast(SkillData.getInstance().getInfo(4406, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4399, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4397, 1));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4393, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4392, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4391, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4404, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4396, 1));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4405, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4403, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4398, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4394, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4402, 1));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4406, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4399, 2));
 				htmltext = "pet_skill_info.htm";
 			}
 			else
@@ -424,13 +424,13 @@ public class PcBangPoint extends AbstractNpcAI
 				player.sendPacket(smsgpc);
 				player.sendPacket(new ExPCCafePointInfo(player.getPcBangPoints(), 3000, false, false, 1));
 				npc.setTarget(player);
-				npc.doCast(SkillData.getInstance().getInfo(4397, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4396, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4392, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4391, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4395, 4));
-				npc.doCast(SkillData.getInstance().getInfo(4401, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4400, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4397, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4396, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4392, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4391, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4395, 4));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4401, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4400, 3));
 				htmltext = "skill_info.htm";
 			}
 			else
@@ -453,13 +453,13 @@ public class PcBangPoint extends AbstractNpcAI
 				player.sendPacket(smsgpc);
 				player.sendPacket(new ExPCCafePointInfo(player.getPcBangPoints(), 2100, false, false, 1));
 				npc.setTarget(player.getSummon());
-				npc.doCast(SkillData.getInstance().getInfo(4397, 1));
-				npc.doCast(SkillData.getInstance().getInfo(4396, 1));
-				npc.doCast(SkillData.getInstance().getInfo(4392, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4391, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4395, 3));
-				npc.doCast(SkillData.getInstance().getInfo(4401, 2));
-				npc.doCast(SkillData.getInstance().getInfo(4400, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4397, 1));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4396, 1));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4392, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4391, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4395, 3));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4401, 2));
+				npc.doSimultaneousCast(SkillData.getInstance().getInfo(4400, 2));
 				htmltext = "pet_skill_info.htm";
 			}
 			else

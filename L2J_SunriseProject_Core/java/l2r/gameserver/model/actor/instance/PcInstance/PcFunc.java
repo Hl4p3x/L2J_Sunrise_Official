@@ -20,8 +20,10 @@ package l2r.gameserver.model.actor.instance.PcInstance;
 
 import l2r.Config;
 import l2r.gameserver.SevenSigns;
+import l2r.gameserver.enums.QuickVarType;
 import l2r.gameserver.enums.ZoneIdType;
 import l2r.gameserver.instancemanager.InstanceManager;
+import l2r.gameserver.instancemanager.KrateiCubeManager;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.entity.Instance;
 import l2r.gameserver.model.entity.olympiad.OlympiadManager;
@@ -113,6 +115,13 @@ public class PcFunc
 		
 		if (target.isFestivalParticipant() || target.isFlyingMounted() || target.isCombatFlagEquipped())
 		{
+			activeChar.sendPacket(SystemMessageId.YOUR_TARGET_IS_IN_AN_AREA_WHICH_BLOCKS_SUMMONING);
+			return false;
+		}
+		
+		if (KrateiCubeManager.getInstance().isInProgress(target.getQuickVarI(QuickVarType.KRATEI_CUBE_LVL.getCommand(), -1)) && KrateiCubeManager.getInstance().isKrateiParticipant(target))
+		{
+			KrateiCubeManager.getInstance().setCanReward(target, false);
 			activeChar.sendPacket(SystemMessageId.YOUR_TARGET_IS_IN_AN_AREA_WHICH_BLOCKS_SUMMONING);
 			return false;
 		}

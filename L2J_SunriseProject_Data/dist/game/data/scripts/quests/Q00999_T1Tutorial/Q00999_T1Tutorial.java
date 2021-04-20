@@ -541,11 +541,11 @@ public class Q00999_T1Tutorial extends Quest
 					st.giveItems(gift1, count1);
 					if (gift1 == SPIRITSHOT_NOVICE)
 					{
-						playSound(player, Voice.TUTORIAL_VOICE_017_1000);
+						playSound(player, Voice.TUTORIAL_VOICE_027_1000);
 					}
 					else
 					{
-						playSound(player, Voice.TUTORIAL_VOICE_016_1000);
+						playSound(player, Voice.TUTORIAL_VOICE_026_1000);
 					}
 				}
 				else if (player.getClassId().getId() == classId2)
@@ -553,7 +553,7 @@ public class Q00999_T1Tutorial extends Quest
 					if (gift2 != 0)
 					{
 						st.giveItems(gift2, count2);
-						playSound(player, Voice.TUTORIAL_VOICE_016_1000);
+						playSound(player, Voice.TUTORIAL_VOICE_026_1000);
 					}
 				}
 				st.set("step", "4");

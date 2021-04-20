@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015 L2J Server
+ * Copyright (C) 2004-2016 L2J Server
  * 
  * This file is part of L2J Server.
  * 
@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import l2r.Config;
 import l2r.gameserver.model.actor.L2Attackable;
 import l2r.gameserver.model.actor.L2Character;
-import l2r.gameserver.model.actor.templates.L2NpcTemplate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +43,11 @@ public final class DecayTaskManager
 	private final ScheduledExecutorService _decayExecutor = Executors.newSingleThreadScheduledExecutor();
 	
 	protected final Map<L2Character, ScheduledFuture<?>> _decayTasks = new ConcurrentHashMap<>();
+	
+	public void add(L2Character character, long delay)
+	{
+		add(character, delay, TimeUnit.MILLISECONDS);
+	}
 	
 	/**
 	 * Adds a decay task for the specified character.<br>
@@ -61,9 +65,9 @@ public final class DecayTaskManager
 			}
 			
 			long delay;
-			if (character.getTemplate() instanceof L2NpcTemplate)
+			if (character.isRaid() && !character.isRaidMinion())
 			{
-				delay = ((L2NpcTemplate) character.getTemplate()).getCorpseTime();
+				delay = Config.RAID_BOSS_DECAY_TIME;
 			}
 			else
 			{

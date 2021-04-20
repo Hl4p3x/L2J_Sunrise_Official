@@ -85,12 +85,18 @@ public abstract class Chamber extends AbstractInstance
 		
 		protected void stopBanishTask()
 		{
-			_banishTask.cancel(true);
+			if (_banishTask != null)
+			{
+				_banishTask.cancel(true);
+			}
 		}
 		
 		protected void stopRoomChangeTask()
 		{
-			_roomChangeTask.cancel(true);
+			if (_roomChangeTask != null)
+			{
+				_roomChangeTask.cancel(true);
+			}
 		}
 		
 		protected class BanishTask implements Runnable

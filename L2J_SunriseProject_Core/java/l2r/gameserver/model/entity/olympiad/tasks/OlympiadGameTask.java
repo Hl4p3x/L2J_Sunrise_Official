@@ -18,13 +18,16 @@
  */
 package l2r.gameserver.model.entity.olympiad.tasks;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
 
 import l2r.Config;
 import l2r.gameserver.ThreadPoolManager;
 import l2r.gameserver.model.entity.olympiad.AbstractOlympiadGame;
 import l2r.gameserver.model.entity.olympiad.OlympiadGameManager;
+import l2r.gameserver.model.entity.olympiad.Participant;
 import l2r.gameserver.model.entity.olympiad.enums.BattleStatus;
 import l2r.gameserver.model.zone.type.L2OlympiadStadiumZone;
 import l2r.gameserver.network.SystemMessageId;
@@ -95,6 +98,8 @@ public final class OlympiadGameTask implements Runnable
 	private BattleStatus _state = BattleStatus.IDLE;
 	private boolean _needAnnounce = false;
 	private int _countDown = 0;
+	
+	private ScheduledFuture<?> _CheckParticipantsThread = null;
 	
 	public OlympiadGameTask(L2OlympiadStadiumZone zone)
 	{
@@ -413,11 +418,20 @@ public final class OlympiadGameTask implements Runnable
 				_game.announceGame();
 			}
 			
+			if (Config.ENABLE_AUTO_CORRECT_LOCATION)
+			{
+				_CheckParticipantsThread = ThreadPoolManager.getInstance().scheduleGeneralAtFixedRate(new CheckParticipantsLocation(_game.getParticipants(), _zone.getSpawns().get(0).getZ()), 5000, 5000);
+			}
+			
 			OlympiadGameManager.getInstance().startBattle(); // inform manager
 			return true;
 		}
 		catch (Exception e)
 		{
+			if (_CheckParticipantsThread != null)
+			{
+				_CheckParticipantsThread.cancel(true);
+			}
 			_log.warn(e.getMessage(), e);
 		}
 		return false;
@@ -496,6 +510,11 @@ public final class OlympiadGameTask implements Runnable
 	 */
 	private final void stopGame()
 	{
+		if (_CheckParticipantsThread != null)
+		{
+			_CheckParticipantsThread.cancel(true);
+		}
+		
 		if (_game._hasEnded)
 		{
 			return;
@@ -570,6 +589,32 @@ public final class OlympiadGameTask implements Runnable
 		catch (Exception e)
 		{
 			_log.warn(e.getMessage(), e);
+		}
+	}
+	
+	private class CheckParticipantsLocation implements Runnable
+	{
+		private List<Participant> _participantsList = new ArrayList<>();
+		private final int _Z;
+		
+		public CheckParticipantsLocation(List<Participant> participants, int z)
+		{
+			_participantsList = participants;
+			_Z = z;
+		}
+		
+		@Override
+		public void run()
+		{
+			_participantsList.forEach(p ->
+			{
+				int currentZ = p.getPlayer().getLocation().getZ();
+				
+				if (Math.abs(_Z - currentZ) > 200)
+				{
+					p.getPlayer().teleToLocation(p._arenaLocation, false);
+				}
+			});
 		}
 	}
 }

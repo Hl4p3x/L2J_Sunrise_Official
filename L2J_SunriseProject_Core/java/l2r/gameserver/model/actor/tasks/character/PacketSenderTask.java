@@ -58,7 +58,7 @@ public class PacketSenderTask
 	
 	public static void updateAndBroadcastStatus(L2PcInstance player, boolean fullUpdate)
 	{
-		player.refreshOverloaded(false);
+		player.getInventory().refreshWeight();
 		player.refreshExpertisePenalty(false);
 		
 		if (player.entering)

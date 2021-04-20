@@ -19,8 +19,7 @@
 package l2r.gameserver.enums;
 
 /**
- * Creature races enumerated.
- * @author Zealar
+ * @author vGodFather
  */
 public enum Race
 {
@@ -30,22 +29,24 @@ public enum Race
 	ORC,
 	DWARF,
 	KAMAEL,
-	ANIMAL,
+	UNDEAD,
+	MAGICCREATURE,
 	BEAST,
-	BUG,
-	CASTLE_GUARD,
-	CONSTRUCT,
-	DEMONIC,
-	DIVINE,
-	DRAGON,
-	ELEMENTAL,
-	ETC,
-	FAIRY,
-	GIANT,
-	HUMANOID,
-	MERCENARY,
-	NONE,
+	ANIMAL,
 	PLANT,
-	SIEGE_WEAPON,
-	UNDEAD;
+	HUMANOID,
+	SPIRIT,
+	ANGEL,
+	DEMON,
+	DRAGON,
+	GIANT,
+	BUG,
+	FAIRIE,
+	OTHER,
+	NONLIVING,
+	SIEGEWEAPON,
+	DEFENDINGARMY,
+	MERCENARIE,
+	UNKNOWN,
+	NONE
 }

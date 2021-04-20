@@ -309,4 +309,21 @@ public class L2EffectZone extends L2ZoneType
 			}
 		}
 	}
+	
+	public void startNow()
+	{
+		if (_skills != null)
+		{
+			if (getSettings().getTask() == null)
+			{
+				synchronized (this)
+				{
+					if (getSettings().getTask() == null)
+					{
+						getSettings().setTask(ThreadPoolManager.getInstance().scheduleGeneralAtFixedRate(new ApplySkill(), _initialDelay, _reuse));
+					}
+				}
+			}
+		}
+	}
 }

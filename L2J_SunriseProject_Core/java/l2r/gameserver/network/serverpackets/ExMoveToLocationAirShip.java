@@ -18,21 +18,20 @@
  */
 package l2r.gameserver.network.serverpackets;
 
+import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.L2Character;
 
 public class ExMoveToLocationAirShip extends L2GameServerPacket
 {
-	private final int _objId, _tx, _ty, _tz, _x, _y, _z;
+	private final int _objId;
+	
+	private final Location _origin, _destination;
 	
 	public ExMoveToLocationAirShip(L2Character cha)
 	{
 		_objId = cha.getObjectId();
-		_tx = cha.getXdestination();
-		_ty = cha.getYdestination();
-		_tz = cha.getZdestination();
-		_x = cha.getX();
-		_y = cha.getY();
-		_z = cha.getZ();
+		_origin = cha.getLocation();
+		_destination = cha.getDestination();
 	}
 	
 	@Override
@@ -42,11 +41,12 @@ public class ExMoveToLocationAirShip extends L2GameServerPacket
 		writeH(0x65);
 		
 		writeD(_objId);
-		writeD(_tx);
-		writeD(_ty);
-		writeD(_tz);
-		writeD(_x);
-		writeD(_y);
-		writeD(_z);
+		
+		writeD(_destination.getX());
+		writeD(_destination.getY());
+		writeD(_destination.getZ());
+		writeD(_origin.getX());
+		writeD(_origin.getY());
+		writeD(_origin.getZ());
 	}
 }

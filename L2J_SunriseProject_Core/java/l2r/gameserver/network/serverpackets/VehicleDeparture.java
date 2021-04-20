@@ -18,6 +18,7 @@
  */
 package l2r.gameserver.network.serverpackets;
 
+import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.instance.L2BoatInstance;
 
 /**
@@ -25,7 +26,8 @@ import l2r.gameserver.model.actor.instance.L2BoatInstance;
  */
 public class VehicleDeparture extends L2GameServerPacket
 {
-	private final int _objId, _x, _y, _z, _moveSpeed, _rotationSpeed;
+	private final int _objId, _moveSpeed, _rotationSpeed;
+	private final Location _loc;
 	
 	/**
 	 * @param boat
@@ -33,9 +35,7 @@ public class VehicleDeparture extends L2GameServerPacket
 	public VehicleDeparture(L2BoatInstance boat)
 	{
 		_objId = boat.getObjectId();
-		_x = boat.getXdestination();
-		_y = boat.getYdestination();
-		_z = boat.getZdestination();
+		_loc = boat.getDestination();
 		_moveSpeed = (int) boat.getMoveSpeed();
 		_rotationSpeed = (int) boat.getStat().getRotationSpeed();
 	}
@@ -47,9 +47,8 @@ public class VehicleDeparture extends L2GameServerPacket
 		writeD(_objId);
 		writeD(_moveSpeed);
 		writeD(_rotationSpeed);
-		writeD(_x);
-		writeD(_y);
-		writeD(_z);
-		
+		writeD(_loc.getX());
+		writeD(_loc.getY());
+		writeD(_loc.getZ());
 	}
 }

@@ -176,6 +176,16 @@ public class L2GameClient extends MMOClient<MMOConnection<L2GameClient>>
 		return _addr;
 	}
 	
+	public void setConnectionAddress(InetAddress address)
+	{
+		_addr = address;
+	}
+	
+	public InetAddress getInetAddress()
+	{
+		return _addr;
+	}
+	
 	public long getConnectionStartTime()
 	{
 		return _connectionStartTime;
@@ -767,7 +777,7 @@ public class L2GameClient extends MMOClient<MMOConnection<L2GameClient>>
 	{
 		try
 		{
-			final InetAddress address = getConnection().getInetAddress();
+			final InetAddress address = getInetAddress();
 			switch (getState())
 			{
 				case CONNECTED:

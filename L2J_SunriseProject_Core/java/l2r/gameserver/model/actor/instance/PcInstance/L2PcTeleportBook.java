@@ -4,13 +4,19 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import l2r.gameserver.GameTimeController;
+import l2r.gameserver.ThreadPoolManager;
 import l2r.gameserver.dao.factory.impl.DAOFactory;
+import l2r.gameserver.enums.CtrlIntention;
 import l2r.gameserver.enums.ZoneIdType;
 import l2r.gameserver.model.TeleportBookmark;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.network.SystemMessageId;
 import l2r.gameserver.network.serverpackets.ExGetBookMarkInfoPacket;
+import l2r.gameserver.network.serverpackets.MagicSkillUse;
+import l2r.gameserver.network.serverpackets.SetupGauge;
 import l2r.gameserver.network.serverpackets.SystemMessage;
+import l2r.gameserver.util.Broadcast;
 
 import gr.sr.player.PcExtention;
 
@@ -88,9 +94,50 @@ public class L2PcTeleportBook extends PcExtention
 		if (bookmark != null)
 		{
 			getChar().destroyItem("Consume", getChar().getInventory().getItemByItemId(consumableScroll).getObjectId(), 1, null, false);
-			getChar().teleToLocation(bookmark, false);
+			// getChar().teleToLocation(bookmark, false);
+			
+			getChar().forceIsCasting(GameTimeController.getInstance().getGameTicks() + (20000 / GameTimeController.MILLIS_IN_TICK));
+			
+			getChar().getAI().setIntention(CtrlIntention.AI_INTENTION_IDLE);
+			
+			getChar().setTarget(getChar());
+			getChar().disableAllSkills();
+			
+			MagicSkillUse msk = new MagicSkillUse(getChar(), 2588, 1, 20000, 0);
+			Broadcast.toSelfAndKnownPlayersInRadius(getChar(), msk, 900);
+			SetupGauge sg = new SetupGauge(SetupGauge.BLUE, 20000);
+			getChar().sendPacket(sg);
+			
+			// continue execution later
+			getChar().setSkillCast(ThreadPoolManager.getInstance().scheduleGeneral(new EscapeFinalizer(getChar(), bookmark), 20000));
 		}
 		getChar().sendPacket(new ExGetBookMarkInfoPacket(getChar()));
+	}
+	
+	private static class EscapeFinalizer implements Runnable
+	{
+		private final L2PcInstance _activeChar;
+		private final TeleportBookmark _bookmark;
+		
+		protected EscapeFinalizer(L2PcInstance activeChar, TeleportBookmark bookmark)
+		{
+			_activeChar = activeChar;
+			_bookmark = bookmark;
+		}
+		
+		@Override
+		public void run()
+		{
+			if (_activeChar.isDead())
+			{
+				return;
+			}
+			
+			_activeChar.setIsIn7sDungeon(false);
+			_activeChar.enableAllSkills();
+			_activeChar.setIsCastingNow(false);
+			_activeChar.teleToLocation(_bookmark, false);
+		}
 	}
 	
 	public boolean teleportBookmarkCondition(int type)

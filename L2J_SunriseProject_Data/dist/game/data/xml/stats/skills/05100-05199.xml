@@ -133,10 +133,10 @@
 		<set name="magicLvl" val="70" />
 		<set name="offensive" val="true" />
 		<set name="operateType" val="A1" />
-		<set name="power" val="68" />
+		<set name="power" val="20400" />
 		<set name="reuseDelay" val="10500" />
 		<set name="skillType" val="PDAM" />
-		<set name="targetType" val="AREA" />
+		<set name="targetType" val="ONE" />
 		<cond msgId="113" addName="1">
 			<and>
 				<!-- FIXME: This condition is a hack fix, until support for retail target system is done -->
@@ -159,10 +159,10 @@
 		<set name="magicLvl" val="70" />
 		<set name="offensive" val="true" />
 		<set name="operateType" val="A1" />
-		<set name="power" val="68" />
+		<set name="power" val="20400" />
 		<set name="reuseDelay" val="10500" />
 		<set name="skillType" val="PDAM" />
-		<set name="targetType" val="AREA" />
+		<set name="targetType" val="ONE" />
 		<cond msgId="113" addName="1">
 			<and>
 				<!-- FIXME: This condition is a hack fix, until support for retail target system is done -->

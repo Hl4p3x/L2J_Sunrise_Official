@@ -526,9 +526,7 @@ public final class RequestAcquireSkill extends L2GameClientPacket
 					player.setSp(player.getSp() - levelUpSp);
 					final StatusUpdate su = player.makeStatusUpdate(StatusUpdate.SP);
 					player.sendPacket(su);
-					
-					// vGodFather: broadcast with low priority
-					player.sendUserInfo(false);
+					player.sendUserInfo(true);
 				}
 				return true;
 			}

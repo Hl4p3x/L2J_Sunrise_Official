@@ -12673,7 +12673,6 @@
 		<skill skillName="Dryad Root" skillId="1201" skillLvl="26" getLevel="60" levelUpSp="231000" learnedByNpc="true" />
 		<skill skillName="Word of Fear" skillId="1272" skillLvl="6" getLevel="60" levelUpSp="231000" learnedByNpc="true" />
 		<skill skillName="Concentration" skillId="1078" skillLvl="5" getLevel="60" levelUpSp="231000" learnedByNpc="true" />
-		<skill skillName="Resist Earth" skillId="1548" skillLvl="1" getLevel="60" levelUpSp="231000" learnedByNpc="true" />
 		<skill skillName="Resist Poison" skillId="1033" skillLvl="1" getLevel="60" levelUpSp="231000" learnedByNpc="true" />
 		<skill skillName="Erase" skillId="1395" skillLvl="3" getLevel="60" levelUpSp="231000" learnedByNpc="true" />
 		<skill skillName="Mana Burn" skillId="1398" skillLvl="3" getLevel="60" levelUpSp="231000" learnedByNpc="true" />
@@ -12709,7 +12708,6 @@
 		<skill skillName="Dryad Root" skillId="1201" skillLvl="28" getLevel="64" levelUpSp="370000" learnedByNpc="true" />
 		<skill skillName="Word of Fear" skillId="1272" skillLvl="8" getLevel="64" levelUpSp="370000" learnedByNpc="true" />
 		<skill skillName="Bless the Body" skillId="1045" skillLvl="5" getLevel="64" levelUpSp="370000" learnedByNpc="true" />
-		<skill skillName="Resist Earth" skillId="1548" skillLvl="2" getLevel="64" levelUpSp="370000" learnedByNpc="true" />
 		<skill skillName="Resist Poison" skillId="1033" skillLvl="2" getLevel="64" levelUpSp="370000" learnedByNpc="true" />
 		<skill skillName="Erase" skillId="1395" skillLvl="5" getLevel="64" levelUpSp="370000" learnedByNpc="true" />
 		<skill skillName="Mana Burn" skillId="1398" skillLvl="5" getLevel="64" levelUpSp="370000" learnedByNpc="true" />
@@ -12749,7 +12747,6 @@
 		<skill skillName="Dryad Root" skillId="1201" skillLvl="30" getLevel="68" levelUpSp="640000" learnedByNpc="true" />
 		<skill skillName="Word of Fear" skillId="1272" skillLvl="10" getLevel="68" levelUpSp="640000" learnedByNpc="true" />
 		<skill skillName="Concentration" skillId="1078" skillLvl="6" getLevel="68" levelUpSp="640000" learnedByNpc="true" />
-		<skill skillName="Resist Earth" skillId="1548" skillLvl="3" getLevel="68" levelUpSp="640000" learnedByNpc="true" />
 		<skill skillName="Resist Poison" skillId="1033" skillLvl="3" getLevel="68" levelUpSp="640000" learnedByNpc="true" />
 		<skill skillName="Erase" skillId="1395" skillLvl="7" getLevel="68" levelUpSp="640000" learnedByNpc="true" />
 		<skill skillName="Mana Burn" skillId="1398" skillLvl="7" getLevel="68" levelUpSp="640000" learnedByNpc="true" />

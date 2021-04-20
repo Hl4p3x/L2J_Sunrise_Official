@@ -18,6 +18,7 @@
  */
 package l2r.gameserver.network.serverpackets;
 
+import l2r.Config;
 import l2r.gameserver.model.L2Object;
 import l2r.gameserver.model.Location;
 import l2r.gameserver.model.interfaces.ILocational;
@@ -46,7 +47,7 @@ public final class TeleportToLocation extends L2GameServerPacket
 		writeD(_targetObjId);
 		writeD(_loc.getX());
 		writeD(_loc.getY());
-		writeD(_loc.getZ() + 16);
+		writeD(_loc.getZ() + Config.CLIENT_SHIFTZ);
 		writeD(0x00); // IsValidation
 		writeD(_loc.getHeading());
 	}

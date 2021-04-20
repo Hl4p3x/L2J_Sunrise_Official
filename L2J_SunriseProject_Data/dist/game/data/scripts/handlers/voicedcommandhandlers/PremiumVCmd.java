@@ -50,7 +50,7 @@ public class PremiumVCmd implements IVoicedCommandHandler
 			Map<Integer, Float> prSpecialDropMap = PremiumServiceConfigs.PR_RATE_DROP_ITEMS_ID;
 			
 			// get normal drop map
-			Map<Integer, Float> normalSpecialDropMap = Config.RATE_DROP_AMOUNT_MULTIPLIER;
+			Map<Integer, Float> normalSpecialDropMap = Config.RATE_DROP_ITEMS_ID;
 			
 			// get pr adena multiplier from pr map (57 is adena item id)
 			float PrAdenaMultiplier = prSpecialDropMap.get(57);
@@ -80,14 +80,14 @@ public class PremiumVCmd implements IVoicedCommandHandler
 				html3.append("<tr><td><center>Details<br1></td></tr>");
 				html3.append("<tr><td>Rate EXP: <font color=\"00A5FF\">x" + Math.round(Config.RATE_XP) + "<br1></font></td></tr>");
 				html3.append("<tr><td>Rate SP: <font color=\"00A5FF\">x" + Math.round(Config.RATE_SP) + "<br1></font></td></tr>");
-				html3.append("<tr><td>Rate Drop: <font color=\"00A5FF\">x" + Math.round(Config.RATE_DEATH_DROP_AMOUNT_MULTIPLIER) + "<br1></font></td></tr>");
+				html3.append("<tr><td>Rate Drop: <font color=\"00A5FF\">x" + Math.round(Config.RATE_DROP_ITEMS) + "<br1></font></td></tr>");
 				html3.append("<tr><td>Rate Adena: <font color=\"00A5FF\">x" + Math.round(normalAdenaMultiplier) + "<br1></font></td></tr><br>");
 				html3.append("<tr><td>Expires: <font color=\"00A5FF\">Never (Normal Account)<br1></font></td></tr>");
 				html3.append("<tr><td>Current Date: <font color=\"70FFCA\">" + String.valueOf(format.format(System.currentTimeMillis())) + " <br><br></font></td></tr><br><br1><br1>");
 				html3.append("<tr><td>Upgrade to Premium Account: <font color=\"70FFCA\"> http://www.l2sunrise.eu</font></td></tr>");
 				html3.append("<tr><td>Rate EXP: <font color=\"LEVEL\">x" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_XP) + " (+" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_XP - Config.RATE_XP) + ")<br1></font></td></tr>");
 				html3.append("<tr><td>Rate SP: <font color=\"LEVEL\">x" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_SP) + " (+" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_SP - Config.RATE_SP) + ")<br1></font></td></tr>");
-				html3.append("<tr><td>Rate Drop: <font color=\"LEVEL\">x" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_DROP_ITEMS) + " (+" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_DROP_ITEMS - Config.RATE_DEATH_DROP_AMOUNT_MULTIPLIER) + ")<br1></font></td></tr>");
+				html3.append("<tr><td>Rate Drop: <font color=\"LEVEL\">x" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_DROP_ITEMS) + " (+" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_DROP_ITEMS - Config.RATE_DROP_ITEMS) + ")<br1></font></td></tr>");
 				html3.append("<tr><td>Rate Adena: <font color=\"LEVEL\">x" + PrAdenaDrop + " (+" + PrAdenaDropDiff + "%)<br1></font></td></tr><br>");
 				html3.append("<tr><td>Buffer: <font color=\"LEVEL\">Unique .buffer command<br1></font></td></tr>");
 				html3.append("<tr><td>Premium Buffs: <font color=\"LEVEL\">Enchanted buffs from npc buffers and " + Math.round(prBuffScheme - normalBuffScheme) + " extra buff schemes<br1><br></font></td></tr>");
@@ -113,7 +113,7 @@ public class PremiumVCmd implements IVoicedCommandHandler
 				html3.append("<tr><td><center>Account Type:<font color=\"LEVEL\"> Premium<br></font></td></tr>");
 				html3.append("<tr><td>Rate EXP: <font color=\"LEVEL\">x" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_XP) + " (+" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_XP - Config.RATE_XP) + ")<br1></font></td></tr>");
 				html3.append("<tr><td>Rate SP: <font color=\"LEVEL\">x" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_SP) + " (+" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_SP - Config.RATE_SP) + ")<br1></font></td></tr>");
-				html3.append("<tr><td>Rate Drop: <font color=\"LEVEL\">x" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_DROP_ITEMS) + " (+" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_DROP_ITEMS - Config.RATE_DEATH_DROP_AMOUNT_MULTIPLIER) + ")<br1></font></td></tr>");
+				html3.append("<tr><td>Rate Drop: <font color=\"LEVEL\">x" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_DROP_ITEMS) + " (+" + Math.round(PremiumServiceConfigs.PREMIUM_RATE_DROP_ITEMS - Config.RATE_DROP_ITEMS) + ")<br1></font></td></tr>");
 				html3.append("<tr><td>Rate Adena: <font color=\"LEVEL\">x" + PrAdenaDrop + " (+" + PrAdenaDropDiff + "%)<br1></font></td></tr><br>");
 				html3.append("<tr><td>Buffer: <font color=\"LEVEL\">Unique .buffer command<br1></font></td></tr>");
 				html3.append("<tr><td>Premium Buffs: <font color=\"LEVEL\">Enchanted buffs from npc buffers and " + Math.round(prBuffScheme - normalBuffScheme) + " extra buff schemes<br1></font></td></tr>");

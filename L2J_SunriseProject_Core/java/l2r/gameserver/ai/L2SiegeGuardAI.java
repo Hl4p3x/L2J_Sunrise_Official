@@ -395,7 +395,7 @@ public class L2SiegeGuardAI extends L2CharacterAI implements Runnable
 	{
 		L2Character target = getAttackTarget();
 		// Call all L2Object of its Faction inside the Faction Range
-		if ((((L2Npc) _actor).getTemplate().getClans() == null) || (target == null))
+		if ((((L2Npc) _actor).getClans() == null) || (target == null))
 		{
 			return;
 		}
@@ -448,7 +448,7 @@ public class L2SiegeGuardAI extends L2CharacterAI implements Runnable
 							
 							L2Object OldTarget = _actor.getTarget();
 							_actor.setTarget(cha);
-							clientStopMoving(null);
+							_actor.stopMove();
 							_actor.doCast(sk);
 							_actor.setTarget(OldTarget);
 							return;
@@ -505,7 +505,7 @@ public class L2SiegeGuardAI extends L2CharacterAI implements Runnable
 					
 					L2Object OldTarget = _actor.getTarget();
 					_actor.setTarget(npc);
-					clientStopMoving(null);
+					npc.stopMove();
 					_actor.doCast(sk);
 					_actor.setTarget(OldTarget);
 					return;
@@ -597,7 +597,7 @@ public class L2SiegeGuardAI extends L2CharacterAI implements Runnable
 						}
 					}
 					
-					clientStopMoving(null);
+					npc.stopMove();
 					_actor.doCast(sk);
 					_actor.setTarget(OldTarget);
 					return;
@@ -716,7 +716,7 @@ public class L2SiegeGuardAI extends L2CharacterAI implements Runnable
 							}
 						}
 						
-						clientStopMoving(null);
+						npc.stopMove();
 						_actor.doCast(sk);
 						_actor.setTarget(OldTarget);
 						return;

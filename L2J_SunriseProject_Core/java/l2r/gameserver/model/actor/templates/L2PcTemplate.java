@@ -82,6 +82,7 @@ public class L2PcTemplate extends L2CharTemplate
 		_fCollisionHeightFemale = set.getDouble("collisionFemaleheight");
 		
 		_baseSafeFallHeight = set.getInt("baseSafeFall", 333);
+		
 		_creationPoints = creationPoints;
 	}
 	

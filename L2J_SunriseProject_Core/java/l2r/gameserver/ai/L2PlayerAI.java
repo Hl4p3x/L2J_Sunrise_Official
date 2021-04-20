@@ -18,6 +18,7 @@
  */
 package l2r.gameserver.ai;
 
+import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_ACTIVE;
 import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_ATTACK;
 import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_CAST;
 import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_IDLE;
@@ -167,14 +168,23 @@ public class L2PlayerAI extends L2PlayableAI
 			{
 				setAttackTarget(null);
 			}
-			clientStopMoving(null);
+			clientStopMoving();
 		}
 	}
 	
 	@Override
 	protected void onIntentionActive()
 	{
-		setIntention(AI_INTENTION_IDLE);
+		// Check if the Intention is not already Active
+		if (getIntention() != AI_INTENTION_ACTIVE)
+		{
+			// Set the AI Intention to AI_INTENTION_ACTIVE
+			changeIntention(AI_INTENTION_ACTIVE, null, null);
+			
+			// Init cast and attack target
+			setCastTarget(null);
+			setAttackTarget(null);
+		}
 	}
 	
 	/**
@@ -226,9 +236,6 @@ public class L2PlayerAI extends L2PlayableAI
 	@Override
 	protected void clientNotifyDead()
 	{
-		_clientMovingToPawnOffset = 0;
-		_clientMoving = false;
-		
 		super.clientNotifyDead();
 	}
 	
@@ -250,7 +257,7 @@ public class L2PlayerAI extends L2PlayableAI
 			return;
 		}
 		
-		clientStopMoving(null);
+		clientStopMoving(false);
 		_actor.doAttack(target);
 	}
 	
@@ -259,6 +266,12 @@ public class L2PlayerAI extends L2PlayableAI
 		L2Character target = getCastTarget();
 		if ((_skill.getTargetType() == L2TargetType.GROUND) && (_actor instanceof L2PcInstance))
 		{
+			if (!GeoData.getInstance().canMove(_actor, ((L2PcInstance) _actor).getCurrentSkillWorldPosition()))
+			{
+				_actor.setIsCastingNow(false);
+				return;
+			}
+			
 			if (maybeMoveToPosition(((L2PcInstance) _actor).getCurrentSkillWorldPosition(), _actor.getMagicalAttackRange(_skill)))
 			{
 				_actor.setIsCastingNow(false);
@@ -277,14 +290,10 @@ public class L2PlayerAI extends L2PlayableAI
 				_actor.setIsCastingNow(false);
 				return;
 			}
-			if (target != null)
+			if ((target != null) && (_skill.getTargetType() != L2TargetType.HOLY) && (_skill.getTargetType() != L2TargetType.FLAGPOLE))
 			{
 				if (maybeMoveToPawn(target, _actor.getMagicalAttackRange(_skill)))
 				{
-					if (!GeoData.getInstance().canMove(_actor, target))
-					{
-						moveTo(GeoData.getInstance().moveCheck(_actor, target), 0);
-					}
 					_actor.setIsCastingNow(false);
 					return;
 				}
@@ -318,12 +327,10 @@ public class L2PlayerAI extends L2PlayableAI
 		{
 			return;
 		}
-		if (maybeMoveToPawn(target, 60))
+		
+		if (maybeMoveToPawn(target, 36))
 		{
-			if (_actor.isGM() && _actor.isDebug())
-			{
-				_actor.sendMessage("You are too far away trying to go closer to target: " + target);
-			}
+			moveToPawn(target, 20);
 			return;
 		}
 		setIntention(AI_INTENTION_IDLE);
@@ -336,15 +343,18 @@ public class L2PlayerAI extends L2PlayableAI
 		{
 			return;
 		}
-		L2Object target = getTarget();
+		
+		final L2Object target = getTarget();
 		if (checkTargetLost(target))
 		{
 			return;
 		}
-		if (maybeMoveToPawn(target, 36))
+		
+		if (maybeMoveToPawn(target, 60))
 		{
 			return;
 		}
+		
 		if (!(target instanceof L2StaticObjectInstance))
 		{
 			_actor.getActingPlayer().doInteract((L2Character) target);

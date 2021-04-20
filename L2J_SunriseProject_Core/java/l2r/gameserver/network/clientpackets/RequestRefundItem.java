@@ -22,6 +22,7 @@ import static l2r.gameserver.model.actor.L2Npc.INTERACTION_DISTANCE;
 
 import l2r.Config;
 import l2r.gameserver.data.xml.impl.BuyListData;
+import l2r.gameserver.enums.QuickVarType;
 import l2r.gameserver.model.L2Object;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.instance.L2MerchantInstance;
@@ -92,42 +93,42 @@ public final class RequestRefundItem extends L2GameClientPacket
 		}
 		
 		L2Object target = player.getTarget();
-		if (!player.isGM() && ((target == null) || !(target instanceof L2MerchantInstance) || (player.getInstanceId() != target.getInstanceId()) || !player.isInsideRadius(target, INTERACTION_DISTANCE, true, false)))
-		{
-			sendPacket(ActionFailed.STATIC_PACKET);
-			return;
-		}
-		
 		L2Character merchant = null;
-		if (target instanceof L2MerchantInstance)
+		if (!player.containsQuickVar(QuickVarType.COMMUNITY_SELL.getCommand()))
 		{
-			merchant = (L2Character) target;
-		}
-		else if (!player.isGM())
-		{
-			sendPacket(ActionFailed.STATIC_PACKET);
-			return;
+			if ((target == null) || (!player.isInsideRadius(target, INTERACTION_DISTANCE, true, false)) // Distance is too far)
+			|| (player.getInstanceId() != target.getInstanceId()))
+			{
+				sendPacket(ActionFailed.STATIC_PACKET);
+				return;
+			}
+			if (target instanceof L2MerchantInstance)
+			{
+				merchant = (L2Character) target;
+			}
+			else
+			{
+				sendPacket(ActionFailed.STATIC_PACKET);
+				return;
+			}
 		}
 		
 		double taxRate = 0;
 		
-		if (merchant == null)
-		{
-			sendPacket(ActionFailed.STATIC_PACKET);
-			return;
-		}
-		
 		final L2BuyList buyList = BuyListData.getInstance().getBuyList(_listId);
-		if (buyList == null)
+		if ((buyList == null) && (_listId != 1) && !player.containsQuickVar(QuickVarType.COMMUNITY_SELL.getCommand()))
 		{
 			Util.handleIllegalPlayerAction(player, "Warning!! Character " + player.getName() + " of account " + player.getAccountName() + " sent a false BuyList list_id " + _listId, Config.DEFAULT_PUNISH);
 			return;
 		}
 		
-		if (!buyList.isNpcAllowed(((L2MerchantInstance) merchant).getId()))
+		if (merchant instanceof L2MerchantInstance)
 		{
-			sendPacket(ActionFailed.STATIC_PACKET);
-			return;
+			if ((buyList == null) || !buyList.isNpcAllowed(((L2MerchantInstance) merchant).getId()))
+			{
+				sendPacket(ActionFailed.STATIC_PACKET);
+				return;
+			}
 		}
 		
 		long weight = 0;

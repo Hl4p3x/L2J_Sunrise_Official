@@ -18,599 +18,315 @@
  */
 package l2r.gameserver.data.sql;
 
-import java.io.File;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
 
 import l2r.Config;
+import l2r.L2DatabaseFactory;
+import l2r.gameserver.data.xml.impl.ItemData;
 import l2r.gameserver.data.xml.impl.SkillData;
 import l2r.gameserver.data.xml.impl.SkillLearnData;
+import l2r.gameserver.model.Elementals;
+import l2r.gameserver.model.L2DropData;
+import l2r.gameserver.model.L2MinionData;
+import l2r.gameserver.model.L2NpcAIData;
 import l2r.gameserver.model.StatsSet;
 import l2r.gameserver.model.actor.templates.L2NpcTemplate;
 import l2r.gameserver.model.base.ClassId;
-import l2r.gameserver.model.drops.DropListScope;
-import l2r.gameserver.model.drops.GeneralDropItem;
-import l2r.gameserver.model.drops.GroupedGeneralDropItem;
-import l2r.gameserver.model.drops.IDropItem;
-import l2r.gameserver.model.holders.MinionHolder;
-import l2r.gameserver.model.holders.SkillHolder;
 import l2r.gameserver.model.skills.L2Skill;
-import l2r.gameserver.util.Util;
-import l2r.util.data.xml.IXmlReader.IXmlReader;
+import l2r.gameserver.model.stats.BaseStats;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * NPC data parser.
- * @author NosBit
- */
-public class NpcTable implements IXmlReader
+public class NpcTable
 {
-	private final Map<Integer, L2NpcTemplate> _npcs = new ConcurrentHashMap<>();
-	private final Map<String, Integer> _clans = new ConcurrentHashMap<>();
-	private MinionData _minionData;
+	private static final Logger _log = LoggerFactory.getLogger(NpcTable.class);
 	
+	private static final Map<Integer, L2NpcTemplate> _npcs = new HashMap<>();
+	
+	// SQL Queries
+	private static final String SELECT_NPC_ALL = "SELECT * FROM npc ORDER BY id";
+	private static final String SELECT_NPC_BY_ID = "SELECT * FROM npc WHERE id = ?";
+	
+	private static final String SELECT_SKILLS_ALL = "SELECT * FROM npcskills ORDER BY npcid";
+	private static final String SELECT_SKILLS_BY_ID = "SELECT * FROM npcskills WHERE npcid = ?";
+	
+	private static final String SELECT_DROPLIST_ALL = "SELECT * FROM droplist ORDER BY mobId, chance DESC";
+	private static final String SELECT_DROPLIST_BY_ID = "SELECT * FROM droplist WHERE mobId = ? ORDER BY mobId, chance DESC";
+	
+	private static final String SELECT_NPC_AI_ALL = "SELECT * FROM npcaidata ORDER BY npcId";
+	private static final String SELECT_NPC_AI_BY_ID = "SELECT * FROM npcaidata WHERE npcId = ?";
+	
+	private static final String SELECT_NPC_ELEMENTALS_ALL = "SELECT * FROM npc_elementals ORDER BY npc_id";
+	private static final String SELECT_NPC_ELEMENTALS_BY_ID = "SELECT * FROM npc_elementals WHERE npc_id = ?";
+	
+	private static final String SELECT_MINION_ALL = "SELECT * FROM minions ORDER BY boss_id";
+	private static final String SELECT_MINION_BY_ID = "SELECT * FROM minions WHERE boss_id = ?";
+	
+	// Custom SQL queries
+	private static final String CUSTOM_SELECT_NPC_ALL = "SELECT * FROM custom_npc ORDER BY id";
+	private static final String CUSTOM_SELECT_NPC_BY_ID = "SELECT * FROM custom_npc WHERE id = ?";
+	
+	private static final String CUSTOM_SELECT_SKILLS_ALL = "SELECT * FROM custom_npcskills ORDER BY npcid";
+	private static final String CUSTOM_SELECT_SKILLS_BY_ID = "SELECT * FROM custom_npcskills WHERE npcid = ?";
+	
+	private static final String CUSTOM_SELECT_DROPLIST_ALL = "SELECT * FROM custom_droplist ORDER BY mobId, chance DESC";
+	private static final String CUSTOM_SELECT_DROPLIST_BY_ID = "SELECT * FROM custom_droplist WHERE mobId = ? ORDER BY mobId, chance DESC";
+	
+	private static final String CUSTOM_SELECT_NPC_AI_ALL = "SELECT * FROM custom_npcaidata ORDER BY npcId";
+	private static final String CUSTOM_SELECT_NPC_AI_BY_ID = "SELECT * FROM custom_npcaidata WHERE npcId = ?";
+	
+	private static final String CUSTOM_SELECT_NPC_ELEMENTALS_ALL = "SELECT * FROM custom_npc_elementals ORDER BY npc_id";
+	private static final String CUSTOM_SELECT_NPC_ELEMENTALS_BY_ID = "SELECT * FROM custom_npc_elementals WHERE npc_id = ?";
+	
+	/**
+	 * Instantiates a new npc table.
+	 */
 	protected NpcTable()
 	{
-		load();
+		_npcs.clear();
+		restoreNpcData();
 	}
 	
-	@Override
-	public synchronized void load()
+	/**
+	 * Restore npc data.
+	 */
+	private void restoreNpcData()
 	{
-		_minionData = new MinionData();
+		loadNpcs(0);
+		loadNpcsSkills(0);
+		loadNpcsDrop(0);
+		loadNpcsSkillLearn(0);
+		loadMinions(0);
+		loadNpcsAI(0);
+		loadNpcsElement(0);
+	}
+	
+	/**
+	 * Fill npc table.
+	 * @param NpcData the npc data
+	 * @throws Exception the exception
+	 */
+	private void fillNpcTable(ResultSet NpcData) throws Exception
+	{
+		StatsSet npcDat = new StatsSet();
+		int id = NpcData.getInt("id");
+		int idTemp = NpcData.getInt("idTemplate");
 		
-		parseDatapackDirectory("data/xml/stats/npcs", false);
-		LOGGER.info("{}: Loaded {} NPCs.", getClass().getSimpleName(), _npcs.size());
+		assert idTemp < 1000000;
 		
-		if (Config.CUSTOM_NPC_DATA)
+		npcDat.set("npcId", id);
+		npcDat.set("idTemplate", idTemp);
+		int level = NpcData.getInt("level");
+		npcDat.set("level", level);
+		npcDat.set("client_class", NpcData.getString("class"));
+		
+		npcDat.set("baseShldDef", 0);
+		npcDat.set("baseShldRate", 0);
+		npcDat.set("baseCritRate", NpcData.getInt("critical"));
+		
+		npcDat.set("name", NpcData.getString("name"));
+		npcDat.set("serverSideName", NpcData.getBoolean("serverSideName"));
+		npcDat.set("title", NpcData.getString("title"));
+		npcDat.set("serverSideTitle", NpcData.getBoolean("serverSideTitle"));
+		npcDat.set("collision_radius", NpcData.getDouble("collision_radius"));
+		npcDat.set("collision_height", NpcData.getDouble("collision_height"));
+		npcDat.set("sex", NpcData.getString("sex"));
+		npcDat.set("type", NpcData.getString("type"));
+		npcDat.set("baseAtkRange", NpcData.getInt("attackrange"));
+		npcDat.set("rewardExp", NpcData.getInt("exp"));
+		npcDat.set("rewardSp", NpcData.getInt("sp"));
+		npcDat.set("basePAtkSpd", NpcData.getInt("atkspd"));
+		npcDat.set("baseMAtkSpd", NpcData.getInt("matkspd"));
+		
+		npcDat.set("chestId", 0/* NpcData.getInt("chest") */);
+		npcDat.set("rhandId", NpcData.getInt("rhand"));
+		npcDat.set("lhandId", NpcData.getInt("lhand"));
+		npcDat.set("weaponEnchant", NpcData.getInt("enchant"));
+		
+		npcDat.set("baseWalkSpd", NpcData.getDouble("walkspd"));
+		npcDat.set("baseRunSpd", NpcData.getDouble("runspd"));
+		
+		// constants, until we have stats in DB
+		npcDat.safeSet("baseSTR", NpcData.getInt("str"), 0, BaseStats.MAX_STAT_VALUE, "Loading npc template id: " + NpcData.getInt("idTemplate"));
+		npcDat.safeSet("baseCON", NpcData.getInt("con"), 0, BaseStats.MAX_STAT_VALUE, "Loading npc template id: " + NpcData.getInt("idTemplate"));
+		npcDat.safeSet("baseDEX", NpcData.getInt("dex"), 0, BaseStats.MAX_STAT_VALUE, "Loading npc template id: " + NpcData.getInt("idTemplate"));
+		npcDat.safeSet("baseINT", NpcData.getInt("int"), 0, BaseStats.MAX_STAT_VALUE, "Loading npc template id: " + NpcData.getInt("idTemplate"));
+		npcDat.safeSet("baseWIT", NpcData.getInt("wit"), 0, BaseStats.MAX_STAT_VALUE, "Loading npc template id: " + NpcData.getInt("idTemplate"));
+		npcDat.safeSet("baseMEN", NpcData.getInt("men"), 0, BaseStats.MAX_STAT_VALUE, "Loading npc template id: " + NpcData.getInt("idTemplate"));
+		
+		npcDat.set("baseHpMax", NpcData.getDouble("hp"));
+		npcDat.set("baseCpMax", 0);
+		npcDat.set("baseMpMax", NpcData.getDouble("mp"));
+		npcDat.set("baseHpReg", NpcData.getFloat("hpreg") > 0 ? NpcData.getFloat("hpreg") : 1.5 + ((level - 1) / 10.0));
+		npcDat.set("baseMpReg", NpcData.getFloat("mpreg") > 0 ? NpcData.getFloat("mpreg") : 0.9 + (0.3 * ((level - 1) / 10.0)));
+		npcDat.set("basePAtk", NpcData.getInt("patk"));
+		npcDat.set("basePDef", NpcData.getInt("pdef"));
+		npcDat.set("baseMAtk", NpcData.getInt("matk"));
+		npcDat.set("baseMDef", NpcData.getInt("mdef"));
+		
+		npcDat.set("dropHerbGroup", NpcData.getInt("dropHerbGroup"));
+		
+		// Default element resists
+		npcDat.set("baseFireRes", 20);
+		npcDat.set("baseWindRes", 20);
+		npcDat.set("baseWaterRes", 20);
+		npcDat.set("baseEarthRes", 20);
+		npcDat.set("baseHolyRes", 20);
+		npcDat.set("baseDarkRes", 20);
+		
+		_npcs.put(id, new L2NpcTemplate(npcDat));
+	}
+	
+	/**
+	 * Reload npc.
+	 * @param id of the NPC to reload.
+	 */
+	public void reloadNpc(int id)
+	{
+		try
 		{
-			final int npcCount = _npcs.size();
-			parseDatapackDirectory("data/xml/stats/npcs/custom", true);
-			LOGGER.info("{}: Loaded {} custom NPCs.", getClass().getSimpleName(), (_npcs.size() - npcCount));
+			loadNpcs(id);
+			loadNpcsSkills(id);
+			loadNpcsDrop(id);
+			loadNpcsSkillLearn(id);
+			loadMinions(id);
+			loadNpcsAI(id);
+			loadNpcsElement(id);
 		}
-		
-		_minionData = null;
-		loadNpcsSkillLearn();
-	}
-	
-	@Override
-	public void parseDocument(Document doc, File f)
-	{
-		for (Node node = doc.getFirstChild(); node != null; node = node.getNextSibling())
+		catch (Exception e)
 		{
-			if ("list".equalsIgnoreCase(node.getNodeName()))
-			{
-				for (Node listNode = node.getFirstChild(); listNode != null; listNode = listNode.getNextSibling())
-				{
-					if ("npc".equalsIgnoreCase(listNode.getNodeName()))
-					{
-						NamedNodeMap attrs = listNode.getAttributes();
-						final StatsSet set = new StatsSet();
-						final int npcId = parseInteger(attrs, "id");
-						Map<String, Object> parameters = null;
-						Map<Integer, L2Skill> skills = null;
-						Set<Integer> clans = null;
-						Set<Integer> ignoreClanNpcIds = null;
-						Map<DropListScope, List<IDropItem>> dropLists = null;
-						set.set("id", npcId);
-						set.set("displayId", parseInteger(attrs, "displayId"));
-						set.set("level", parseByte(attrs, "level"));
-						set.set("type", parseString(attrs, "type"));
-						set.set("name", parseString(attrs, "name"));
-						set.set("usingServerSideName", parseBoolean(attrs, "usingServerSideName"));
-						set.set("title", parseString(attrs, "title"));
-						set.set("usingServerSideTitle", parseBoolean(attrs, "usingServerSideTitle"));
-						for (Node npcNode = listNode.getFirstChild(); npcNode != null; npcNode = npcNode.getNextSibling())
-						{
-							attrs = npcNode.getAttributes();
-							switch (npcNode.getNodeName().toLowerCase())
-							{
-								case "parameters":
-								{
-									if (parameters == null)
-									{
-										parameters = new HashMap<>();
-									}
-									
-									for (Node parametersNode = npcNode.getFirstChild(); parametersNode != null; parametersNode = parametersNode.getNextSibling())
-									{
-										attrs = parametersNode.getAttributes();
-										switch (parametersNode.getNodeName().toLowerCase())
-										{
-											case "param":
-											{
-												parameters.put(parseString(attrs, "name"), parseString(attrs, "value"));
-												break;
-											}
-											case "skill":
-											{
-												parameters.put(parseString(attrs, "name"), new SkillHolder(parseInteger(attrs, "id"), parseInteger(attrs, "level")));
-												break;
-											}
-											case "minions":
-											{
-												final List<MinionHolder> minions = new ArrayList<>(1);
-												for (Node minionsNode = parametersNode.getFirstChild(); minionsNode != null; minionsNode = minionsNode.getNextSibling())
-												{
-													if (minionsNode.getNodeName().equalsIgnoreCase("npc"))
-													{
-														attrs = minionsNode.getAttributes();
-														minions.add(new MinionHolder(parseInteger(attrs, "id"), parseInteger(attrs, "count"), parseInteger(attrs, "respawnTime"), parseInteger(attrs, "weightPoint")));
-													}
-												}
-												
-												if (!minions.isEmpty())
-												{
-													parameters.put(parseString(parametersNode.getAttributes(), "name"), minions);
-												}
-												
-												break;
-											}
-										}
-									}
-									break;
-								}
-								case "race":
-								case "sex":
-									set.set(npcNode.getNodeName(), npcNode.getTextContent().toUpperCase());
-									break;
-								case "equipment":
-								{
-									set.set("chestId", parseInteger(attrs, "chest"));
-									set.set("rhandId", parseInteger(attrs, "rhand"));
-									set.set("lhandId", parseInteger(attrs, "lhand"));
-									set.set("weaponEnchant", parseInteger(attrs, "weaponEnchant"));
-									break;
-								}
-								case "acquire":
-								{
-									set.set("expRate", parseDouble(attrs, "expRate"));
-									set.set("sp", parseDouble(attrs, "sp"));
-									set.set("raidPoints", parseDouble(attrs, "raidPoints"));
-									break;
-								}
-								case "stats":
-								{
-									set.set("baseSTR", parseInteger(attrs, "str"));
-									set.set("baseINT", parseInteger(attrs, "int"));
-									set.set("baseDEX", parseInteger(attrs, "dex"));
-									set.set("baseWIT", parseInteger(attrs, "wit"));
-									set.set("baseCON", parseInteger(attrs, "con"));
-									set.set("baseMEN", parseInteger(attrs, "men"));
-									for (Node statsNode = npcNode.getFirstChild(); statsNode != null; statsNode = statsNode.getNextSibling())
-									{
-										attrs = statsNode.getAttributes();
-										switch (statsNode.getNodeName().toLowerCase())
-										{
-											case "vitals":
-											{
-												set.set("baseHpMax", parseDouble(attrs, "hp"));
-												set.set("baseHpReg", parseDouble(attrs, "hpRegen"));
-												set.set("baseMpMax", parseDouble(attrs, "mp"));
-												set.set("baseMpReg", parseDouble(attrs, "mpRegen"));
-												break;
-											}
-											case "attack":
-											{
-												set.set("basePAtk", parseDouble(attrs, "physical"));
-												set.set("baseMAtk", parseDouble(attrs, "magical"));
-												set.set("baseRndDam", parseInteger(attrs, "random"));
-												set.set("baseCritRate", parseInteger(attrs, "critical"));
-												set.set("accuracy", parseDouble(attrs, "accuracy"));// TODO: Implement me
-												set.set("basePAtkSpd", parseInteger(attrs, "attackSpeed"));
-												set.set("reuseDelay", parseInteger(attrs, "reuseDelay"));// TODO: Implement me
-												set.set("baseAtkType", parseString(attrs, "type"));
-												set.set("baseAtkRange", parseInteger(attrs, "range"));
-												set.set("distance", parseInteger(attrs, "distance"));
-												set.set("width", parseInteger(attrs, "width"));
-												break;
-											}
-											case "defence":
-											{
-												set.set("basePDef", parseDouble(attrs, "physical"));
-												set.set("baseMDef", parseDouble(attrs, "magical"));
-												set.set("evasion", parseInteger(attrs, "evasion"));// TODO: Implement me
-												set.set("baseShldDef", parseInteger(attrs, "shield"));
-												set.set("baseShldRate", parseInteger(attrs, "shieldRate"));
-												break;
-											}
-											case "attribute":
-											{
-												for (Node attributeNode = statsNode.getFirstChild(); attributeNode != null; attributeNode = attributeNode.getNextSibling())
-												{
-													attrs = attributeNode.getAttributes();
-													switch (attributeNode.getNodeName().toLowerCase())
-													{
-														case "attack":
-														{
-															String attackAttributeType = parseString(attrs, "type");
-															switch (attackAttributeType.toUpperCase())
-															{
-																case "FIRE":
-																	set.set("baseFire", parseInteger(attrs, "value"));
-																	break;
-																case "WATER":
-																	set.set("baseWater", parseInteger(attrs, "value"));
-																	break;
-																case "WIND":
-																	set.set("baseWind", parseInteger(attrs, "value"));
-																	break;
-																case "EARTH":
-																	set.set("baseEarth", parseInteger(attrs, "value"));
-																	break;
-																case "DARK":
-																	set.set("baseDark", parseInteger(attrs, "value"));
-																	break;
-																case "HOLY":
-																	set.set("baseHoly", parseInteger(attrs, "value"));
-																	break;
-															}
-															break;
-														}
-														case "defence":
-														{
-															set.set("baseFireRes", parseInteger(attrs, "fire"));
-															set.set("baseWaterRes", parseInteger(attrs, "water"));
-															set.set("baseWindRes", parseInteger(attrs, "wind"));
-															set.set("baseEarthRes", parseInteger(attrs, "earth"));
-															set.set("baseHolyRes", parseInteger(attrs, "holy"));
-															set.set("baseDarkRes", parseInteger(attrs, "dark"));
-															set.set("baseElementRes", parseInteger(attrs, "default"));
-															break;
-														}
-													}
-												}
-												break;
-											}
-											case "speed":
-											{
-												for (Node speedNode = statsNode.getFirstChild(); speedNode != null; speedNode = speedNode.getNextSibling())
-												{
-													attrs = speedNode.getAttributes();
-													switch (speedNode.getNodeName().toLowerCase())
-													{
-														case "walk":
-														{
-															set.set("baseWalkSpd", parseDouble(attrs, "ground"));
-															set.set("baseSwimWalkSpd", parseDouble(attrs, "swim"));
-															set.set("baseFlyWalkSpd", parseDouble(attrs, "fly"));
-															break;
-														}
-														case "run":
-														{
-															set.set("baseRunSpd", parseDouble(attrs, "ground"));
-															set.set("baseSwimRunSpd", parseDouble(attrs, "swim"));
-															set.set("baseFlyRunSpd", parseDouble(attrs, "fly"));
-															break;
-														}
-													}
-												}
-												break;
-											}
-											case "hitTime":
-												set.set("hitTime", npcNode.getTextContent());// TODO: Implement me default 600 (value in ms)
-												break;
-										}
-									}
-									break;
-								}
-								case "status":
-								{
-									set.set("unique", parseBoolean(attrs, "unique"));
-									set.set("attackable", parseBoolean(attrs, "attackable"));
-									set.set("targetable", parseBoolean(attrs, "targetable"));
-									set.set("undying", parseBoolean(attrs, "undying"));
-									set.set("showName", parseBoolean(attrs, "showName"));
-									set.set("flying", parseBoolean(attrs, "flying"));
-									set.set("canMove", parseBoolean(attrs, "canMove"));
-									set.set("noSleepMode", parseBoolean(attrs, "noSleepMode"));
-									set.set("passableDoor", parseBoolean(attrs, "passableDoor"));
-									set.set("hasSummoner", parseBoolean(attrs, "hasSummoner"));
-									set.set("canBeSown", parseBoolean(attrs, "canBeSown"));
-									break;
-								}
-								case "skilllist":
-								{
-									skills = new HashMap<>();
-									for (Node skillListNode = npcNode.getFirstChild(); skillListNode != null; skillListNode = skillListNode.getNextSibling())
-									{
-										if ("skill".equalsIgnoreCase(skillListNode.getNodeName()))
-										{
-											attrs = skillListNode.getAttributes();
-											final int skillId = parseInteger(attrs, "id");
-											final int skillLevel = parseInteger(attrs, "level");
-											final L2Skill skill = SkillData.getInstance().getSkill(skillId, skillLevel);
-											if (skill != null)
-											{
-												skills.put(skill.getId(), skill);
-											}
-											else
-											{
-												LOGGER.warn("[" + f.getName() + "] skill not found. NPC ID: " + npcId + " Skill ID: " + skillId + " Skill Level: " + skillLevel + "!");
-											}
-										}
-									}
-									break;
-								}
-								case "shots":
-								{
-									set.set("soulShot", parseInteger(attrs, "soul"));
-									set.set("spiritShot", parseInteger(attrs, "spirit"));
-									set.set("shotShotChance", parseInteger(attrs, "shotChance"));
-									set.set("spiritShotChance", parseInteger(attrs, "spiritChance"));
-									break;
-								}
-								case "corpsetime":
-									set.set("corpseTime", npcNode.getTextContent());
-									break;
-								case "excrteffect":
-									set.set("exCrtEffect", npcNode.getTextContent()); // TODO: Implement me default ? type boolean
-									break;
-								case "snpcprophprate":
-									set.set("sNpcPropHpRate", Double.parseDouble(npcNode.getTextContent()));
-									break;
-								case "ai":
-								{
-									set.set("aiType", parseString(attrs, "type"));
-									set.set("aggroRange", parseInteger(attrs, "aggroRange"));
-									set.set("clanHelpRange", parseInteger(attrs, "clanHelpRange"));
-									set.set("dodge", parseInteger(attrs, "dodge"));
-									set.set("isChaos", parseBoolean(attrs, "isChaos"));
-									set.set("isAggressive", parseBoolean(attrs, "isAggressive"));
-									for (Node aiNode = npcNode.getFirstChild(); aiNode != null; aiNode = aiNode.getNextSibling())
-									{
-										attrs = aiNode.getAttributes();
-										switch (aiNode.getNodeName().toLowerCase())
-										{
-											case "skill":
-											{
-												set.set("minSkillChance", parseInteger(attrs, "minChance"));
-												set.set("maxSkillChance", parseInteger(attrs, "maxChance"));
-												set.set("primarySkillId", parseInteger(attrs, "primaryId"));
-												set.set("shortRangeSkillId", parseInteger(attrs, "shortRangeId"));
-												set.set("shortRangeSkillChance", parseInteger(attrs, "shortRangeChance"));
-												set.set("longRangeSkillId", parseInteger(attrs, "longRangeId"));
-												set.set("longRangeSkillChance", parseInteger(attrs, "longRangeChance"));
-												break;
-											}
-											case "clanlist":
-											{
-												for (Node clanListNode = aiNode.getFirstChild(); clanListNode != null; clanListNode = clanListNode.getNextSibling())
-												{
-													attrs = clanListNode.getAttributes();
-													switch (clanListNode.getNodeName().toLowerCase())
-													{
-														case "clan":
-														{
-															if (clans == null)
-															{
-																clans = new HashSet<>(1);
-															}
-															clans.add(getOrCreateClanId(clanListNode.getTextContent()));
-															break;
-														}
-														case "ignorenpcid":
-														{
-															if (ignoreClanNpcIds == null)
-															{
-																ignoreClanNpcIds = new HashSet<>(1);
-															}
-															ignoreClanNpcIds.add(Integer.parseInt(clanListNode.getTextContent()));
-															break;
-														}
-													}
-												}
-												break;
-											}
-										}
-									}
-									break;
-								}
-								case "droplists":
-								{
-									for (Node dropListsNode = npcNode.getFirstChild(); dropListsNode != null; dropListsNode = dropListsNode.getNextSibling())
-									{
-										DropListScope dropListScope = null;
-										
-										try
-										{
-											dropListScope = Enum.valueOf(DropListScope.class, dropListsNode.getNodeName().toUpperCase());
-										}
-										catch (Exception e)
-										{
-										}
-										
-										if (dropListScope != null)
-										{
-											if (dropLists == null)
-											{
-												dropLists = new EnumMap<>(DropListScope.class);
-											}
-											
-											List<IDropItem> dropList = new ArrayList<>();
-											parseDropList(f, dropListsNode, dropListScope, dropList);
-											dropLists.put(dropListScope, Collections.unmodifiableList(dropList));
-										}
-									}
-									break;
-								}
-								case "collision":
-								{
-									for (Node collisionNode = npcNode.getFirstChild(); collisionNode != null; collisionNode = collisionNode.getNextSibling())
-									{
-										attrs = collisionNode.getAttributes();
-										switch (collisionNode.getNodeName().toLowerCase())
-										{
-											case "radius":
-											{
-												set.set("collisionRadius", parseDouble(attrs, "normal"));
-												set.set("collisionRadiusGrown", parseDouble(attrs, "grown"));
-												break;
-											}
-											case "height":
-											{
-												set.set("collisionHeight", parseDouble(attrs, "normal"));
-												set.set("collisionHeightGrown", parseDouble(attrs, "grown"));
-												break;
-											}
-										}
-									}
-									break;
-								}
-							}
-						}
-						
-						L2NpcTemplate template = _npcs.get(npcId);
-						if (template == null)
-						{
-							template = new L2NpcTemplate(set);
-							_npcs.put(template.getId(), template);
-						}
-						else
-						{
-							template.set(set);
-						}
-						
-						if (_minionData._tempMinions.containsKey(npcId))
-						{
-							if (parameters == null)
-							{
-								parameters = new HashMap<>();
-							}
-							parameters.putIfAbsent("Privates", _minionData._tempMinions.get(npcId));
-						}
-						
-						if (parameters != null)
-						{
-							// Using unmodifiable map parameters of template are not meant to be changed at runtime.
-							template.setParameters(new StatsSet(Collections.unmodifiableMap(parameters)));
-						}
-						else
-						{
-							template.setParameters(StatsSet.EMPTY_STATSET);
-						}
-						
-						if (skills != null)
-						{
-							for (L2Skill skill : skills.values())
-							{
-								template.addSkill(skill);
-							}
-						}
-						
-						template.setClans(clans);
-						template.setIgnoreClanNpcIds(ignoreClanNpcIds);
-						
-						template.setDropLists(dropLists);
-					}
-				}
-			}
+			_log.warn(getClass().getSimpleName() + ": Could not reload data for NPC " + id + ": " + e.getMessage(), e);
 		}
 	}
 	
-	private void parseDropList(File f, Node dropListNode, DropListScope dropListScope, List<IDropItem> drops)
+	/**
+	 * Just wrapper.
+	 */
+	public void reloadAllNpc()
 	{
-		for (Node dropNode = dropListNode.getFirstChild(); dropNode != null; dropNode = dropNode.getNextSibling())
+		restoreNpcData();
+	}
+	
+	/**
+	 * Save npc.
+	 * @param npc the npc
+	 */
+	public void saveNpc(StatsSet npc)
+	{
+		final Map<String, Object> set = npc.getSet();
+		int length = 0;
+		for (Object obj : set.keySet())
 		{
-			NamedNodeMap attrs = dropNode.getAttributes();
-			switch (dropNode.getNodeName().toLowerCase())
+			// 15 is just guessed npc name length
+			length += ((String) obj).length() + 7 + 15;
+		}
+		
+		final StringBuilder npcSb = new StringBuilder(length);
+		final StringBuilder npcAiSb = new StringBuilder(30);
+		String attribute;
+		String value;
+		for (Entry<String, Object> entry : set.entrySet())
+		{
+			attribute = entry.getKey();
+			value = String.valueOf(entry.getValue());
+			switch (attribute)
 			{
-				case "group":
+				case "npcId":
+					break;
+				case "aggro":
+				case "showName":
+				case "targetable":
 				{
-					GroupedGeneralDropItem dropItem = dropListScope.newGroupedDropItem(parseDouble(attrs, "chance"));
-					List<IDropItem> groupedDropList = new ArrayList<>(2);
-					for (Node groupNode = dropNode.getFirstChild(); groupNode != null; groupNode = groupNode.getNextSibling())
-					{
-						parseDropListItem(groupNode, dropListScope, groupedDropList);
-					}
-					
-					List<GeneralDropItem> items = new ArrayList<>(groupedDropList.size());
-					for (IDropItem item : groupedDropList)
-					{
-						if (item instanceof GeneralDropItem)
-						{
-							items.add((GeneralDropItem) item);
-						}
-						else
-						{
-							LOGGER.warn("[{}] grouped general drop item supports only general drop item.", f);
-						}
-					}
-					dropItem.setItems(items);
-					
-					drops.add(dropItem);
+					appendEntry(npcAiSb, attribute, value);
 					break;
 				}
 				default:
 				{
-					parseDropListItem(dropNode, dropListScope, drops);
-					break;
+					appendEntry(npcSb, attribute, value);
 				}
 			}
 		}
-	}
-	
-	private void parseDropListItem(Node dropListItem, DropListScope dropListScope, List<IDropItem> drops)
-	{
-		NamedNodeMap attrs = dropListItem.getAttributes();
-		switch (dropListItem.getNodeName().toLowerCase())
+		
+		try (Connection con = L2DatabaseFactory.getInstance().getConnection())
 		{
-			case "item":
+			int updated = 0;
+			final int npcId = npc.getInt("npcId");
+			if (Config.CUSTOM_NPC_TABLE)
 			{
-				// vGodFather: knight epaulets are already handled with scripts
-				int itemId = parseInteger(attrs, "id");
-				if (itemId == 9912)
-				{
-					break;
-				}
-				
-				final IDropItem dropItem = dropListScope.newDropItem(parseInteger(attrs, "id"), parseLong(attrs, "min"), parseLong(attrs, "max"), parseDouble(attrs, "chance"));
-				if (dropItem != null)
-				{
-					drops.add(dropItem);
-				}
-				break;
+				updated = performUpdate(npcSb, "custom_npc", "id", npcId, con);
+				performUpdate(npcAiSb, "custom_npcaidata", "npcId", npcId, con);
+			}
+			
+			if (updated == 0)
+			{
+				performUpdate(npcSb, "npc", "id", npcId, con);
+				performUpdate(npcAiSb, "npcaidata", "npcId", npcId, con);
 			}
 		}
-	}
-	
-	/**
-	 * Gets or creates a clan id if it doesnt exists.
-	 * @param clanName the clan name to get or create its id
-	 * @return the clan id for the given clan name
-	 */
-	private int getOrCreateClanId(String clanName)
-	{
-		Integer id = _clans.get(clanName.toUpperCase());
-		if (id == null)
+		catch (Exception e)
 		{
-			id = _clans.size();
-			_clans.put(clanName.toUpperCase(), id);
+			_log.warn(getClass().getSimpleName() + ": Could not store new NPC data in database: " + e.getMessage(), e);
 		}
-		return id;
 	}
 	
 	/**
-	 * Gets the clan id
-	 * @param clanName the clan name to get its id
-	 * @return the clan id for the given clan name if it exists, -1 otherwise
+	 * Append entry.
+	 * @param sb the string builder to append the attribute and value.
+	 * @param attribute the attribute to append.
+	 * @param value the value to append.
 	 */
-	public int getClanId(String clanName)
+	private final void appendEntry(StringBuilder sb, String attribute, String value)
 	{
-		Integer id = _clans.get(clanName.toUpperCase());
-		return id != null ? id : -1;
+		if (sb.length() > 0)
+		{
+			sb.append(", ");
+		}
+		
+		sb.append(attribute);
+		sb.append(" = '");
+		sb.append(value);
+		sb.append('\'');
+	}
+	
+	/**
+	 * Perform update.
+	 * @param sb the string builder with the parameters
+	 * @param table the table to update.
+	 * @param key the key of the table.
+	 * @param npcId the Npc Id.
+	 * @param con the current database connection.
+	 * @return the count of updated NPCs.
+	 * @throws SQLException the SQL exception.
+	 */
+	private final int performUpdate(StringBuilder sb, String table, String key, int npcId, Connection con) throws SQLException
+	{
+		int updated = 0;
+		if ((sb != null) && !sb.toString().isEmpty())
+		{
+			final StringBuilder sbQuery = new StringBuilder(sb.length() + 28);
+			sbQuery.append("UPDATE ");
+			sbQuery.append(table);
+			sbQuery.append(" SET ");
+			sbQuery.append(sb.toString());
+			sbQuery.append(" WHERE ");
+			sbQuery.append(key);
+			sbQuery.append(" = ?");
+			try (PreparedStatement ps = con.prepareStatement(sbQuery.toString()))
+			{
+				ps.setInt(1, npcId);
+				updated = ps.executeUpdate();
+			}
+		}
+		return updated;
 	}
 	
 	/**
@@ -641,27 +357,24 @@ public class NpcTable implements IXmlReader
 	}
 	
 	/**
-	 * Gets all templates matching the filter.
-	 * @param filter
-	 * @return the template list for the given filter
-	 */
-	public List<L2NpcTemplate> getTemplates(Predicate<L2NpcTemplate> filter)
-	{
-		//@formatter:off
-			return _npcs.values().stream()
-			.filter(filter)
-			.collect(Collectors.toList());
-		//@formatter:on
-	}
-	
-	/**
 	 * Gets the all of level.
 	 * @param lvls of all the templates to get.
 	 * @return the template list for the given level.
 	 */
 	public List<L2NpcTemplate> getAllOfLevel(int... lvls)
 	{
-		return getTemplates(template -> Util.contains(lvls, template.getLevel()));
+		final List<L2NpcTemplate> list = new ArrayList<>();
+		for (int lvl : lvls)
+		{
+			for (L2NpcTemplate t : _npcs.values())
+			{
+				if (t.getLevel() == lvl)
+				{
+					list.add(t);
+				}
+			}
+		}
+		return list;
 	}
 	
 	/**
@@ -671,17 +384,39 @@ public class NpcTable implements IXmlReader
 	 */
 	public List<L2NpcTemplate> getAllMonstersOfLevel(int... lvls)
 	{
-		return getTemplates(template -> Util.contains(lvls, template.getLevel()) && template.isType("L2Monster"));
+		final List<L2NpcTemplate> list = new ArrayList<>();
+		for (int lvl : lvls)
+		{
+			for (L2NpcTemplate t : _npcs.values())
+			{
+				if ((t.getLevel() == lvl) && t.isType("L2Monster"))
+				{
+					list.add(t);
+				}
+			}
+		}
+		return list;
 	}
 	
 	/**
 	 * Gets the all npc starting with.
-	 * @param text of all the NPC templates which its name start with.
+	 * @param letters of all the NPC templates which its name start with.
 	 * @return the template list for the given letter.
 	 */
-	public List<L2NpcTemplate> getAllNpcStartingWith(String text)
+	public List<L2NpcTemplate> getAllNpcStartingWith(String... letters)
 	{
-		return getTemplates(template -> template.isType("L2Npc") && template.getName().startsWith(text));
+		final List<L2NpcTemplate> list = new ArrayList<>();
+		for (String letter : letters)
+		{
+			for (L2NpcTemplate t : _npcs.values())
+			{
+				if (t.getName().startsWith(letter) && t.isType("L2Npc"))
+				{
+					list.add(t);
+				}
+			}
+		}
+		return list;
 	}
 	
 	/**
@@ -691,84 +426,504 @@ public class NpcTable implements IXmlReader
 	 */
 	public List<L2NpcTemplate> getAllNpcOfClassType(String... classTypes)
 	{
-		return getTemplates(template -> Util.contains(classTypes, template.getType(), true));
-	}
-	
-	public void loadNpcsSkillLearn()
-	{
-		_npcs.values().forEach(template ->
+		final List<L2NpcTemplate> list = new ArrayList<>();
+		for (String classType : classTypes)
 		{
-			final List<ClassId> teachInfo = SkillLearnData.getInstance().getSkillLearnData(template.getId());
-			if (teachInfo != null)
+			for (L2NpcTemplate t : _npcs.values())
 			{
-				template.addTeachInfo(teachInfo);
+				if (t.isType(classType))
+				{
+					list.add(t);
+				}
 			}
-		});
+		}
+		return list;
 	}
 	
 	/**
-	 * This class handles minions from Spawn System<br>
-	 * Once Spawn System gets reworked delete this class<br>
-	 * @author Zealar
+	 * Load npcs.
+	 * @param id the id
 	 */
-	private final class MinionData implements IXmlReader
+	public void loadNpcs(int id)
 	{
-		public final Map<Integer, List<MinionHolder>> _tempMinions = new HashMap<>();
-		
-		protected MinionData()
+		try (Connection con = L2DatabaseFactory.getInstance().getConnection())
 		{
-			load();
-		}
-		
-		@Override
-		public void load()
-		{
-			_tempMinions.clear();
-			parseDatapackFile("data/xml/other/minionData.xml");
-			LOGGER.info("{}: Loaded {} minions data.", getClass().getSimpleName(), _tempMinions.size());
-		}
-		
-		@Override
-		public void parseDocument(Document doc)
-		{
-			for (Node node = doc.getFirstChild(); node != null; node = node.getNextSibling())
+			int count = loadNpcs(con, id, false);
+			int ccount = 0;
+			if (Config.CUSTOM_NPC_TABLE)
 			{
-				if ("list".equals(node.getNodeName()))
+				ccount = loadNpcs(con, id, true);
+			}
+			_log.info(getClass().getSimpleName() + ": Loaded " + count + " (Custom: " + ccount + ") NPC template(s).");
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error reading NPC AI Data: " + e.getMessage(), e);
+		}
+	}
+	
+	/**
+	 * Id equals to zero or lesser means all.
+	 * @param con the database connection
+	 * @param id of the NPC to load.
+	 * @param isCustom the is custom
+	 * @return the loaded NPC count
+	 */
+	public int loadNpcs(Connection con, int id, boolean isCustom)
+	{
+		int count = 0;
+		try
+		{
+			final String query = isCustom ? (((id > 0) ? CUSTOM_SELECT_NPC_BY_ID : CUSTOM_SELECT_NPC_ALL)) : ((id > 0) ? SELECT_NPC_BY_ID : SELECT_NPC_ALL);
+			try (PreparedStatement ps = con.prepareStatement(query))
+			{
+				if (id > 0)
 				{
-					for (Node listNode = node.getFirstChild(); listNode != null; listNode = listNode.getNextSibling())
+					ps.setInt(1, id);
+				}
+				
+				try (ResultSet rs = ps.executeQuery())
+				{
+					while (rs.next())
 					{
-						if ("npc".equals(listNode.getNodeName()))
-						{
-							final List<MinionHolder> minions = new ArrayList<>(1);
-							NamedNodeMap attrs = listNode.getAttributes();
-							int id = parseInteger(attrs, "id");
-							for (Node npcNode = listNode.getFirstChild(); npcNode != null; npcNode = npcNode.getNextSibling())
-							{
-								if ("minion".equals(npcNode.getNodeName()))
-								{
-									attrs = npcNode.getAttributes();
-									minions.add(new MinionHolder(parseInteger(attrs, "id"), parseInteger(attrs, "count"), parseInteger(attrs, "respawnTime"), 0));
-								}
-							}
-							_tempMinions.put(id, minions);
-						}
+						fillNpcTable(rs);
+						count++;
 					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error creating NPC table.", e);
+		}
+		return count;
+	}
+	
+	/**
+	 * Id equals to zero or lesser means all.
+	 * @param id of the NPC to load it's skills.
+	 */
+	public void loadNpcsSkills(int id)
+	{
+		try (Connection con = L2DatabaseFactory.getInstance().getConnection())
+		{
+			int count = loadNpcsSkills(con, id, false);
+			int ccount = 0;
+			if (Config.CUSTOM_NPC_SKILLS_TABLE)
+			{
+				ccount = loadNpcsSkills(con, id, true);
+			}
+			_log.info(getClass().getSimpleName() + ": Loaded " + count + " (Custom: " + ccount + ") NPC skills.");
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error reading NPC AI Data: " + e.getMessage(), e);
+		}
+	}
+	
+	/**
+	 * Load npcs skills.
+	 * @param con the database connection
+	 * @param id the NPC Id
+	 * @param isCustom the is custom
+	 * @return the loaded NPC count
+	 */
+	private int loadNpcsSkills(Connection con, int id, boolean isCustom)
+	{
+		int count = 0;
+		final String query = isCustom ? (((id > 0) ? CUSTOM_SELECT_SKILLS_BY_ID : CUSTOM_SELECT_SKILLS_ALL)) : ((id > 0) ? SELECT_SKILLS_BY_ID : SELECT_SKILLS_ALL);
+		try (PreparedStatement ps = con.prepareStatement(query))
+		{
+			if (id > 0)
+			{
+				ps.setInt(1, id);
+			}
+			
+			try (ResultSet rs = ps.executeQuery())
+			{
+				L2NpcTemplate npcDat = null;
+				L2Skill npcSkill = null;
+				
+				while (rs.next())
+				{
+					int mobId = rs.getInt("npcid");
+					npcDat = _npcs.get(mobId);
+					
+					if (npcDat == null)
+					{
+						_log.warn(getClass().getSimpleName() + ": Skill data for undefined NPC. npcId: " + mobId);
+						continue;
+					}
+					
+					int skillId = rs.getInt("skillid");
+					int level = rs.getInt("level");
+					
+					if (skillId == L2Skill.SKILL_NPC_RACE)
+					{
+						npcDat.setRace(level);
+						continue;
+					}
+					
+					npcSkill = SkillData.getInstance().getInfo(skillId, level);
+					if (npcSkill == null)
+					{
+						continue;
+					}
+					count++;
+					npcDat.addSkill(npcSkill);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error reading NPC skills table.", e);
+		}
+		return count;
+	}
+	
+	/**
+	 * Id equals to zero or lesser means all.
+	 * @param id of the NPC to load it's drops.
+	 */
+	public void loadNpcsDrop(int id)
+	{
+		try (Connection con = L2DatabaseFactory.getInstance().getConnection())
+		{
+			int count = loadNpcsDrop(con, id, false);
+			int ccount = 0;
+			if (Config.CUSTOM_DROPLIST_TABLE)
+			{
+				ccount = loadNpcsDrop(con, id, true);
+			}
+			_log.info(getClass().getSimpleName() + ": Loaded " + count + " (Custom: " + ccount + ") drops.");
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error reading NPC AI Data: " + e.getMessage(), e);
+		}
+	}
+	
+	/**
+	 * Id equals to zero or lesser means all.
+	 * @param id of the NPC to load it's skill learn list.
+	 */
+	public void loadNpcsSkillLearn(int id)
+	{
+		if (id > 0)
+		{
+			final List<ClassId> teachInfo = SkillLearnData.getInstance().getSkillLearnData(id);
+			final L2NpcTemplate template = _npcs.get(id);
+			if ((teachInfo != null) && (template != null))
+			{
+				template.addTeachInfo(teachInfo);
+			}
+		}
+		else
+		{
+			for (L2NpcTemplate template : _npcs.values())
+			{
+				final List<ClassId> teachInfo = SkillLearnData.getInstance().getSkillLearnData(template.getId());
+				if (teachInfo != null)
+				{
+					template.addTeachInfo(teachInfo);
 				}
 			}
 		}
 	}
 	
 	/**
-	 * @return the _npcs
+	 * Load npcs drop.
+	 * @param con the con
+	 * @param id the id
+	 * @param isCustom the is custom
+	 * @return the int
 	 */
-	public Map<Integer, L2NpcTemplate> getNpcs()
+	public int loadNpcsDrop(Connection con, int id, boolean isCustom)
 	{
-		return _npcs;
+		int count = 0;
+		final String query = isCustom ? (((id > 0) ? CUSTOM_SELECT_DROPLIST_BY_ID : CUSTOM_SELECT_DROPLIST_ALL)) : ((id > 0) ? SELECT_DROPLIST_BY_ID : SELECT_DROPLIST_ALL);
+		try (PreparedStatement ps = con.prepareStatement(query))
+		{
+			if (id > 0)
+			{
+				ps.setInt(1, id);
+			}
+			
+			try (ResultSet rs = ps.executeQuery())
+			{
+				L2DropData dropDat = null;
+				L2NpcTemplate npcDat = null;
+				while (rs.next())
+				{
+					int mobId = rs.getInt("mobId");
+					npcDat = _npcs.get(mobId);
+					if (npcDat == null)
+					{
+						_log.warn(getClass().getSimpleName() + ": Drop data for undefined NPC. npcId: " + mobId);
+						continue;
+					}
+					dropDat = new L2DropData();
+					
+					dropDat.setItemId(rs.getInt("itemId"));
+					dropDat.setMinDrop(rs.getInt("min"));
+					dropDat.setMaxDrop(rs.getInt("max"));
+					dropDat.setChance(rs.getInt("chance"));
+					
+					int category = rs.getInt("category");
+					if (ItemData.getInstance().getTemplate(dropDat.getId()) == null)
+					{
+						_log.warn(getClass().getSimpleName() + ": Drop data for undefined item template! NpcId: " + mobId + " itemId: " + dropDat.getId());
+						continue;
+					}
+					count++;
+					npcDat.addDropData(dropDat, category);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error reading NPC dropdata. ", e);
+		}
+		return count;
 	}
 	
 	/**
-	 * Gets the single instance of NpcData.
-	 * @return single instance of NpcData
+	 * Id equals to zero or lesser means all.
+	 * @param id of the NPC to load it's minions.
+	 */
+	public void loadMinions(int id)
+	{
+		final String query = (id > 0) ? SELECT_MINION_BY_ID : SELECT_MINION_ALL;
+		try (Connection con = L2DatabaseFactory.getInstance().getConnection();
+			PreparedStatement statement = con.prepareStatement(query))
+		{
+			if (id > 0)
+			{
+				statement.setInt(1, id);
+			}
+			
+			int count = 0;
+			try (ResultSet rset = statement.executeQuery())
+			{
+				L2MinionData minionDat = null;
+				L2NpcTemplate npcDat = null;
+				
+				int raidId;
+				while (rset.next())
+				{
+					raidId = rset.getInt("boss_id");
+					npcDat = _npcs.get(raidId);
+					if (npcDat == null)
+					{
+						_log.warn(getClass().getSimpleName() + ": Minion references undefined boss NPC. Boss NpcId: " + raidId);
+						continue;
+					}
+					
+					minionDat = new L2MinionData();
+					minionDat.setMinionId(rset.getInt("minion_id"));
+					minionDat.setAmountMin(rset.getInt("amount_min"));
+					minionDat.setAmountMax(rset.getInt("amount_max"));
+					npcDat.addRaidData(minionDat);
+					count++;
+				}
+			}
+			_log.info(getClass().getSimpleName() + ": Loaded " + count + " Minions.");
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error loading minion data.", e);
+		}
+	}
+	
+	/**
+	 * Id equals to zero or lesser means all.
+	 * @param id of the NPC to load it's AI data.
+	 */
+	public void loadNpcsAI(int id)
+	{
+		try (Connection con = L2DatabaseFactory.getInstance().getConnection())
+		{
+			int count = loadNpcAi(con, id, false);
+			int ccount = 0;
+			if (Config.CUSTOM_NPC_TABLE)
+			{
+				ccount = loadNpcAi(con, id, true);
+			}
+			_log.info(getClass().getSimpleName() + ": Loaded " + count + " (Custom: " + ccount + ") AI Data.");
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error reading NPC AI Data: " + e.getMessage(), e);
+		}
+	}
+	
+	/**
+	 * Method that give the parameters will load one or all NPC AI from normal or custom tables.
+	 * @param con the database connection
+	 * @param id the NPC Id
+	 * @param isCustom if {@code true} the data will be loaded from the custom table
+	 * @return the count of NPC loaded
+	 */
+	private int loadNpcAi(Connection con, int id, boolean isCustom)
+	{
+		int count = 0;
+		final String query = isCustom ? (((id > 0) ? CUSTOM_SELECT_NPC_AI_BY_ID : CUSTOM_SELECT_NPC_AI_ALL)) : ((id > 0) ? SELECT_NPC_AI_BY_ID : SELECT_NPC_AI_ALL);
+		try (PreparedStatement ps = con.prepareStatement(query))
+		{
+			if (id > 0)
+			{
+				ps.setInt(1, id);
+			}
+			
+			try (ResultSet rs = ps.executeQuery())
+			{
+				L2NpcAIData npcAIDat = null;
+				L2NpcTemplate npcDat = null;
+				
+				int npcId;
+				while (rs.next())
+				{
+					npcId = rs.getInt("npcId");
+					npcDat = _npcs.get(npcId);
+					if (npcDat == null)
+					{
+						_log.error(getClass().getSimpleName() + ": AI Data Error with id : " + npcId);
+						continue;
+					}
+					
+					npcAIDat = new L2NpcAIData();
+					npcAIDat.setPrimarySkillId(rs.getInt("primarySkillId"));
+					npcAIDat.setMinSkillChance(rs.getInt("minSkillChance"));
+					npcAIDat.setMaxSkillChance(rs.getInt("maxSkillChance"));
+					npcAIDat.setAggro(rs.getInt("aggro"));
+					npcAIDat.setCanMove(rs.getInt("canMove"));
+					npcAIDat.setShowName(rs.getInt("showName") == 1);
+					npcAIDat.setTargetable(rs.getInt("targetable") == 1);
+					npcAIDat.setSoulShot(rs.getInt("soulshot"));
+					npcAIDat.setSpiritShot(rs.getInt("spiritshot"));
+					npcAIDat.setSoulShotChance(rs.getInt("ssChance"));
+					npcAIDat.setSpiritShotChance(rs.getInt("spsChance"));
+					npcAIDat.setIsChaos(rs.getInt("isChaos"));
+					npcAIDat.setShortRangeSkill(rs.getInt("minRangeSkill"));
+					npcAIDat.setShortRangeChance(rs.getInt("minRangeChance"));
+					npcAIDat.setLongRangeSkill(rs.getInt("maxRangeSkill"));
+					npcAIDat.setLongRangeChance(rs.getInt("maxRangeChance"));
+					npcAIDat.setClan(rs.getString("clan"));
+					npcAIDat.setClanRange(rs.getInt("clanRange"));
+					npcAIDat.setEnemyClan(rs.getString("enemyClan"));
+					npcAIDat.setEnemyRange(rs.getInt("enemyRange"));
+					npcAIDat.setDodge(rs.getInt("dodge"));
+					npcAIDat.setAi(rs.getString("aiType"));
+					
+					npcDat.setAIData(npcAIDat);
+					count++;
+				}
+			}
+		}
+		catch (SQLException e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error reading NPC AI Data: " + e.getMessage(), e);
+		}
+		return count;
+	}
+	
+	/**
+	 * Id equals to zero or lesser means all.
+	 * @param id of the NPC to load it's element data.
+	 */
+	public void loadNpcsElement(int id)
+	{
+		try (Connection con = L2DatabaseFactory.getInstance().getConnection())
+		{
+			int count = loadNpcsElement(con, id, false);
+			int ccount = 0;
+			if (Config.CUSTOM_NPC_TABLE)
+			{
+				ccount = loadNpcsElement(con, id, true);
+			}
+			_log.info(getClass().getSimpleName() + ": Loaded " + count + " (Custom: " + ccount + ") Elementals Data.");
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error reading NPC AI Data: " + e.getMessage(), e);
+		}
+	}
+	
+	/**
+	 * Load npcs element.
+	 * @param con the con
+	 * @param id the id
+	 * @param isCustom the is custom
+	 * @return the int
+	 */
+	private int loadNpcsElement(Connection con, int id, boolean isCustom)
+	{
+		int count = 0;
+		final String query = isCustom ? (((id > 0) ? CUSTOM_SELECT_NPC_ELEMENTALS_BY_ID : CUSTOM_SELECT_NPC_ELEMENTALS_ALL)) : ((id > 0) ? SELECT_NPC_ELEMENTALS_BY_ID : SELECT_NPC_ELEMENTALS_ALL);
+		try (PreparedStatement ps = con.prepareStatement(query))
+		{
+			if (id > 0)
+			{
+				ps.setInt(1, id);
+			}
+			
+			try (ResultSet rset = ps.executeQuery())
+			{
+				L2NpcTemplate npcDat = null;
+				int npcId;
+				while (rset.next())
+				{
+					npcId = rset.getInt("npc_id");
+					npcDat = _npcs.get(npcId);
+					if (npcDat == null)
+					{
+						_log.error("NPCElementals: Elementals Error with id : " + npcId);
+						continue;
+					}
+					switch (rset.getByte("elemAtkType"))
+					{
+						case Elementals.FIRE:
+							npcDat.setBaseFire(rset.getInt("elemAtkValue"));
+							break;
+						case Elementals.WATER:
+							npcDat.setBaseWater(rset.getInt("elemAtkValue"));
+							break;
+						case Elementals.EARTH:
+							npcDat.setBaseEarth(rset.getInt("elemAtkValue"));
+							break;
+						case Elementals.WIND:
+							npcDat.setBaseWind(rset.getInt("elemAtkValue"));
+							break;
+						case Elementals.HOLY:
+							npcDat.setBaseHoly(rset.getInt("elemAtkValue"));
+							break;
+						case Elementals.DARK:
+							npcDat.setBaseDark(rset.getInt("elemAtkValue"));
+							break;
+						default:
+							_log.error("NPCElementals: Elementals Error with id : " + npcId + "; unknown elementType: " + rset.getByte("elemAtkType"));
+							continue;
+					}
+					npcDat.setBaseFireRes(rset.getInt("fireDefValue"));
+					npcDat.setBaseWaterRes(rset.getInt("waterDefValue"));
+					npcDat.setBaseEarthRes(rset.getInt("earthDefValue"));
+					npcDat.setBaseWindRes(rset.getInt("windDefValue"));
+					npcDat.setBaseHolyRes(rset.getInt("holyDefValue"));
+					npcDat.setBaseDarkRes(rset.getInt("darkDefValue"));
+					count++;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			_log.error(getClass().getSimpleName() + ": Error reading NPC Elementals Data: " + e.getMessage(), e);
+		}
+		return count;
+	}
+	
+	/**
+	 * Gets the single instance of NpcTable.
+	 * @return single instance of NpcTable
 	 */
 	public static NpcTable getInstance()
 	{

@@ -8,9 +8,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import l2r.Config;
-import l2r.gameserver.GameTimeController;
 import l2r.gameserver.ThreadPoolManager;
+import l2r.gameserver.ai.L2BoatAI;
+import l2r.gameserver.ai.L2CharacterAI;
 import l2r.gameserver.enums.CtrlIntention;
 import l2r.gameserver.enums.InstanceType;
 import l2r.gameserver.enums.TeleportWhereType;
@@ -25,16 +25,33 @@ import l2r.gameserver.model.actor.templates.L2CharTemplate;
 import l2r.gameserver.model.interfaces.ILocational;
 import l2r.gameserver.model.items.L2Weapon;
 import l2r.gameserver.model.items.instance.L2ItemInstance;
+import l2r.gameserver.model.items.type.WeaponType;
 import l2r.gameserver.network.SystemMessageId;
+import l2r.gameserver.network.serverpackets.ActionFailed;
 import l2r.gameserver.network.serverpackets.InventoryUpdate;
 import l2r.gameserver.network.serverpackets.L2GameServerPacket;
-import l2r.gameserver.util.Util;
 
 /**
  * @author DS
  */
 public abstract class L2Vehicle extends L2Character
 {
+	public abstract L2GameServerPacket validateLocationPacket(L2PcInstance player);
+	
+	public abstract L2GameServerPacket getOnPacket(final L2PcInstance p0, final Location p1);
+	
+	public abstract L2GameServerPacket getOffPacket(final L2PcInstance p0, final Location p1);
+	
+	public abstract L2GameServerPacket inMovePacket(final L2PcInstance p0, final Location p1, final Location p2);
+	
+	public abstract L2GameServerPacket inStopMovePacket(final L2PcInstance p0);
+	
+	public abstract L2GameServerPacket startPacket();
+	
+	public abstract L2GameServerPacket checkLocationPacket();
+	
+	public abstract L2GameServerPacket infoPacket();
+	
 	protected int _dockId = 0;
 	protected final List<L2PcInstance> _passengers = new CopyOnWriteArrayList<>();
 	protected Location _oustLoc = null;
@@ -52,6 +69,12 @@ public abstract class L2Vehicle extends L2Character
 		super(template);
 		setInstanceType(InstanceType.L2Vehicle);
 		setIsFlying(true);
+	}
+	
+	@Override
+	protected L2CharacterAI initAI()
+	{
+		return new L2BoatAI(this);
 	}
 	
 	public boolean isBoat()
@@ -99,6 +122,12 @@ public abstract class L2Vehicle extends L2Character
 				getStat().setRotationSpeed(point.getRotationSpeed());
 			}
 			
+			final L2GameServerPacket startPacket = startPacket();
+			if (startPacket != null)
+			{
+				broadcastPacket(startPacket);
+			}
+			
 			getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_TO, new Location(point.getX(), point.getY(), point.getZ(), 0));
 			return;
 		}
@@ -106,10 +135,30 @@ public abstract class L2Vehicle extends L2Character
 	}
 	
 	@Override
-	public boolean moveToNextRoutePoint()
+	public void setXYZ(final int x, final int y, final int z, final boolean MoveTask)
 	{
-		_move = null;
-		
+		super.setXYZ(x, y, z, MoveTask);
+		this.updatePeopleInTheBoat(x, y, z);
+	}
+	
+	protected void updatePeopleInTheBoat(final int x, final int y, final int z)
+	{
+		for (final L2PcInstance player : this._passengers)
+		{
+			if (player != null)
+			{
+				player.setXYZ(x, y, z, true);
+			}
+		}
+	}
+	
+	public void onEvtArrived()
+	{
+		moveNext();
+	}
+	
+	public void moveNext()
+	{
 		if (_currentPath != null)
 		{
 			_runState++;
@@ -134,27 +183,8 @@ public abstract class L2Vehicle extends L2Character
 							getStat().setRotationSpeed(point.getRotationSpeed());
 						}
 						
-						MoveData m = new MoveData();
-						m.disregardingGeodata = false;
-						m.onGeodataPathIndex = -1;
-						m._xDestination = point.getX();
-						m._yDestination = point.getY();
-						m._zDestination = point.getZ();
-						m._heading = 0;
-						
-						final double dx = point.getX() - getX();
-						final double dy = point.getY() - getY();
-						final double distance = Math.sqrt((dx * dx) + (dy * dy));
-						if (distance > 1)
-						{
-							setHeading(Util.calculateHeadingFrom(getX(), getY(), point.getX(), point.getY()));
-						}
-						
-						m._moveStartTime = GameTimeController.getInstance().getGameTicks();
-						_move = m;
-						
-						GameTimeController.getInstance().registerMovingObject(this);
-						return true;
+						getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_TO, new Location(point.getX(), point.getY(), point.getZ(), 0));
+						return;
 					}
 				}
 			}
@@ -165,7 +195,18 @@ public abstract class L2Vehicle extends L2Character
 		}
 		
 		runEngine(10);
-		return false;
+	}
+	
+	@Override
+	public void sendInfo(L2PcInstance activeChar)
+	{
+		if (!this.isMoving)
+		{
+			activeChar.sendPacket(this.infoPacket());
+			return;
+		}
+		activeChar.sendPacket(this.infoPacket());
+		activeChar.sendPacket(this.movePacket());
 	}
 	
 	@Override
@@ -213,18 +254,45 @@ public abstract class L2Vehicle extends L2Character
 	
 	public void oustPlayers()
 	{
+		final L2GameServerPacket checkLocation = this.checkLocationPacket();
+		if (checkLocation != null)
+		{
+			broadcastPacket(this.infoPacket());
+			broadcastPacket(checkLocation);
+		}
+		
 		_passengers.forEach(p -> oustPlayer(p));
 		_passengers.clear();
 	}
 	
 	public void oustPlayer(L2PcInstance player)
 	{
+		oustPlayer(player, getOustLoc(), true);
+	}
+	
+	public void oustPlayer(L2PcInstance player, Location loc, boolean teleport)
+	{
 		player.setVehicle(null);
 		player.setInVehiclePosition(null);
+		
+		if (player.isOnline())
+		{
+			player.broadcastPacket(this.getOffPacket(player, loc));
+			player.setLoc(loc, true);
+			if (teleport)
+			{
+				player.teleToLocation(loc.getX(), loc.getY(), loc.getZ());
+			}
+		}
+		else
+		{
+			player.setXYZInvisible(loc.getX(), loc.getY(), loc.getZ()); // disconnects handling
+		}
+		
 		removePassenger(player);
 	}
 	
-	public boolean addPassenger(L2PcInstance player)
+	public boolean addPassenger(L2PcInstance player, Location loc)
 	{
 		if ((player == null) || _passengers.contains(player))
 		{
@@ -250,6 +318,43 @@ public abstract class L2Vehicle extends L2Character
 		catch (Exception e)
 		{
 		}
+	}
+	
+	public void moveInBoat(final L2PcInstance activeChar, final Location ori, final Location loc)
+	{
+		if (activeChar.hasSummon())
+		{
+			activeChar.sendPacket(SystemMessageId.RELEASE_PET_ON_BOAT);
+			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
+			return;
+		}
+		
+		if (activeChar.isTransformed())
+		{
+			activeChar.sendPacket(SystemMessageId.CANT_POLYMORPH_ON_BOAT);
+			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
+			return;
+		}
+		
+		if (activeChar.isAttackingNow() && (activeChar.getActiveWeaponItem() != null) && (activeChar.getActiveWeaponItem().getItemType() == WeaponType.BOW))
+		{
+			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
+			return;
+		}
+		
+		if (activeChar.isSitting() || activeChar.isMovementDisabled())
+		{
+			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
+			return;
+		}
+		
+		if (!activeChar.isInBoat())
+		{
+			activeChar.setVehicle(this);
+		}
+		
+		activeChar.setInVehiclePosition(loc);
+		activeChar.broadcastPacket(this.inMovePacket(activeChar, ori, loc));
 	}
 	
 	public boolean isEmpty()
@@ -309,27 +414,10 @@ public abstract class L2Vehicle extends L2Character
 						iu.addModifiedItem(ticket);
 						player.sendInventoryUpdate(iu);
 					}
-					addPassenger(player);
+					addPassenger(player, new Location(getX(), getY(), getZ()));
 				}
 			}
 		}
-	}
-	
-	@Override
-	public boolean updatePosition()
-	{
-		final boolean result = super.updatePosition();
-		
-		for (L2PcInstance player : _passengers)
-		{
-			if ((player != null) && (player.getVehicle() == this))
-			{
-				player.setXYZ(getX(), getY(), getZ());
-				player.revalidateZone(false);
-			}
-		}
-		
-		return result;
 	}
 	
 	@Override
@@ -337,7 +425,7 @@ public abstract class L2Vehicle extends L2Character
 	{
 		if (isMoving())
 		{
-			stopMove(null, false);
+			stopMove(true, false);
 		}
 		
 		setIsTeleporting(true);
@@ -363,23 +451,6 @@ public abstract class L2Vehicle extends L2Character
 		
 		onTeleported();
 		revalidateZone(true);
-	}
-	
-	@Override
-	public void stopMove(Location loc, boolean updateKnownObjects)
-	{
-		_move = null;
-		if (loc != null)
-		{
-			setXYZ(loc.getX(), loc.getY(), loc.getZ());
-			setHeading(loc.getHeading());
-			revalidateZone(true);
-		}
-		
-		if (Config.MOVE_BASED_KNOWNLIST && updateKnownObjects)
-		{
-			getKnownList().findObjects();
-		}
 	}
 	
 	@Override

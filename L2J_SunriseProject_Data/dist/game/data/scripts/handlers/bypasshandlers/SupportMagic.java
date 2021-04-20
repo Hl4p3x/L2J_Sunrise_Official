@@ -166,7 +166,8 @@ public class SupportMagic implements IBypassHandler
 			
 			if ((level >= CUBIC_LOWEST) && (level <= CUBIC_HIGHEST))
 			{
-				npc.doSimultaneousCast(CUBIC.getSkill());
+				CUBIC.getSkill().applyEffects(player, player);
+				// npc.doSimultaneousCast(CUBIC.getSkill());
 			}
 		}
 	}

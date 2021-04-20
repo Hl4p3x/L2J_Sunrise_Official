@@ -118,7 +118,7 @@ public class MageAI extends L2AttackableAI
 						if (!npc.isInsideRadius(newX, newY, 0, collision, false, false))
 						{
 							int newZ = npc.getZ() + 30;
-							Location loc = GeoData.getInstance().moveCheck(npc, new Location(newX, newY, newZ));
+							Location loc = GeoData.getInstance().moveCheck(npc, new Location(newX, newY, newZ), true);
 							moveTo(loc);
 							return;
 						}
@@ -127,9 +127,9 @@ public class MageAI extends L2AttackableAI
 			}
 			
 			// apply dodge
-			if (npc.getDodge() > 0)
+			if (npc.getCanDodge() > 0)
 			{
-				if (Rnd.get(100) <= npc.getDodge())
+				if (Rnd.get(100) <= npc.getCanDodge())
 				{
 					double distance2 = npc.getPlanDistanceSq(mostHate.getX(), mostHate.getY());
 					if (Math.sqrt(distance2) <= (60 + combinedCollision))
@@ -138,7 +138,7 @@ public class MageAI extends L2AttackableAI
 						int newY = (Rnd.nextBoolean() ? mostHate.getY() + combinedCollision + Rnd.get(150) : (mostHate.getY() - combinedCollision) + Rnd.get(150));
 						int posZ = npc.getZ() + 30;
 						
-						Location loc = GeoData.getInstance().moveCheck(npc, new Location(newX, newY, posZ));
+						Location loc = GeoData.getInstance().moveCheck(npc, new Location(newX, newY, posZ), true);
 						moveTo(loc);
 						return;
 					}
@@ -238,7 +238,7 @@ public class MageAI extends L2AttackableAI
 							
 							if (GeoData.getInstance().canSeeTarget(npc, leader))
 							{
-								clientStopMoving(null);
+								npc.stopMove();
 								final L2Object target = npc.getTarget();
 								npc.setTarget(leader);
 								npc.doCast(healSkill);
@@ -259,7 +259,7 @@ public class MageAI extends L2AttackableAI
 							continue;
 						}
 						
-						clientStopMoving(null);
+						clientStopMoving();
 						final L2Object target = npc.getTarget();
 						npc.setTarget(npc);
 						npc.doCast(sk);
@@ -296,7 +296,7 @@ public class MageAI extends L2AttackableAI
 							{
 								if (GeoData.getInstance().canSeeTarget(npc, targets))
 								{
-									clientStopMoving(null);
+									clientStopMoving();
 									final L2Object target = npc.getTarget();
 									npc.setTarget(obj);
 									npc.doCast(sk);
@@ -310,7 +310,7 @@ public class MageAI extends L2AttackableAI
 					
 					if (isParty(sk))
 					{
-						clientStopMoving(null);
+						clientStopMoving();
 						npc.doCast(sk);
 						return;
 					}
@@ -347,7 +347,7 @@ public class MageAI extends L2AttackableAI
 							
 							if (GeoData.getInstance().canSeeTarget(npc, leader))
 							{
-								clientStopMoving(null);
+								clientStopMoving();
 								final L2Object target = npc.getTarget();
 								npc.setTarget(leader);
 								npc.doCast(sk);
@@ -375,16 +375,17 @@ public class MageAI extends L2AttackableAI
 								continue;
 							}
 							
-							L2Attackable targets = ((L2Attackable) obj);
+							final L2Attackable targets = (L2Attackable) obj;
 							if (!npc.isInMyClan(targets))
 							{
 								continue;
 							}
+							
 							if (Rnd.get(100) < 10)
 							{
 								if (GeoData.getInstance().canSeeTarget(npc, targets))
 								{
-									clientStopMoving(null);
+									clientStopMoving();
 									final L2Object target = npc.getTarget();
 									npc.setTarget(obj);
 									npc.doCast(sk);
@@ -397,7 +398,7 @@ public class MageAI extends L2AttackableAI
 					}
 					if (isParty(sk))
 					{
-						clientStopMoving(null);
+						clientStopMoving();
 						final L2Object target = npc.getTarget();
 						npc.setTarget(npc);
 						npc.doCast(sk);
@@ -424,7 +425,7 @@ public class MageAI extends L2AttackableAI
 							return;
 						}
 						
-						clientStopMoving(null);
+						clientStopMoving();
 						npc.doCast(skill);
 						return;
 					}
@@ -450,7 +451,7 @@ public class MageAI extends L2AttackableAI
 			final L2Skill shortRangeSkill = npc.getShortRangeSkills().get(Rnd.get(npc.getShortRangeSkills().size()));
 			if (checkSkillCastConditions(npc, npc.getTarget(), shortRangeSkill))
 			{
-				clientStopMoving(null);
+				clientStopMoving();
 				npc.doCast(shortRangeSkill);
 				_log.debug(this + " used short range skill " + shortRangeSkill + " on {}", npc.getTarget());
 				return;
@@ -462,7 +463,7 @@ public class MageAI extends L2AttackableAI
 			final L2Skill longRangeSkill = npc.getLongRangeSkills().get(Rnd.get(npc.getLongRangeSkills().size()));
 			if (checkSkillCastConditions(npc, npc.getTarget(), longRangeSkill))
 			{
-				clientStopMoving(null);
+				clientStopMoving();
 				npc.doCast(longRangeSkill);
 				_log.debug(this + " used long range skill " + longRangeSkill + " on {}", npc.getTarget());
 				return;
@@ -486,7 +487,7 @@ public class MageAI extends L2AttackableAI
 						range -= 100;
 					}
 					
-					moveToPawn(target, Math.max(range, 5));
+					moveToPawn(target, Math.max(range - 20, 5));
 				}
 			}
 			return;

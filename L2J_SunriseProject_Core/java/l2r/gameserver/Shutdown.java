@@ -27,6 +27,7 @@ import l2r.gameserver.data.sql.OfflineTradersTable;
 import l2r.gameserver.instancemanager.CHSiegeManager;
 import l2r.gameserver.instancemanager.CastleManorManager;
 import l2r.gameserver.instancemanager.CursedWeaponsManager;
+import l2r.gameserver.instancemanager.FishingChampionshipManager;
 import l2r.gameserver.instancemanager.GlobalVariablesManager;
 import l2r.gameserver.instancemanager.GrandBossManager;
 import l2r.gameserver.instancemanager.ItemAuctionManager;
@@ -592,6 +593,13 @@ public class Shutdown extends Thread
 		// Save all global variables data
 		GlobalVariablesManager.getInstance().storeMe();
 		_log.info("Global Variables Manager: Variables saved(" + tc.getEstimatedTimeAndRestartCounter() + "ms).");
+		
+		// Save Fishing tournament data
+		if (Config.ALT_FISH_CHAMPIONSHIP_ENABLED)
+		{
+			FishingChampionshipManager.getInstance().shutdown();
+			_log.info("Fishing Championship data has been saved(" + tc.getEstimatedTimeAndRestartCounter() + "ms).");
+		}
 		
 		SunriseEvents.serverShutDown();
 		

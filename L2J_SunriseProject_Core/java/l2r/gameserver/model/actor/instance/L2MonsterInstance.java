@@ -28,6 +28,7 @@ import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.knownlist.MonsterKnownList;
 import l2r.gameserver.model.actor.templates.L2NpcTemplate;
 import l2r.gameserver.util.MinionList;
+import l2r.util.Rnd;
 
 import gr.sr.achievementEngine.AchievementsManager;
 
@@ -83,12 +84,12 @@ public class L2MonsterInstance extends L2Attackable
 	}
 	
 	/**
-	 * Return True if the L2MonsterInstance is Aggressive (aggroRange > 0).
+	 * Return True if the L2MonsterInstance is Agressive (aggroRange > 0).
 	 */
 	@Override
 	public boolean isAggressive()
 	{
-		return getTemplate().isAggressive();
+		return (getAggroRange() > 0);
 	}
 	
 	@Override
@@ -132,8 +133,27 @@ public class L2MonsterInstance extends L2Attackable
 		return MONSTER_MAINTENANCE_INTERVAL;
 	}
 	
+	/**
+	 * Spawn all minions at a regular interval
+	 */
 	protected void startMaintenanceTask()
 	{
+		// maintenance task now used only for minions spawn
+		if (getTemplate().getMinionData() == null)
+		{
+			return;
+		}
+		
+		if (_maintenanceTask == null)
+		{
+			_maintenanceTask = ThreadPoolManager.getInstance().scheduleGeneral(() ->
+			{
+				if (_enableMinions)
+				{
+					getMinionList().spawnMinions();
+				}
+			} , getMaintenanceInterval() + Rnd.get(1000));
+		}
 	}
 	
 	@Override
@@ -189,7 +209,7 @@ public class L2MonsterInstance extends L2Attackable
 	{
 		if (hasMinions())
 		{
-			getMinionList().onMasterDie(true);
+			getMinionList().onMasterDie(false);
 		}
 		
 		if (getLeader() != null)

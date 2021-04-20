@@ -1723,7 +1723,7 @@
 		<enchant4 name="elementPower" val="#ench4DarkAttack" />
 		<enchant4 name="magicLvl" val="#enchMagicLvl" />
 		<cond msgId="144">
-			<target npcRace="DIVINE" />
+			<target npcRace="ANGEL" />
 		</cond>
 		<for>
 			<effect count="10" name="Fear" abnormalTime="2" />

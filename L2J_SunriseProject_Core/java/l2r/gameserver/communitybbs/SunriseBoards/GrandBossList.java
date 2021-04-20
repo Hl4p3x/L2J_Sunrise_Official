@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import l2r.L2DatabaseFactory;
-import l2r.gameserver.data.sql.NpcTable;
 
 /**
  * @author L2jSunrise Team
@@ -26,19 +25,30 @@ public class GrandBossList extends AbstractSunriseBoards
 			PreparedStatement statement = con.prepareStatement("SELECT boss_id, status FROM grandboss_data");
 			ResultSet result = statement.executeQuery();
 			
+			nextnpc:
 			while (result.next())
 			{
 				int npcid = result.getInt("boss_id");
 				int status = result.getInt("status");
 				if (npcid == 29062)
 				{
-					continue;
+					continue nextnpc;
 				}
 				
-				pos++;
-				String name = NpcTable.getInstance().getTemplate(npcid).getName();
-				boolean rstatus = status == 0;
-				addGrandBossToList(pos, name, rstatus);
+				PreparedStatement statement2 = con.prepareStatement("SELECT name FROM npc WHERE id=" + npcid);
+				ResultSet result2 = statement2.executeQuery();
+				
+				while (result2.next())
+				{
+					pos++;
+					boolean rstatus = false;
+					if (status == 0)
+					{
+						rstatus = true;
+					}
+					String npcname = result2.getString("name");
+					addGrandBossToList(pos, npcname, rstatus);
+				}
 			}
 		}
 		catch (Exception e)

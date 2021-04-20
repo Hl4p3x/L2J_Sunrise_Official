@@ -112,7 +112,7 @@ public final class RequestSellItem extends L2GameClientPacket
 		
 		L2Object target = player.getTarget();
 		L2Character merchant = null;
-		if (!player.isGM() && !player.containsQuickVar(QuickVarType.COMMUNITY_SELL.getCommand()))
+		if (!player.containsQuickVar(QuickVarType.COMMUNITY_SELL.getCommand()))
 		{
 			if ((target == null) || (!player.isInsideRadius(target, INTERACTION_DISTANCE, true, false)) // Distance is too far)
 			|| (player.getInstanceId() != target.getInstanceId()))
@@ -131,29 +131,21 @@ public final class RequestSellItem extends L2GameClientPacket
 			}
 		}
 		
-		player.deleteQuickVar(QuickVarType.COMMUNITY_SELL.getCommand());
-		
 		double taxRate = 0;
 		
-		if (_listId != -1)
+		final L2BuyList buyList = BuyListData.getInstance().getBuyList(_listId);
+		if ((buyList == null) && (_listId != 1) && !player.containsQuickVar(QuickVarType.COMMUNITY_SELL.getCommand()))
 		{
-			final L2BuyList buyList = BuyListData.getInstance().getBuyList(_listId);
-			if ((buyList == null))
+			Util.handleIllegalPlayerAction(player, "Warning!! Character " + player.getName() + " of account " + player.getAccountName() + " sent a false BuyList list_id " + _listId, Config.DEFAULT_PUNISH);
+			return;
+		}
+		
+		if (merchant instanceof L2MerchantInstance)
+		{
+			if ((buyList == null) || !buyList.isNpcAllowed(((L2MerchantInstance) merchant).getId()))
 			{
-				Util.handleIllegalPlayerAction(player, "Warning!! Character " + player.getName() + " of account " + player.getAccountName() + " sent a false BuyList list_id " + _listId, Config.DEFAULT_PUNISH);
+				sendPacket(ActionFailed.STATIC_PACKET);
 				return;
-			}
-			
-			if ((merchant != null))
-			{
-				if (merchant instanceof L2MerchantInstance)
-				{
-					if (!buyList.isNpcAllowed(((L2MerchantInstance) merchant).getId()))
-					{
-						sendPacket(ActionFailed.STATIC_PACKET);
-						return;
-					}
-				}
 			}
 		}
 		

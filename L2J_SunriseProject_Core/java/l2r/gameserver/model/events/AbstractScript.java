@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -64,9 +63,6 @@ import l2r.gameserver.model.actor.instance.L2MonsterInstance;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.actor.instance.L2TrapInstance;
 import l2r.gameserver.model.actor.templates.L2NpcTemplate;
-import l2r.gameserver.model.drops.GeneralDropItem;
-import l2r.gameserver.model.drops.GroupedGeneralDropItem;
-import l2r.gameserver.model.drops.IDropItem;
 import l2r.gameserver.model.entity.Castle;
 import l2r.gameserver.model.entity.Fort;
 import l2r.gameserver.model.entity.Instance;
@@ -2329,17 +2325,16 @@ public abstract class AbstractScript implements INamable
 		dropChance *= Config.RATE_QUEST_DROP; // TODO separate configs for rate and amount
 		if ((npc != null) && Config.L2JMOD_CHAMPION_ENABLE && npc.isChampion())
 		{
+			dropChance *= Config.L2JMOD_CHAMPION_REWARDS;
 			if ((itemId == Inventory.ADENA_ID) || (itemId == Inventory.ANCIENT_ADENA_ID))
 			{
-				dropChance *= Config.L2JMOD_CHAMPION_ADENAS_REWARDS_CHANCE;
-				minAmount *= Config.L2JMOD_CHAMPION_ADENAS_REWARDS_AMOUNT;
-				maxAmount *= Config.L2JMOD_CHAMPION_ADENAS_REWARDS_AMOUNT;
+				minAmount *= Config.L2JMOD_CHAMPION_ADENAS_REWARDS;
+				maxAmount *= Config.L2JMOD_CHAMPION_ADENAS_REWARDS;
 			}
 			else
 			{
-				dropChance *= Config.L2JMOD_CHAMPION_REWARDS_CHANCE;
-				minAmount *= Config.L2JMOD_CHAMPION_REWARDS_AMOUNT;
-				maxAmount *= Config.L2JMOD_CHAMPION_REWARDS_AMOUNT;
+				minAmount *= Config.L2JMOD_CHAMPION_REWARDS;
+				maxAmount *= Config.L2JMOD_CHAMPION_REWARDS;
 			}
 		}
 		
@@ -2379,24 +2374,6 @@ public abstract class AbstractScript implements INamable
 			}
 		}
 		return false;
-	}
-	
-	/**
-	 * Gives an item to the player
-	 * @param player
-	 * @param item
-	 * @param victim the character that "dropped" the item
-	 * @return <code>true</code> if at least one item was given, <code>false</code> otherwise
-	 */
-	protected static boolean giveItems(L2PcInstance player, IDropItem item, L2Character victim)
-	{
-		List<ItemHolder> items = item.calculateDrops(victim, player);
-		if ((items == null) || items.isEmpty())
-		{
-			return false;
-		}
-		giveItems(player, items);
-		return true;
 	}
 	
 	/**
@@ -2524,67 +2501,6 @@ public abstract class AbstractScript implements INamable
 	}
 	
 	/**
-	 * @param player
-	 * @param item
-	 * @param victim the character that "dropped" the item
-	 * @param limit the maximum amount of items the player can have. Won't give more if this limit is reached.
-	 * @return <code>true</code> if at least one item was given to the player, <code>false</code> otherwise
-	 */
-	protected static boolean giveItems(L2PcInstance player, IDropItem item, L2Character victim, int limit)
-	{
-		return giveItems(player, item.calculateDrops(victim, player), limit);
-	}
-	
-	protected static boolean giveItems(L2PcInstance player, IDropItem item, L2Character victim, int limit, boolean playSound)
-	{
-		boolean drop = giveItems(player, item, victim, limit);
-		if (drop && playSound)
-		{
-			playSound(player, QuestSound.ITEMSOUND_QUEST_ITEMGET);
-		}
-		return drop;
-	}
-	
-	/**
-	 * @param player
-	 * @param item
-	 * @param victim the character that "dropped" the item
-	 * @param limit the maximum amount of items the player can have. Won't give more if this limit is reached. If a no limit for an itemId is specified, item will always be given
-	 * @return <code>true</code> if at least one item was given to the player, <code>false</code> otherwise
-	 */
-	protected static boolean giveItems(L2PcInstance player, IDropItem item, L2Character victim, Map<Integer, Long> limit)
-	{
-		return giveItems(player, item.calculateDrops(victim, player), limit);
-	}
-	
-	/**
-	 * @param player
-	 * @param item
-	 * @param victim the character that "dropped" the item
-	 * @param limit the maximum amount of items the player can have. Won't give more if this limit is reached. If a no limit for an itemId is specified, item will always be given
-	 * @return <code>true</code> if at least one item was given to the player, <code>false</code> otherwise
-	 */
-	protected static boolean giveItems(L2PcInstance player, IDropItem item, L2Character victim, Function<Integer, Long> limit)
-	{
-		return giveItems(player, item.calculateDrops(victim, player), limit);
-	}
-	
-	protected static boolean giveItems(L2PcInstance player, IDropItem item, L2Character victim, Map<Integer, Long> limit, boolean playSound)
-	{
-		return giveItems(player, item, victim, Util.mapToFunction(limit), playSound);
-	}
-	
-	protected static boolean giveItems(L2PcInstance player, IDropItem item, L2Character victim, Function<Integer, Long> limit, boolean playSound)
-	{
-		boolean drop = giveItems(player, item, victim, limit);
-		if (drop && playSound)
-		{
-			playSound(player, QuestSound.ITEMSOUND_QUEST_ITEMGET);
-		}
-		return drop;
-	}
-	
-	/**
 	 * Distributes items to players equally
 	 * @param players the players to whom the items will be distributed
 	 * @param items the items to distribute
@@ -2646,127 +2562,6 @@ public abstract class AbstractScript implements INamable
 			}
 		}
 		return returnMap;
-	}
-	
-	/**
-	 * Distributes items to players equally
-	 * @param players the players to whom the items will be distributed
-	 * @param items the items to distribute
-	 * @param killer the one who "kills" the victim
-	 * @param victim the character that "dropped" the item
-	 * @param limit the limit what single player can have of each item
-	 * @param playSound if to play sound if a player gets at least one item
-	 * @return the counts of each items given to each player
-	 */
-	protected static Map<L2PcInstance, Map<Integer, Long>> distributeItems(Collection<L2PcInstance> players, IDropItem items, L2Character killer, L2Character victim, Function<Integer, Long> limit, boolean playSound)
-	{
-		return distributeItems(players, items.calculateDrops(victim, killer), limit, playSound);
-	}
-	
-	/**
-	 * Distributes items to players equally
-	 * @param players the players to whom the items will be distributed
-	 * @param items the items to distribute
-	 * @param killer the one who "kills" the victim
-	 * @param victim the character that "dropped" the item
-	 * @param limit the limit what single player can have of each item
-	 * @param playSound if to play sound if a player gets at least one item
-	 * @return the counts of each items given to each player
-	 */
-	protected static Map<L2PcInstance, Map<Integer, Long>> distributeItems(Collection<L2PcInstance> players, IDropItem items, L2Character killer, L2Character victim, Map<Integer, Long> limit, boolean playSound)
-	{
-		return distributeItems(players, items.calculateDrops(victim, killer), limit, playSound);
-	}
-	
-	/**
-	 * Distributes items to players equally
-	 * @param players the players to whom the items will be distributed
-	 * @param items the items to distribute
-	 * @param killer the one who "kills" the victim
-	 * @param victim the character that "dropped" the item
-	 * @param limit the limit what single player can have of each item
-	 * @param playSound if to play sound if a player gets at least one item
-	 * @return the counts of each items given to each player
-	 */
-	protected static Map<L2PcInstance, Map<Integer, Long>> distributeItems(Collection<L2PcInstance> players, IDropItem items, L2Character killer, L2Character victim, long limit, boolean playSound)
-	{
-		return distributeItems(players, items.calculateDrops(victim, killer), limit, playSound);
-	}
-	
-	/**
-	 * Distributes items to players equally
-	 * @param players the players to whom the items will be distributed
-	 * @param items the items to distribute
-	 * @param killer the one who "kills" the victim
-	 * @param victim the character that "dropped" the item
-	 * @param limit the limit what single player can have of each item
-	 * @param playSound if to play sound if a player gets at least one item
-	 * @param smartDrop true if to not calculate a drop, which can't be given to any player 'cause of limits
-	 * @return the counts of each items given to each player
-	 */
-	protected static Map<L2PcInstance, Map<Integer, Long>> distributeItems(Collection<L2PcInstance> players, final GroupedGeneralDropItem items, L2Character killer, L2Character victim, Function<Integer, Long> limit, boolean playSound, boolean smartDrop)
-	{
-		GroupedGeneralDropItem toDrop;
-		if (smartDrop)
-		{
-			toDrop = new GroupedGeneralDropItem(items.getChance(), items.getDropCalculationStrategy(), items.getKillerChanceModifierStrategy(), items.getPreciseStrategy());
-			List<GeneralDropItem> dropItems = new LinkedList<>(items.getItems());
-			ITEM_LOOP:
-			for (Iterator<GeneralDropItem> it = dropItems.iterator(); it.hasNext();)
-			{
-				GeneralDropItem item = it.next();
-				for (L2PcInstance player : players)
-				{
-					int itemId = item.getItemId();
-					if (player.getInventory().getInventoryItemCount(itemId, -1, true) < avoidNull(limit, itemId))
-					{
-						// we can give this item to this player
-						continue ITEM_LOOP;
-					}
-				}
-				// there's nobody to give this item to
-				it.remove();
-			}
-			toDrop.setItems(dropItems);
-			toDrop = toDrop.normalizeMe(victim, killer);
-		}
-		else
-		{
-			toDrop = items;
-		}
-		return distributeItems(players, toDrop, killer, victim, limit, playSound);
-	}
-	
-	/**
-	 * Distributes items to players equally
-	 * @param players the players to whom the items will be distributed
-	 * @param items the items to distribute
-	 * @param killer the one who "kills" the victim
-	 * @param victim the character that "dropped" the item
-	 * @param limit the limit what single player can have of each item
-	 * @param playSound if to play sound if a player gets at least one item
-	 * @param smartDrop true if to not calculate a drop, which can't be given to any player
-	 * @return the counts of each items given to each player
-	 */
-	protected static Map<L2PcInstance, Map<Integer, Long>> distributeItems(Collection<L2PcInstance> players, final GroupedGeneralDropItem items, L2Character killer, L2Character victim, Map<Integer, Long> limit, boolean playSound, boolean smartDrop)
-	{
-		return distributeItems(players, items, killer, victim, Util.mapToFunction(limit), playSound, smartDrop);
-	}
-	
-	/**
-	 * Distributes items to players equally
-	 * @param players the players to whom the items will be distributed
-	 * @param items the items to distribute
-	 * @param killer the one who "kills" the victim
-	 * @param victim the character that "dropped" the item
-	 * @param limit the limit what single player can have of each item
-	 * @param playSound if to play sound if a player gets at least one item
-	 * @param smartDrop true if to not calculate a drop, which can't be given to any player
-	 * @return the counts of each items given to each player
-	 */
-	protected static Map<L2PcInstance, Map<Integer, Long>> distributeItems(Collection<L2PcInstance> players, final GroupedGeneralDropItem items, L2Character killer, L2Character victim, long limit, boolean playSound, boolean smartDrop)
-	{
-		return distributeItems(players, items, killer, victim, t -> limit, playSound, smartDrop);
 	}
 	
 	/**

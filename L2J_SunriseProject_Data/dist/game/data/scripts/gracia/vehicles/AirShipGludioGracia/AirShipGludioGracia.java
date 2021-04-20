@@ -83,8 +83,8 @@ public final class AirShipGludioGracia extends Quest implements Runnable
 		new VehiclePathPoint(-182129, 243385, 2733),
 		new VehiclePathPoint(-179440, 243651, 1337),
 		new VehiclePathPoint(-174538, 246185, 39),
-		new VehiclePathPoint(-172595, 247737, 398),
-		new VehiclePathPoint(-171822, 250061, 425),
+		new VehiclePathPoint(-172595, 247737, 450),
+		new VehiclePathPoint(-171822, 250061, 450),
 		new VehiclePathPoint(-169763, 254815, 282),
 		new VehiclePathPoint(-168067, 256626, 343),
 		new VehiclePathPoint(-157261, 255664, 221, 0, 64781)
@@ -227,7 +227,7 @@ public final class AirShipGludioGracia extends Quest implements Runnable
 		}
 		else if (_ship.isInDock() && _ship.isInsideRadius(player, 600, true, false))
 		{
-			_ship.addPassenger(player);
+			_ship.addPassenger(player, _ship.getLocation());
 		}
 		
 		return null;

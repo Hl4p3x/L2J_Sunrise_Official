@@ -153,6 +153,7 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 	private int _refId;
 	// all times in milliseconds
 	private final int _hitTime;
+	private final int _hitCancelTime;
 	private final int[] _hitTimings;
 	// private final int _skillInterruptTime;
 	private final int _coolTime;
@@ -402,6 +403,7 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 		
 		_killByDOT = set.getBoolean("killByDOT", false);
 		_hitTime = set.getInt("hitTime", 0);
+		_hitCancelTime = set.getInt("hitCancelTime", 500);
 		String hitTimings = set.getString("hitTimings", null);
 		if (hitTimings != null)
 		{
@@ -616,6 +618,7 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 			case BEHIND_AURA:
 			case FRONT_AREA:
 			case FRONT_AURA:
+			case CORPSE_CLAN:
 				return true;
 			default:
 				return false;
@@ -632,6 +635,7 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 			case AURA_CORPSE_MOB:
 			case AURA_FRIENDLY:
 			case AURA_UNDEAD_ENEMY:
+			case CORPSE_CLAN:
 				return true;
 			default:
 				return false;
@@ -672,6 +676,24 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 		}
 		
 		return hasEffectType(L2EffectType.MAGICAL_ATTACK_MP, L2EffectType.PHYSICAL_ATTACK, L2EffectType.PHYSICAL_ATTACK_HP_LINK);
+	}
+	
+	public boolean ignoreGeoLos()
+	{
+		switch (getTargetType())
+		{
+			case FLAGPOLE:
+			case HOLY:
+			case PARTY:
+				return true;
+		}
+		
+		if (hasEffectType(L2EffectType.HEAL))
+		{
+			return true;
+		}
+		
+		return false;
 	}
 	
 	public final boolean isOverhit()
@@ -1109,6 +1131,11 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 	public final int getHitTime()
 	{
 		return _hitTime;
+	}
+	
+	public final int getHitCancelTime()
+	{
+		return _hitCancelTime;
 	}
 	
 	public final int getHitCounts()
@@ -1558,9 +1585,24 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 		else
 		{
 			// target is mob
-			if ((targetPlayer == null) && (target instanceof L2Attackable) && (caster instanceof L2Attackable))
+			if ((targetPlayer == null) && (target.isAttackable()) && (caster.isAttackable()))
 			{
-				return false;
+				String casterEnemyClan = ((L2Attackable) caster).getEnemyClan();
+				if ((casterEnemyClan == null) || casterEnemyClan.isEmpty())
+				{
+					return false;
+				}
+				
+				String targetClan = ((L2Attackable) target).getClan();
+				if ((targetClan == null) || targetClan.isEmpty())
+				{
+					return false;
+				}
+				
+				if (!casterEnemyClan.equals(targetClan))
+				{
+					return false;
+				}
 			}
 		}
 		
@@ -1674,11 +1716,6 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 		
 		// vGodFather: this will prevent some effect apply on dead characters
 		if (effected.isDead() && !applyOnDeadChar())
-		{
-			return _emptyEffectSet;
-		}
-		
-		if (!hasEffects() || isPassive())
 		{
 			return _emptyEffectSet;
 		}
@@ -2248,6 +2285,11 @@ public abstract class L2Skill implements IChanceSkillTrigger, IIdentifiable
 				return true;
 				}
 				//@formatter:on
+		
+		if (getId() == CommonSkill.BATTLEFIELD_DEATH_SYNDROME.getId())
+		{
+			return true;
+		}
 		
 		return hasEffectType(L2EffectType.RESURRECTION, L2EffectType.RESURRECTION_SPECIAL, L2EffectType.SWEEP, L2EffectType.CONSUME_BODY);
 	}

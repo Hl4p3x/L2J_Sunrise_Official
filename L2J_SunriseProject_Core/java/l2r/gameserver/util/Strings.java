@@ -282,4 +282,19 @@ public class Strings
 	{
 		return String.format("<button value=\"%s\" action=\"%s\" back=\"L2UI_CT1.Button_DF_Small_Down\" width=%d height=%d fore=\"L2UI_CT1.Button_DF_Small\">", value, action, width, height);
 	}
+	
+	public static boolean isBlank(String value)
+	{
+		if (value == null)
+		{
+			return true;
+		}
+		
+		if (value.isEmpty())
+		{
+			return true;
+		}
+		
+		return false;
+	}
 }

@@ -18,9 +18,14 @@
  */
 package l2r.gameserver.model.conditions;
 
+import l2r.gameserver.enums.ZoneIdType;
+import l2r.gameserver.instancemanager.SiegeManager;
+import l2r.gameserver.instancemanager.TerritoryWarManager;
+import l2r.gameserver.model.L2Clan;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.L2Summon;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
+import l2r.gameserver.model.entity.Siege;
 import l2r.gameserver.model.skills.L2Skill;
 import l2r.gameserver.model.stats.Env;
 import l2r.gameserver.network.SystemMessageId;
@@ -84,6 +89,78 @@ public class ConditionPlayerCanResurrect extends Condition
 				if (effector.isPlayer())
 				{
 					effector.sendPacket(SystemMessageId.RES_HAS_ALREADY_BEEN_PROPOSED);
+				}
+			}
+			else if (skill.getId() != 2393) // Blessed Scroll of Battlefield Resurrection
+			{
+				if (player.isInsideZone(ZoneIdType.SIEGE) && effector.isInsideZone(ZoneIdType.SIEGE))
+				{
+					final Siege siege = SiegeManager.getInstance().getSiege(player);
+					final boolean twWar = TerritoryWarManager.getInstance().isTWInProgress();
+					if ((siege != null) && siege.isInProgress())
+					{
+						final L2Clan clan = player.getClan();
+						if (clan == null)
+						{
+							canResurrect = false;
+							if (effector.isPlayer())
+							{
+								effector.sendPacket(SystemMessageId.CANNOT_BE_RESURRECTED_DURING_SIEGE);
+							}
+						}
+						else if (siege.checkIsDefender(clan) && (siege.getControlTowerCount() == 0))
+						{
+							canResurrect = false;
+							if (effector.isPlayer())
+							{
+								effector.sendPacket(SystemMessageId.TOWER_DESTROYED_NO_RESURRECTION);
+							}
+						}
+						else if (siege.checkIsAttacker(clan) && (siege.getAttackerClan(clan).getNumFlags() == 0))
+						{
+							canResurrect = false;
+							if (effector.isPlayer())
+							{
+								effector.sendPacket(SystemMessageId.NO_RESURRECTION_WITHOUT_BASE_CAMP);
+							}
+						}
+						else
+						{
+							canResurrect = false;
+							if (effector.isPlayer())
+							{
+								effector.sendPacket(SystemMessageId.CANNOT_BE_RESURRECTED_DURING_SIEGE);
+							}
+						}
+					}
+					else if (twWar)
+					{
+						final L2Clan clan = player.getClan();
+						if (clan == null)
+						{
+							canResurrect = false;
+							if (effector.isPlayer())
+							{
+								effector.sendPacket(SystemMessageId.CANNOT_BE_RESURRECTED_DURING_SIEGE);
+							}
+						}
+						else if (TerritoryWarManager.getInstance().getHQForClan(player.getClan()) == null)
+						{
+							canResurrect = false;
+							if (effector.isPlayer())
+							{
+								effector.sendPacket(SystemMessageId.NO_RESURRECTION_WITHOUT_BASE_CAMP);
+							}
+						}
+						else
+						{
+							canResurrect = false;
+							if (effector.isPlayer())
+							{
+								effector.sendPacket(SystemMessageId.CANNOT_BE_RESURRECTED_DURING_SIEGE);
+							}
+						}
+					}
 				}
 			}
 		}

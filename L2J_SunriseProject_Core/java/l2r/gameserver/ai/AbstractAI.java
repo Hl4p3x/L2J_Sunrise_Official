@@ -22,18 +22,14 @@ import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_ATTACK;
 import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_FOLLOW;
 import static l2r.gameserver.enums.CtrlIntention.AI_INTENTION_IDLE;
 
-import java.util.List;
 import java.util.concurrent.Future;
 
-import l2r.gameserver.GameTimeController;
-import l2r.gameserver.GeoData;
 import l2r.gameserver.ThreadPoolManager;
 import l2r.gameserver.enums.CtrlEvent;
 import l2r.gameserver.enums.CtrlIntention;
 import l2r.gameserver.model.L2Object;
 import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.L2Character;
-import l2r.gameserver.model.actor.L2Npc;
 import l2r.gameserver.model.actor.L2Summon;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.skills.L2Skill;
@@ -41,14 +37,7 @@ import l2r.gameserver.network.serverpackets.ActionFailed;
 import l2r.gameserver.network.serverpackets.AutoAttackStart;
 import l2r.gameserver.network.serverpackets.AutoAttackStop;
 import l2r.gameserver.network.serverpackets.Die;
-import l2r.gameserver.network.serverpackets.MoveToLocation;
-import l2r.gameserver.network.serverpackets.StopMove;
-import l2r.gameserver.network.serverpackets.StopRotation;
-import l2r.gameserver.network.serverpackets.ValidateLocation;
-import l2r.gameserver.pathfinding.AbstractNodeLoc;
-import l2r.gameserver.pathfinding.PathFinding;
 import l2r.gameserver.taskmanager.AttackStanceTaskManager;
-import l2r.util.Rnd;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,10 +120,7 @@ public abstract class AbstractAI implements Ctrl
 						return;
 					}
 					
-					if (!_actor.isOnGeodataPath())
-					{
-						moveToPawn(followTarget, _range);
-					}
+					moveToPawn(followTarget, Math.max(_range, 10));
 				}
 			}
 			catch (Exception e)
@@ -151,72 +137,14 @@ public abstract class AbstractAI implements Ctrl
 	
 	protected void moveToPawn(L2Object followTarget, int _range, boolean usePath)
 	{
-		if (((_range > 200) && GeoData.getInstance().canSeeTarget(_actor, followTarget)) || GeoData.getInstance().canMove(_actor, followTarget))
-		{
-			moveToObject(followTarget, _range);
-		}
-		else
-		{
-			movementCheck(_range, followTarget, usePath);
-		}
-	}
-	
-	// vGodFather this will fix mob-players stuck in walls when try to attack
-	private void movementCheck(int range, L2Object followTarget, boolean usePath)
-	{
-		if (usePath)
-		{
-			List<AbstractNodeLoc> path = PathFinding.getInstance().findPath(_actor.getX(), _actor.getY(), _actor.getZ(), followTarget.getX(), followTarget.getY(), followTarget.getZ(), followTarget.getInstanceId(), true);
-			if (path != null)
-			{
-				for (AbstractNodeLoc point : path)
-				{
-					if (GeoData.getInstance().canMove(point, followTarget))
-					{
-						moveTo(point.getX(), point.getY(), point.getZ());
-						_onFailedPath = 0;
-						return;
-					}
-					
-					_onFailedPath++;
-					if (_onFailedPath >= _maxFailedPath)
-					{
-						Location loc = GeoData.getInstance().moveCheck(_actor.getX() + Rnd.get(-100, +100), _actor.getY() + Rnd.get(-100, +100), _actor.getZ(), followTarget.getX() + Rnd.get(-100, +100), followTarget.getY() + Rnd.get(-100, +100), followTarget.getZ(), _actor.getInstanceId());
-						moveTo(loc);
-						_onFailedPath = 0;
-						return;
-					}
-				}
-			}
-			else
-			{
-				final Location destination = GeoData.getInstance().moveCheck(_actor, followTarget);
-				moveTo(destination);
-			}
-		}
-		else
-		{
-			final Location destination = GeoData.getInstance().moveCheck(_actor, followTarget);
-			moveTo(destination);
-		}
-	}
-	
-	// vGodFather addon
-	protected boolean checkDistanceAndMove(L2Object target)
-	{
-		if (_actor.calculateDistance(target, false, false) > L2Npc.INTERACTION_DISTANCE)
-		{
-			changeIntention(CtrlIntention.AI_INTENTION_INTERACT, target, null);
-			return true;
-		}
-		return false;
+		moveTo(followTarget.getLocation(), _range);
 	}
 	
 	/** The character that this AI manages */
 	protected final L2Character _actor;
 	
 	protected int _maxFailedPath = 20;
-	protected int _onFailedPath = 0;
+	public int _onFailedPath = 0;
 	
 	/** Current long-term intention */
 	protected CtrlIntention _intention = AI_INTENTION_IDLE;
@@ -226,11 +154,7 @@ public abstract class AbstractAI implements Ctrl
 	protected Object _intentionArg1 = null;
 	
 	/** Flags about client's state, in order to know which messages to send */
-	protected volatile boolean _clientMoving;
-	/** Flags about client's state, in order to know which messages to send */
 	protected volatile boolean _clientAutoAttacking;
-	/** Flags about client's state, in order to know which messages to send */
-	protected int _clientMovingToPawnOffset;
 	
 	/** Different targets this AI maintains */
 	private L2Object _target;
@@ -240,9 +164,6 @@ public abstract class AbstractAI implements Ctrl
 	
 	/** The skill we are currently casting by INTENTION_CAST */
 	L2Skill _skill;
-	
-	/** Different internal state flags */
-	private int _moveToPawnTimeout;
 	
 	protected Future<?> _followTask = null;
 	private static final int FOLLOW_INTERVAL = 1000;
@@ -460,7 +381,7 @@ public abstract class AbstractAI implements Ctrl
 				// vGodFather check this
 				// After change this line we fixed a nasty bug with potions sometimes stops auto attack
 				// if (!_actor.isCastingNow() && !_actor.isCastingSimultaneouslyNow())
-				if (!_actor.isCastingNow())
+				if (!_actor.isCastingNow() && (getIntention() != CtrlIntention.AI_INTENTION_CAST))
 				{
 					onEvtReadyToAct();
 				}
@@ -592,90 +513,6 @@ public abstract class AbstractAI implements Ctrl
 		}
 	}
 	
-	/**
-	 * Move the actor to Pawn server side AND client side by sending Server->Client packet MoveToPawn <I>(broadcast)</I>.<br>
-	 * <FONT COLOR=#FF0000><B> <U>Caution</U> : Low level function, used by AI subclasses</B></FONT>
-	 * @param pawn
-	 * @param offset
-	 */
-	protected void moveToObject(L2Object pawn, int offset)
-	{
-		// Check if actor can move
-		if (!_actor.isMovementDisabled())
-		{
-			if (offset < 10)
-			{
-				offset = 10;
-			}
-			
-			// prevent possible extra calls to this function (there is none?),
-			// also don't send movetopawn packets too often
-			boolean sendPacket = true;
-			if (_clientMoving && (_target == pawn))
-			{
-				if (_clientMovingToPawnOffset == offset)
-				{
-					if (GameTimeController.getInstance().getGameTicks() < _moveToPawnTimeout)
-					{
-						return;
-					}
-					sendPacket = false;
-				}
-				else if (_actor.isOnGeodataPath())
-				{
-					// minimum time to calculate new route is 2 seconds
-					if (GameTimeController.getInstance().getGameTicks() < (_moveToPawnTimeout + 10))
-					{
-						return;
-					}
-				}
-			}
-			
-			// Set AI movement data
-			_clientMoving = true;
-			_clientMovingToPawnOffset = offset;
-			_target = pawn;
-			_moveToPawnTimeout = GameTimeController.getInstance().getGameTicks();
-			_moveToPawnTimeout += 1000 / GameTimeController.MILLIS_IN_TICK;
-			
-			if (pawn == null)
-			{
-				return;
-			}
-			
-			// Calculate movement data for a move to location action and add the actor to movingObjects of GameTimeController
-			_actor.moveToLocation(pawn.getX(), pawn.getY(), pawn.getZ(), offset);
-			
-			if (!_actor.isMoving())
-			{
-				clientActionFailed();
-				return;
-			}
-			
-			// Send a Server->Client packet MoveToPawn/CharMoveToLocation to the actor and all L2PcInstance in its _knownPlayers
-			if (pawn instanceof L2Character)
-			{
-				if (_actor.isOnGeodataPath())
-				{
-					_actor.broadcastPacket(new MoveToLocation(_actor));
-					_clientMovingToPawnOffset = 0;
-				}
-				else if (sendPacket)
-				{
-					_actor.moveToPawn(_actor, (L2Character) pawn, offset);
-				}
-			}
-			else
-			{
-				_actor.broadcastPacket(new MoveToLocation(_actor));
-			}
-		}
-		else
-		{
-			clientActionFailed();
-		}
-	}
-	
 	protected void moveTo(Location loc, int offset)
 	{
 		moveTo(loc.getX(), loc.getY(), loc.getZ(), offset);
@@ -701,66 +538,17 @@ public abstract class AbstractAI implements Ctrl
 	 */
 	protected void moveTo(int x, int y, int z, int offset)
 	{
-		// Chek if actor can move
-		if (!_actor.isMovementDisabled())
-		{
-			// Set AI movement data
-			_clientMoving = true;
-			_clientMovingToPawnOffset = 0;
-			
-			// Calculate movement data for a move to location action and add the actor to movingObjects of GameTimeController
-			_actor.moveToLocation(x, y, z, offset);
-			
-			// Send a Server->Client packet CharMoveToLocation to the actor and all L2PcInstance in its _knownPlayers
-			_actor.broadcastPacket(new MoveToLocation(_actor));
-		}
-		else
-		{
-			clientActionFailed();
-		}
+		_actor.moveToLocation(x, y, z, offset);
 	}
 	
-	/**
-	 * Stop the actor movement server side AND client side by sending Server->Client packet StopMove/StopRotation <I>(broadcast)</I>.<br>
-	 * <FONT COLOR=#FF0000><B> <U>Caution</U> : Low level function, used by AI subclasses</B></FONT>
-	 * @param pos
-	 */
-	public void clientStopMoving(Location pos)
+	public void clientStopMoving(boolean validate)
 	{
-		// Stop movement of the L2Character
-		if (_actor.isMoving())
-		{
-			_actor.stopMove(pos);
-		}
-		
-		_clientMovingToPawnOffset = 0;
-		
-		if (_clientMoving || (pos != null))
-		{
-			_clientMoving = false;
-			
-			// Send a Server->Client packet StopMove to the actor and all L2PcInstance in its _knownPlayers
-			_actor.broadcastPacket(new StopMove(_actor));
-			
-			if (pos != null)
-			{
-				// Send a Server->Client packet StopRotation to the actor and all L2PcInstance in its _knownPlayers
-				_actor.broadcastPacket(new StopRotation(_actor.getObjectId(), pos.getHeading(), 0));
-			}
-		}
+		_actor.stopMove(validate);
 	}
 	
-	/**
-	 * Client has already arrived to target, no need to force StopMove packet.
-	 */
-	protected void clientStoppedMoving()
+	public void clientStopMoving()
 	{
-		if (_clientMovingToPawnOffset > 0) // movetoPawn needs to be stopped
-		{
-			_clientMovingToPawnOffset = 0;
-			_actor.broadcastPacket(new StopMove(_actor));
-		}
-		_clientMoving = false;
+		_actor.stopMove();
 	}
 	
 	public boolean isAutoAttacking()
@@ -868,21 +656,8 @@ public abstract class AbstractAI implements Ctrl
 	{
 		if (getActor().isVisibleFor(player))
 		{
-			if (_clientMoving)
-			{
-				if ((_clientMovingToPawnOffset != 0) && (_followTarget != null))
-				{
-					// Send a Server->Client packet MoveToPawn to the actor and all L2PcInstance in its _knownPlayers
-					player.moveToPawn(_actor, _followTarget, _clientMovingToPawnOffset);
-				}
-				else
-				{
-					// Send a Server->Client packet CharMoveToLocation to the actor and all L2PcInstance in its _knownPlayers
-					player.sendPacket(new MoveToLocation(_actor));
-					
-					player.sendPacket(new ValidateLocation(_actor));
-				}
-			}
+			// Send a Server->Client packet CharMoveToLocation to the actor and all L2PcInstance in its _knownPlayers
+			player.movePacket();
 		}
 	}
 	
@@ -934,9 +709,14 @@ public abstract class AbstractAI implements Ctrl
 		_followTarget = null;
 	}
 	
-	protected L2Character getFollowTarget()
+	public L2Character getFollowTarget()
 	{
 		return _followTarget;
+	}
+	
+	public void setFollowTarget(L2Character target)
+	{
+		_followTarget = target;
 	}
 	
 	protected L2Object getTarget()

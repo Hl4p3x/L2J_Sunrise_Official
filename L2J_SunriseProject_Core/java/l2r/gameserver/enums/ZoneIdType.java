@@ -49,7 +49,8 @@ public enum ZoneIdType
 	NO_RESTART,
 	ZONE_CHAOTIC,
 	QUEEN_ANT,
-	FLAG;
+	FLAG,
+	CALL_BUGWALL_ARENA;
 	
 	public static int getZoneCount()
 	{

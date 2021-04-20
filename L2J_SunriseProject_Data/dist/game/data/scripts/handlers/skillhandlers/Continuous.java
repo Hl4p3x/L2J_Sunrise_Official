@@ -159,7 +159,7 @@ public class Continuous implements ISkillHandler
 							{
 								if (e.getSkill().getId() == skill.getId())
 								{
-									e.exit();
+									target.stopSkillEffects(e.getSkill().getId());
 									return;
 								}
 							}

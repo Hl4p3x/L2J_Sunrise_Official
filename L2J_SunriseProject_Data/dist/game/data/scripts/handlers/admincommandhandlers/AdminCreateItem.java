@@ -120,7 +120,7 @@ public class AdminCreateItem implements IAdminCommandHandler
 				if ((activeChar != onlinePlayer) && onlinePlayer.isOnline() && ((onlinePlayer.getClient() != null) && !onlinePlayer.getClient().isDetached()))
 				{
 					String[] player_Ip = new String[2];
-					player_Ip[0] = onlinePlayer.getClient().getConnection().getInetAddress().getHostAddress();
+					player_Ip[0] = onlinePlayer.getClient().getInetAddress().getHostAddress();
 					int[][] trace1 = onlinePlayer.getClient().getTrace();
 					for (int o = 0; o < trace1[0].length; o++)
 					{
@@ -399,7 +399,7 @@ public class AdminCreateItem implements IAdminCommandHandler
 	protected static boolean addToList(L2PcInstance player)
 	{
 		String[] player_Ip = new String[2];
-		player_Ip[0] = player.getClient().getConnection().getInetAddress().getHostAddress();
+		player_Ip[0] = player.getClient().getInetAddress().getHostAddress();
 		int[][] trace1 = player.getClient().getTrace();
 		for (int o = 0; o < trace1[0].length; o++)
 		{

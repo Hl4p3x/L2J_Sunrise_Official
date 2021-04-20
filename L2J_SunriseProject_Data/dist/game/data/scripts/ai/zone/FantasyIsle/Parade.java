@@ -227,14 +227,14 @@ public class Parade extends AbstractNpcAI
 					{
 						if (actor != null)
 						{
-							if (actor.calculateDistance(actor.getXdestination(), actor.getYdestination(), 0, false, true) < (100 * 100))
+							if (actor.calculateDistance(actor.getDestination().getX(), actor.getDestination().getY(), 0, false, true) < (100 * 100))
 							{
 								actor.deleteMe();
 								spawns.remove(actor);
 							}
 							else if (!actor.isMoving())
 							{
-								actor.getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_TO, new Location(actor.getXdestination(), actor.getYdestination(), actor.getZdestination(), actor.getHeading()));
+								actor.getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_TO, new Location(actor.getDestination().getX(), actor.getDestination().getY(), actor.getDestination().getZ(), actor.getHeading()));
 							}
 						}
 					}

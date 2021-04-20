@@ -19,6 +19,7 @@
 package l2r.gameserver.model.entity.olympiad;
 
 import l2r.gameserver.model.L2World;
+import l2r.gameserver.model.Location;
 import l2r.gameserver.model.StatsSet;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 
@@ -37,6 +38,8 @@ public final class Participant
 	private final StatsSet stats;
 	public String clanName;
 	public int clanId;
+	
+	public Location _arenaLocation;
 	
 	public Participant(L2PcInstance plr, int olympiadSide)
 	{

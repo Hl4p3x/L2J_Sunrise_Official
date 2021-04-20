@@ -149,7 +149,7 @@ public final class L2ControllableMobAI extends L2AttackableAI
 		if ((getAttackTarget() == null) || getAttackTarget().isAlikeDead())
 		{
 			setAttackTarget(findNextRndTarget());
-			clientStopMoving(null);
+			npc.stopMove();
 		}
 		
 		if (getAttackTarget() == null)
@@ -191,7 +191,7 @@ public final class L2ControllableMobAI extends L2AttackableAI
 		{
 			// try to get next group target
 			setForcedTarget(findNextGroupTarget());
-			clientStopMoving(null);
+			getActor().stopMove();
 		}
 		
 		if (target == null)
@@ -205,7 +205,7 @@ public final class L2ControllableMobAI extends L2AttackableAI
 		L2ControllableMobAI ctrlAi = (L2ControllableMobAI) theTarget.getAI();
 		ctrlAi.forceAttack(_actor);
 		
-		double dist2 = _actor.calculateDistance(target, false, true);
+		double dist2 = _actor.getPlanDistanceSq(target.getX(), target.getY());
 		int range = _actor.getPhysicalAttackRange() + _actor.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
 		int max_range = range;
 		
@@ -239,13 +239,13 @@ public final class L2ControllableMobAI extends L2AttackableAI
 	{
 		if ((getForcedTarget() == null) || getForcedTarget().isAlikeDead())
 		{
-			clientStopMoving(null);
+			getActor().stopMove();
 			setIntention(AI_INTENTION_ACTIVE);
 			setAlternateAI(AI_IDLE);
 		}
 		
 		_actor.setTarget(getForcedTarget());
-		double dist2 = _actor.calculateDistance(getForcedTarget(), false, true);
+		double dist2 = _actor.getPlanDistanceSq(getForcedTarget().getX(), getForcedTarget().getY());
 		int range = _actor.getPhysicalAttackRange() + _actor.getTemplate().getCollisionRadius() + getForcedTarget().getTemplate().getCollisionRadius();
 		int max_range = range;
 		
@@ -293,7 +293,7 @@ public final class L2ControllableMobAI extends L2AttackableAI
 		else
 		{
 			// notify aggression
-			if (((L2Npc) _actor).getTemplate().getClans() != null)
+			if (((L2Npc) _actor).getClans() != null)
 			{
 				Collection<L2Object> objs = _actor.getKnownList().getKnownObjects().values();
 				for (L2Object obj : objs)
@@ -310,7 +310,7 @@ public final class L2ControllableMobAI extends L2AttackableAI
 						continue;
 					}
 					
-					if (_actor.isInsideRadius(npc, npc.getTemplate().getClanHelpRange(), false, true) && (Math.abs(getAttackTarget().getZ() - npc.getZ()) < 200))
+					if (_actor.isInsideRadius(npc, npc.getFactionRange(), false, true) && (Math.abs(getAttackTarget().getZ() - npc.getZ()) < 200))
 					{
 						npc.getAI().notifyEvent(CtrlEvent.EVT_AGGRESSION, getAttackTarget(), 1);
 					}
@@ -318,7 +318,7 @@ public final class L2ControllableMobAI extends L2AttackableAI
 			}
 			
 			_actor.setTarget(getAttackTarget());
-			double dist2 = _actor.calculateDistance(getAttackTarget(), false, true);
+			double dist2 = _actor.getPlanDistanceSq(getAttackTarget().getX(), getAttackTarget().getY());
 			int range = _actor.getPhysicalAttackRange() + _actor.getTemplate().getCollisionRadius() + getAttackTarget().getTemplate().getCollisionRadius();
 			int max_range = range;
 			
@@ -489,7 +489,7 @@ public final class L2ControllableMobAI extends L2AttackableAI
 	public void stop()
 	{
 		setAlternateAI(AI_IDLE);
-		clientStopMoving(null);
+		getActor().stopMove();
 	}
 	
 	public void move(int x, int y, int z)

@@ -31,7 +31,7 @@ public class CubicTemplate implements ICubicConditionHolder
 		_level = set.getInt("level");
 		_slot = set.getInt("slot");
 		_duration = set.getInt("duration");
-		_delay = set.getInt("delay") * 1000;
+		_delay = set.getInt("delay");
 		_maxCount = set.getInt("maxCount");
 		_useUp = set.getInt("useUp");
 		_power = set.getDouble("power");

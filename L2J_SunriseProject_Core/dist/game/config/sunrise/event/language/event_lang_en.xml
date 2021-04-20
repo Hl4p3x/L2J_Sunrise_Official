@@ -318,5 +318,6 @@
 	<message id="round_final" text="Final" />
 	
 	<!-- ============================================ -->
+	<message id="event_join" text="Would you like to join %s." />
 
 </localization>

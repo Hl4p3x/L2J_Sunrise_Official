@@ -77,7 +77,7 @@ public final class ZoneManager implements IXmlReader
 	{
 		// Get the world regions
 		int count = 0;
-		final L2WorldRegion[][] worldRegions = L2World.getInstance().getWorldRegions();
+		final L2WorldRegion[][] worldRegions = L2World.getInstance().getAllWorldRegions();
 		
 		// Backup old zone settings
 		for (Map<Integer, ? extends L2ZoneType> map : _classZones.values())
@@ -121,7 +121,7 @@ public final class ZoneManager implements IXmlReader
 	public void parseDocument(Document doc, File f)
 	{
 		// Get the world regions
-		final L2WorldRegion[][] worldRegions = L2World.getInstance().getWorldRegions();
+		final L2WorldRegion[][] worldRegions = L2World.getInstance().getAllWorldRegions();
 		NamedNodeMap attrs;
 		Node attribute;
 		String zoneName;

@@ -886,7 +886,7 @@ public final class SeedOfDestruction extends AbstractNpcAI implements IXmlReader
 				L2Character mostHate = ((L2Attackable) npc).getMostHated();
 				if (mostHate != null)
 				{
-					double dist = Util.calculateDistance(mostHate.getXdestination(), mostHate.getYdestination(), 0, npc.getSpawn().getX(), npc.getSpawn().getY(), 0, false, false);
+					double dist = Util.calculateDistance(mostHate.getDestination().getX(), mostHate.getDestination().getY(), 0, npc.getSpawn().getX(), npc.getSpawn().getY(), 0, false, false);
 					if (dist > 900)
 					{
 						((L2Attackable) npc).reduceHate(mostHate, ((L2Attackable) npc).getHating(mostHate));

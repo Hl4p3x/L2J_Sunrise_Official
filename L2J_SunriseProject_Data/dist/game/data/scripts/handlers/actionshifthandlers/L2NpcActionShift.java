@@ -18,23 +18,24 @@
  */
 package handlers.actionshifthandlers;
 
-import java.util.Set;
-
 import l2r.Config;
+import l2r.gameserver.data.xml.impl.ItemData;
 import l2r.gameserver.enums.InstanceType;
 import l2r.gameserver.handler.IActionShiftHandler;
 import l2r.gameserver.instancemanager.WalkingManager;
 import l2r.gameserver.model.Elementals;
+import l2r.gameserver.model.L2DropCategory;
+import l2r.gameserver.model.L2DropData;
 import l2r.gameserver.model.L2Object;
-import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.L2Attackable;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.L2Npc;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
+import l2r.gameserver.model.items.L2Item;
+import l2r.gameserver.model.stats.BaseStats;
+import l2r.gameserver.model.stats.Stats;
 import l2r.gameserver.network.serverpackets.NpcHtmlMessage;
-import l2r.gameserver.util.Util;
-
-import handlers.bypasshandlers.NpcViewMod;
+import l2r.util.StringUtil;
 
 public class L2NpcActionShift implements IActionShiftHandler
 {
@@ -69,7 +70,6 @@ public class L2NpcActionShift implements IActionShiftHandler
 			
 			html.replace("%objid%", String.valueOf(target.getObjectId()));
 			html.replace("%class%", target.getClass().getSimpleName());
-			html.replace("%race%", ((L2Npc) target).getTemplate().getRace().toString());
 			html.replace("%id%", String.valueOf(((L2Npc) target).getTemplate().getId()));
 			html.replace("%lvl%", String.valueOf(((L2Npc) target).getTemplate().getLevel()));
 			html.replace("%name%", String.valueOf(((L2Npc) target).getTemplate().getName()));
@@ -80,18 +80,16 @@ public class L2NpcActionShift implements IActionShiftHandler
 			html.replace("%mp%", String.valueOf((int) ((L2Character) target).getCurrentMp()));
 			html.replace("%mpmax%", String.valueOf(((L2Character) target).getMaxMp()));
 			
-			html.replace("%patk%", String.valueOf(((L2Character) target).getPAtk(null)));
-			html.replace("%matk%", String.valueOf(((L2Character) target).getMAtk(null, null)));
-			html.replace("%pdef%", String.valueOf(((L2Character) target).getPDef(null)));
-			html.replace("%mdef%", String.valueOf(((L2Character) target).getMDef(null, null)));
+			html.replace("%patk%", String.valueOf((int) ((L2Character) target).getPAtk(null)));
+			html.replace("%matk%", String.valueOf((int) ((L2Character) target).getMAtk(null, null)));
+			html.replace("%pdef%", String.valueOf((int) ((L2Character) target).getPDef(null)));
+			html.replace("%mdef%", String.valueOf((int) ((L2Character) target).getMDef(null, null)));
 			html.replace("%accu%", String.valueOf(((L2Character) target).getAccuracy()));
 			html.replace("%evas%", String.valueOf(((L2Character) target).getEvasionRate(null)));
 			html.replace("%crit%", String.valueOf(((L2Character) target).getCriticalHit(null, null)));
-			html.replace("%rspd%", String.valueOf((int) ((L2Character) target).getRunSpeed()));
+			html.replace("%rspd%", String.valueOf(((L2Character) target).getRunSpeed()));
 			html.replace("%aspd%", String.valueOf(((L2Character) target).getPAtkSpd()));
 			html.replace("%cspd%", String.valueOf(((L2Character) target).getMAtkSpd()));
-			html.replace("%atkType%", String.valueOf(((L2Character) target).getTemplate().getBaseAttackType()));
-			html.replace("%atkRng%", String.valueOf(((L2Character) target).getTemplate().getBaseAttackRange()));
 			html.replace("%str%", String.valueOf(((L2Character) target).getSTR()));
 			html.replace("%dex%", String.valueOf(((L2Character) target).getDEX()));
 			html.replace("%con%", String.valueOf(((L2Character) target).getCON()));
@@ -120,8 +118,7 @@ public class L2NpcActionShift implements IActionShiftHandler
 				if (((L2Npc) target).getSpawn().isTerritoryBased())
 				{
 					html.replace("%spawntype%", "Random");
-					final Location spawnLoc = ((L2Npc) target).getSpawn().getLocation(target);
-					html.replace("%spawn%", spawnLoc.getX() + " " + spawnLoc.getY() + " " + spawnLoc.getZ());
+					html.replace("%spawn%", ((L2Npc) target).getSpawn().getX(target) + " " + ((L2Npc) target).getSpawn().getY(target) + " " + ((L2Npc) target).getSpawn().getZ(target));
 				}
 				else
 				{
@@ -155,16 +152,11 @@ public class L2NpcActionShift implements IActionShiftHandler
 			
 			if (((L2Npc) target).hasAI())
 			{
-				Set<Integer> clans = ((L2Npc) target).getTemplate().getClans();
-				Set<Integer> ignoreClanNpcIds = ((L2Npc) target).getTemplate().getIgnoreClanNpcIds();
-				String clansString = clans != null ? Util.implode(clans.toArray(), ", ") : "";
-				String ignoreClanNpcIdsString = ignoreClanNpcIds != null ? Util.implode(ignoreClanNpcIds.toArray(), ", ") : "";
-				
 				html.replace("%ai_intention%", "<tr><td><table width=270 border=0 bgcolor=131210><tr><td width=100><font color=FFAA00>Intention:</font></td><td align=right width=170>" + String.valueOf(((L2Npc) target).getAI().getIntention().name()) + "</td></tr></table></td></tr>");
 				html.replace("%ai%", "<tr><td><table width=270 border=0><tr><td width=100><font color=FFAA00>AI</font></td><td align=right width=170>" + ((L2Npc) target).getAI().getClass().getSimpleName() + "</td></tr></table></td></tr>");
 				html.replace("%ai_type%", "<tr><td><table width=270 border=0 bgcolor=131210><tr><td width=100><font color=FFAA00>AIType</font></td><td align=right width=170>" + String.valueOf(((L2Npc) target).getAiType()) + "</td></tr></table></td></tr>");
-				html.replace("%ai_clan%", "<tr><td><table width=270 border=0><tr><td width=100><font color=FFAA00>Clan & Range:</font></td><td align=right width=170>" + clansString + " " + String.valueOf(((L2Npc) target).getTemplate().getClanHelpRange()) + "</td></tr></table></td></tr>");
-				html.replace("%ai_enemy_clan%", "<tr><td><table width=270 border=0 bgcolor=131210><tr><td width=100><font color=FFAA00>Ignore & Range:</font></td><td align=right width=170>" + ignoreClanNpcIdsString + " " + String.valueOf(((L2Npc) target).getTemplate().getAggroRange()) + "</td></tr></table></td></tr>");
+				html.replace("%ai_clan%", "<tr><td><table width=270 border=0><tr><td width=100><font color=FFAA00>Clan & Range:</font></td><td align=right width=170>" + String.valueOf(((L2Npc) target).getTemplate().getAIDataStatic().getClan()) + " " + String.valueOf(((L2Npc) target).getTemplate().getAIDataStatic().getClanHelpRange()) + "</td></tr></table></td></tr>");
+				html.replace("%ai_enemy_clan%", "<tr><td><table width=270 border=0 bgcolor=131210><tr><td width=100><font color=FFAA00>Enemy & Range:</font></td><td align=right width=170>" + String.valueOf(((L2Npc) target).getTemplate().getAIDataStatic().getEnemyClan()) + " " + String.valueOf(((L2Npc) target).getTemplate().getAIDataStatic().getEnemyRange()) + "</td></tr></table></td></tr>");
 				html.replace("%ai_can_random_walk%", "<tr><td><table width=270 border=0><tr><td width=100><font color=FFAA00>Random Walk:</font></td><td align=right width=170>" + !((L2Npc) target).isNoRndWalk() + "</td></tr></table></td></tr>");
 			}
 			else
@@ -186,16 +178,59 @@ public class L2NpcActionShift implements IActionShiftHandler
 			{
 				html.replace("%route%", "");
 			}
+			
 			activeChar.sendPacket(html);
 		}
 		else if (Config.ALT_GAME_VIEWNPC)
 		{
-			if (!target.isNpc())
-			{
-				return false;
-			}
+			// Set the target of the L2PcInstance activeChar
 			activeChar.setTarget(target);
-			NpcViewMod.sendNpcView(activeChar, (L2Npc) target);
+			
+			final NpcHtmlMessage html = new NpcHtmlMessage();
+			int hpMul = Math.round((float) (((L2Character) target).getStat().calcStat(Stats.MAX_HP, 1, (L2Character) target, null) / BaseStats.CON.calcBonus((L2Character) target)));
+			if (hpMul == 0)
+			{
+				hpMul = 1;
+			}
+			final StringBuilder html1 = StringUtil.startAppend(1000, "<html><body>" + "<br><center><font color=\"LEVEL\">[Combat Stats]</font></center>" + "<table border=0 width=\"100%\">" + "<tr><td>Max.HP</td><td>", String.valueOf(((L2Character) target).getMaxHp() / hpMul), "*", String.valueOf(hpMul), "</td><td>Max.MP</td><td>", String.valueOf(((L2Character) target).getMaxMp()), "</td></tr>" + "<tr><td>P.Atk.</td><td>", String.valueOf(((L2Character) target).getPAtk(null)), "</td><td>M.Atk.</td><td>", String.valueOf(((L2Character) target).getMAtk(null, null)), "</td></tr>" + "<tr><td>P.Def.</td><td>", String.valueOf(((L2Character) target).getPDef(null)), "</td><td>M.Def.</td><td>", String.valueOf(((L2Character) target).getMDef(null, null)), "</td></tr>" + "<tr><td>Accuracy</td><td>", String.valueOf(((L2Character) target).getAccuracy()), "</td><td>Evasion</td><td>", String.valueOf(((L2Character) target).getEvasionRate(null)), "</td></tr>" + "<tr><td>Critical</td><td>", String.valueOf(((L2Character) target).getCriticalHit(null, null)), "</td><td>Speed</td><td>", String.valueOf(((L2Character) target).getRunSpeed()), "</td></tr>" + "<tr><td>Atk.Speed</td><td>", String.valueOf(((L2Character) target).getPAtkSpd()), "</td><td>Cast.Speed</td><td>", String.valueOf(((L2Character) target).getMAtkSpd()), "</td></tr>" + "<tr><td>Race</td><td>", ((L2Npc) target).getTemplate().getRace().toString(), "</td><td></td><td></td></tr>" + "</table>" + "<br><center><font color=\"LEVEL\">[Basic Stats]</font></center>" + "<table border=0 width=\"100%\">" + "<tr><td>STR</td><td>", String.valueOf(((L2Character) target).getSTR()), "</td><td>DEX</td><td>", String.valueOf(((L2Character) target).getDEX()), "</td><td>CON</td><td>", String.valueOf(((L2Character) target).getCON()), "</td></tr>" + "<tr><td>INT</td><td>", String.valueOf(((L2Character) target).getINT()), "</td><td>WIT</td><td>", String.valueOf(((L2Character) target).getWIT()), "</td><td>MEN</td><td>", String.valueOf(((L2Character) target).getMEN()), "</td></tr>" + "</table>");
+			
+			if (!((L2Npc) target).getTemplate().getDropData().isEmpty())
+			{
+				StringUtil.append(html1, "<br><center><font color=\"LEVEL\">[Drop Info]</font></center>" + "<br>Rates legend: <font color=\"ff9999\">50%+</font> <font color=\"00ff00\">30%+</font> <font color=\"0066ff\">less than 30%</font>" + "<table border=0 width=\"100%\">");
+				for (L2DropCategory cat : ((L2Npc) target).getTemplate().getDropData())
+				{
+					for (L2DropData drop : cat.getAllDrops())
+					{
+						final L2Item item = ItemData.getInstance().getTemplate(drop.getId());
+						if (item == null)
+						{
+							continue;
+						}
+						
+						final String color;
+						
+						if (drop.getChance() >= 500000)
+						{
+							color = "ff9999";
+						}
+						else if (drop.getChance() >= 300000)
+						{
+							color = "00ff00";
+						}
+						else
+						{
+							color = "0066ff";
+						}
+						
+						StringUtil.append(html1, "<tr>", "<td><img src=\"" + item.getIcon() + "\" height=32 width=32></td>" + "<td><font color=\"", color, "\">", item.getName(), "</font></td>", "<td>", (drop.isQuestDrop() ? "Quest" : (cat.isSweep() ? "Sweep" : "Drop")), "</td>", "</tr>");
+					}
+				}
+				html1.append("</table>");
+			}
+			html1.append("</body></html>");
+			
+			html.setHtml(html1.toString());
+			activeChar.sendPacket(html);
 		}
 		return true;
 	}

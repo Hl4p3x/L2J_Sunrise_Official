@@ -18,6 +18,9 @@
  */
 package l2r.gameserver.network.clientpackets;
 
+import l2r.Config;
+import l2r.gameserver.instancemanager.FishingChampionshipManager;
+import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.network.serverpackets.NpcHtmlMessage;
 
 import gr.sr.configsEngine.configs.impl.LeaderboardsConfigs;
@@ -40,6 +43,17 @@ public final class RequestExFishRanking extends L2GameClientPacket
 	@Override
 	protected void runImpl()
 	{
+		final L2PcInstance player = getClient().getActiveChar();
+		if (player == null)
+		{
+			return;
+		}
+		
+		if (Config.ALT_FISH_CHAMPIONSHIP_ENABLED)
+		{
+			FishingChampionshipManager.getInstance().showMidResult(player);
+		}
+		
 		if (LeaderboardsConfigs.RANK_FISHERMAN_ENABLED)
 		{
 			NpcHtmlMessage htm = new NpcHtmlMessage();

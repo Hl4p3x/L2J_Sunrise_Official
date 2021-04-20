@@ -44,12 +44,12 @@ import l2r.gameserver.model.stats.Stats;
 import l2r.gameserver.network.SystemMessageId;
 import l2r.gameserver.network.serverpackets.SetSummonRemainTime;
 
-/**
- * @author vGodFather
- */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class L2ServitorInstance extends L2Summon
 {
-	// private static final Logger LOG = LoggerFactory.getLogger(L2ServitorInstance.class);
+	protected static final Logger _log = LoggerFactory.getLogger(L2ServitorInstance.class);
 	
 	private static final String ADD_SKILL_SAVE = "INSERT INTO character_summon_skills_save (ownerId,ownerClassIndex,summonSkillId,skill_id,skill_level,effect_count,effect_cur_time,buff_index) VALUES (?,?,?,?,?,?,?,?)";
 	private static final String RESTORE_SKILL_SAVE = "SELECT skill_id,skill_level,effect_count,effect_cur_time,buff_index FROM character_summon_skills_save WHERE ownerId=? AND ownerClassIndex=? AND summonSkillId=? ORDER BY buff_index ASC";
@@ -65,6 +65,7 @@ public class L2ServitorInstance extends L2Summon
 	private int _timeRemaining;
 	private int _nextItemConsumeTime;
 	public int lastShowntimeRemaining; // Following FbiAgent's example to avoid sending useless packets
+	
 	protected Future<?> _summonLifeTask;
 	
 	private int _referenceSkill;
@@ -241,6 +242,11 @@ public class L2ServitorInstance extends L2Summon
 			return false;
 		}
 		
+		if (Config.DEBUG)
+		{
+			_log.warn(getClass().getSimpleName() + ": " + getTemplate().getName() + " (" + getOwner().getName() + ") has been killed.");
+		}
+		
 		if (_summonLifeTask != null)
 		{
 			_summonLifeTask.cancel(false);
@@ -249,7 +255,9 @@ public class L2ServitorInstance extends L2Summon
 		
 		getOwner().sendPacket(SystemMessageId.SERVITOR_PASSED_AWAY);
 		CharSummonTable.getInstance().removeServitor(getOwner());
+		
 		return true;
+		
 	}
 	
 	@Override
@@ -375,7 +383,7 @@ public class L2ServitorInstance extends L2Summon
 		}
 		catch (Exception e)
 		{
-			// LOG.error("Could not store summon effect data for owner " + ownerId + ", class " + ownerClassId + ", skill " + servitorRefSkill + ", error", e);
+			// _log.error("Could not store summon effect data for owner " + ownerId + ", class " + ownerClassId + ", skill " + servitorRefSkill + ", error", e);
 		}
 	}
 	
@@ -506,6 +514,11 @@ public class L2ServitorInstance extends L2Summon
 	@Override
 	public void unSummon(L2PcInstance owner)
 	{
+		if (Config.DEBUG)
+		{
+			_log.info(getClass().getSimpleName() + ": " + getTemplate().getName() + " (" + owner.getName() + ") unsummoned.");
+		}
+		
 		if (_summonLifeTask != null)
 		{
 			_summonLifeTask.cancel(false);
@@ -529,6 +542,11 @@ public class L2ServitorInstance extends L2Summon
 	@Override
 	public boolean destroyItemByItemId(String process, int itemId, long count, L2Object reference, boolean sendMessage)
 	{
+		if (Config.DEBUG)
+		{
+			_log.warn(getClass().getSimpleName() + ": " + getTemplate().getName() + " (" + getOwner().getName() + ") consume.");
+		}
+		
 		return getOwner().destroyItemByItemId(process, itemId, count, reference, sendMessage);
 	}
 	
@@ -557,7 +575,7 @@ public class L2ServitorInstance extends L2Summon
 	{
 		if (isSharingElementals() && (getOwner() != null))
 		{
-			return (getOwner().getAttackElementValue(attackAttribute));
+			return (int) (getOwner().getAttackElementValue(attackAttribute) * sharedElementalsPercent());
 		}
 		return super.getAttackElementValue(attackAttribute);
 	}
@@ -567,7 +585,7 @@ public class L2ServitorInstance extends L2Summon
 	{
 		if (isSharingElementals() && (getOwner() != null))
 		{
-			return (getOwner().getDefenseElementValue(defenseAttribute));
+			return (int) (getOwner().getDefenseElementValue(defenseAttribute) * sharedElementalsPercent());
 		}
 		return super.getDefenseElementValue(defenseAttribute);
 	}

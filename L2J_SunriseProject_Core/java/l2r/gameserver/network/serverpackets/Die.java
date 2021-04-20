@@ -19,10 +19,12 @@
 package l2r.gameserver.network.serverpackets;
 
 import l2r.gameserver.data.xml.impl.AdminData;
+import l2r.gameserver.enums.QuickVarType;
 import l2r.gameserver.enums.ZoneIdType;
 import l2r.gameserver.instancemanager.CHSiegeManager;
 import l2r.gameserver.instancemanager.CastleManager;
 import l2r.gameserver.instancemanager.FortManager;
+import l2r.gameserver.instancemanager.KrateiCubeManager;
 import l2r.gameserver.instancemanager.TerritoryWarManager;
 import l2r.gameserver.model.L2AccessLevel;
 import l2r.gameserver.model.L2Clan;
@@ -85,6 +87,11 @@ public class Die extends L2GameServerPacket
 				{
 					_canTeleport = false;
 				}
+			}
+			
+			if (KrateiCubeManager.getInstance().isInProgress(activeChar.getQuickVarI(QuickVarType.KRATEI_CUBE_LVL.getCommand(), -1)) && KrateiCubeManager.getInstance().isKrateiParticipant(activeChar))
+			{
+				_canTeleport = false;
 			}
 		}
 	}

@@ -1323,7 +1323,11 @@ public class RimKamaloka extends AbstractNpcAI
 			return null;
 		}
 		
-		if (event.equalsIgnoreCase("Exit"))
+		if (event.equalsIgnoreCase("check"))
+		{
+			return "32484.htm";
+		}
+		else if (event.equalsIgnoreCase("Exit"))
 		{
 			try
 			{
@@ -1360,11 +1364,12 @@ public class RimKamaloka extends AbstractNpcAI
 		try
 		{
 			enterInstance(player, Integer.parseInt(event));
+			return null;
 		}
 		catch (Exception e)
 		{
 		}
-		return null;
+		return event;
 	}
 	
 	@Override

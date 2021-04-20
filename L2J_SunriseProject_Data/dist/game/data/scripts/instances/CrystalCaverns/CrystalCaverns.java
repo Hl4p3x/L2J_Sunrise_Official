@@ -1464,7 +1464,7 @@ public final class CrystalCaverns extends AbstractInstance
 	
 	private void giveRewards(L2PcInstance player, int instanceId, int bossCry, boolean isBaylor)
 	{
-		final int num = Math.max((int) Config.RATE_DEATH_DROP_CHANCE_MULTIPLIER, 1);
+		final int num = Math.max((int) Config.RATE_DROP_ITEMS_BY_RAID, 1);
 		
 		L2Party party = player.getParty();
 		if (party != null)

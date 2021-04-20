@@ -65,14 +65,16 @@ public class ConditionPlayerCanTakeCastle extends Condition
 			env.getPlayer().sendPacket(SystemMessageId.INCORRECT_TARGET);
 			canTakeCastle = false;
 		}
-		else if (!Util.checkIfInRange(env.getSkill().getCastRange(), env.getPlayer(), env.getTarget(), true))
+		
+		// This must be 160 still not confirmed from retail
+		else if (!Util.checkIfInRange(160, env.getPlayer(), env.getTarget(), true))
 		{
 			env.getPlayer().sendPacket(SystemMessageId.DIST_TOO_FAR_CASTING_STOPPED);
 			canTakeCastle = false;
 		}
 		
 		// vGodFather: extra check Z coord
-		if (Math.abs(env.getPlayer().getZ() - env.getTarget().getZ()) > 40)
+		if (Math.abs(env.getPlayer().getZ() - env.getTarget().getZ()) > 65)
 		{
 			env.getPlayer().sendPacket(SystemMessageId.DIST_TOO_FAR_CASTING_STOPPED);
 			canTakeCastle = false;

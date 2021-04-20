@@ -107,7 +107,7 @@ public class RequestBuySeed extends L2GameClientPacket
 		}
 		
 		final L2Npc manager = player.getLastFolkNPC();
-		if (!(manager instanceof L2MerchantInstance) || !manager.canInteract(player) || (manager.getTemplate().getParameters().getInt("manor_id", -1) != _manorId))
+		if (!(manager instanceof L2MerchantInstance) || !manager.canInteract(player) || (manager.getCastle().getResidenceId() != _manorId))
 		{
 			sendActionFailed();
 			return;

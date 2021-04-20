@@ -21,5 +21,7 @@ package l2r.gameserver.model.actor.stat;
 public enum Rates
 {
 	PREMIUM_BONUS_EXP,
-	PREMIUM_BONUS_SP;
+	PREMIUM_BONUS_SP,
+	SPOIL,
+	DROP_ITEM;
 }

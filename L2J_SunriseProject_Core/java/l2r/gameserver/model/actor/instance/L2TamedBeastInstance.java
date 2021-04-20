@@ -38,7 +38,6 @@ import l2r.gameserver.model.skills.L2Skill;
 import l2r.gameserver.model.skills.L2SkillType;
 import l2r.gameserver.network.serverpackets.ActionFailed;
 import l2r.gameserver.network.serverpackets.SocialAction;
-import l2r.gameserver.network.serverpackets.StopMove;
 import l2r.util.Rnd;
 
 // While a tamed beast behaves a lot like a pet (ingame) and does have
@@ -400,8 +399,7 @@ public final class L2TamedBeastInstance extends L2FeedableBeastInstance
 	 */
 	protected void sitCastAndFollow(L2Skill skill, L2Character target)
 	{
-		stopMove(null);
-		broadcastPacket(new StopMove(this));
+		stopMove();
 		getAI().setIntention(AI_INTENTION_IDLE);
 		
 		setTarget(target);

@@ -121,6 +121,11 @@ public final class RequestExEnchantSkill extends L2GameClientPacket
 			return;
 		}
 		
+		if (s.isMaxEnchant(beforeEnchantSkillLevel))
+		{
+			return;
+		}
+		
 		final int costMultiplier = EnchantSkillGroupsData.NORMAL_ENCHANT_COST_MULTIPLIER;
 		final int requiredSp = esd.getSpCost() * costMultiplier;
 		if (player.getSp() >= requiredSp)

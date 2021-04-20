@@ -28,10 +28,10 @@ import java.util.Set;
 
 import l2r.gameserver.instancemanager.InstanceManager;
 import l2r.gameserver.instancemanager.MapRegionManager;
+import l2r.gameserver.model.Location;
 import l2r.gameserver.model.StatsSet;
 import l2r.gameserver.model.actor.instance.L2DoorInstance;
 import l2r.gameserver.model.actor.templates.L2DoorTemplate;
-import l2r.gameserver.pathfinding.AbstractNodeLoc;
 import l2r.util.data.xml.IXmlReader.IXmlReader;
 
 import org.w3c.dom.Document;
@@ -112,8 +112,8 @@ public class DoorData implements IXmlReader
 			collisionRadius = 20;
 		}
 		
-		set.set("collisionRadius", collisionRadius);
-		set.set("collisionHeight", height);
+		set.set("collision_radius", collisionRadius);
+		set.set("collision_height", height);
 	}
 	
 	/**
@@ -171,7 +171,7 @@ public class DoorData implements IXmlReader
 		return _doors.values();
 	}
 	
-	public boolean checkIfDoorsBetween(AbstractNodeLoc start, AbstractNodeLoc end, int instanceId)
+	public boolean checkIfDoorsBetween(Location start, Location end, int instanceId)
 	{
 		return checkIfDoorsBetween(start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ(), instanceId);
 	}

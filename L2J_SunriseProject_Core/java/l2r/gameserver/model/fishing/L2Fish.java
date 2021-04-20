@@ -54,14 +54,14 @@ public class L2Fish implements Cloneable
 		_fishBiteRate = set.getDouble("fishBiteRate"); // TODO: Support needed.
 		_fishGuts = set.getDouble("fishGuts");
 		_fishHp = set.getInt("fishHp");
-		_fishMaxLength = set.getInt("fishMaxLength"); // TODO: Support needed.
+		_fishMaxLength = set.getInt("fishMaxLength");
 		_fishLengthRate = set.getDouble("fishLengthRate"); // TODO: Support needed.
 		_hpRegen = set.getDouble("hpRegen");
 		_startCombatTime = set.getInt("startCombatTime");
 		_combatDuration = set.getInt("combatDuration");
 		_gutsCheckTime = set.getInt("gutsCheckTime");
 		_gutsCheckProbability = set.getDouble("gutsCheckProbability"); // TODO: Support needed.
-		_cheatingProb = set.getDouble("cheatingProb"); // TODO: Support needed.
+		_cheatingProb = set.getDouble("cheatingProb");
 		_fishGrade = getGradeId(set.getString("fishGrade"));
 	}
 	
@@ -249,7 +249,7 @@ public class L2Fish implements Cloneable
 			case "hard_ugly":
 				return 9;
 			case "hs_fish":
-				return 10; // FIXME: Verify the ID
+				return 10;
 			case "wide":
 			default:
 				return 0;

@@ -40,7 +40,6 @@ public enum Stats
 	REGENERATE_MP_RATE("regMp"),
 	MANA_CHARGE("manaCharge"),
 	HEAL_EFFECT("healEffect"),
-	S_HP_PROP_HP_RATE("sNpcPropHpRate"),
 	
 	// ATTACK & DEFENCE
 	POWER_DEFENCE("pDef"),

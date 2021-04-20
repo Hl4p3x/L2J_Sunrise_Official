@@ -30,38 +30,53 @@ import l2r.gameserver.model.skills.L2Skill;
 import l2r.gameserver.model.stats.MoveType;
 
 /**
- * Character template.
  * @author Zoey76
  */
 public class L2CharTemplate extends ListenersContainer
 {
 	// BaseStats
-	private int _baseSTR;
-	private int _baseCON;
-	private int _baseDEX;
-	private int _baseINT;
-	private int _baseWIT;
-	private int _baseMEN;
-	private float _baseHpMax;
-	private float _baseCpMax;
-	private float _baseMpMax;
-	private float _baseHpReg;
-	private float _baseMpReg;
-	private int _basePAtk;
-	private int _baseMAtk;
-	private int _basePDef;
-	private int _baseMDef;
-	private int _basePAtkSpd;
-	private int _baseMAtkSpd;
+	private final int _baseSTR;
+	private final int _baseCON;
+	private final int _baseDEX;
+	private final int _baseINT;
+	private final int _baseWIT;
+	private final int _baseMEN;
+	private final float _baseHpMax;
+	private final float _baseCpMax;
+	private final float _baseMpMax;
+	private final float _baseHpReg;
+	private final float _baseMpReg;
+	private final int _basePAtk;
+	private final int _baseMAtk;
+	private final int _basePDef;
+	private final int _baseMDef;
+	private final int _basePAtkSpd;
+	private final int _baseMAtkSpd;
 	private int _baseAttackRange;
-	private int _randomDamage;
+	private final int _randomDamage;
 	private WeaponType _baseAttackType;
-	private int _baseShldDef;
-	private int _baseShldRate;
-	private int _baseCritRate;
-	private int _baseMCritRate;
+	private final int _baseShldDef;
+	private final int _baseShldRate;
+	private final int _baseCritRate;
+	private final int _baseMCritRate;
 	// SpecialStats
-	private int _baseBreath;
+	private final int _baseBreath;
+	private final int _baseAggression;
+	private final int _baseBleed;
+	private final int _basePoison;
+	private final int _baseStun;
+	private final int _baseRoot;
+	private final int _baseMovement;
+	private final int _baseConfusion;
+	private final int _baseSleep;
+	private final double _baseAggressionVuln;
+	private final double _baseBleedVuln;
+	private final double _basePoisonVuln;
+	private final double _baseStunVuln;
+	private final double _baseRootVuln;
+	private final double _baseMovementVuln;
+	private final double _baseSleepVuln;
+	private final double _baseCritVuln;
 	private int _baseFire;
 	private int _baseWind;
 	private int _baseWater;
@@ -74,27 +89,28 @@ public class L2CharTemplate extends ListenersContainer
 	private double _baseEarthRes;
 	private double _baseHolyRes;
 	private double _baseDarkRes;
-	private double _baseElementRes;
-	private double _sNpcPropHpRate;
 	
-	/** For client info use {@link #_fCollisionRadius} */
-	private int _collisionRadius;
-	/** For client info use {@link #_fCollisionHeight} */
-	private int _collisionHeight;
+	private final int _baseMpConsumeRate;
+	private final int _baseHpConsumeRate;
 	
-	private double _fCollisionRadius;
-	private double _fCollisionHeight;
+	/**
+	 * For client info use {@link #_fCollisionRadius}
+	 */
+	private final int _collisionRadius;
+	
+	/**
+	 * For client info use {@link #_fCollisionHeight}
+	 */
+	private final int _collisionHeight;
+	
+	private final double _fCollisionRadius;
+	private final double _fCollisionHeight;
 	
 	private final double[] _moveType = new double[MoveType.values().length];
 	/** The creature's race. */
-	private Race _race;
+	private Race _race = Race.NONE;
 	
 	public L2CharTemplate(StatsSet set)
-	{
-		set(set);
-	}
-	
-	public void set(StatsSet set)
 	{
 		// Base stats
 		_baseSTR = set.getInt("baseSTR", 0);
@@ -124,26 +140,42 @@ public class L2CharTemplate extends ListenersContainer
 		
 		// SpecialStats
 		_baseBreath = set.getInt("baseBreath", 100);
+		_baseAggression = set.getInt("baseAggression", 0);
+		_baseBleed = set.getInt("baseBleed", 0);
+		_basePoison = set.getInt("basePoison", 0);
+		_baseStun = set.getInt("baseStun", 0);
+		_baseRoot = set.getInt("baseRoot", 0);
+		_baseMovement = set.getInt("baseMovement", 0);
+		_baseConfusion = set.getInt("baseConfusion", 0);
+		_baseSleep = set.getInt("baseSleep", 0);
 		_baseFire = set.getInt("baseFire", 0);
 		_baseWind = set.getInt("baseWind", 0);
 		_baseWater = set.getInt("baseWater", 0);
 		_baseEarth = set.getInt("baseEarth", 0);
 		_baseHoly = set.getInt("baseHoly", 0);
 		_baseDark = set.getInt("baseDark", 0);
+		_baseAggressionVuln = set.getInt("baseAggressionVuln", 0);
+		_baseBleedVuln = set.getInt("baseBleedVuln", 0);
+		_basePoisonVuln = set.getInt("basePoisonVuln", 0);
+		_baseStunVuln = set.getInt("baseStunVuln", 0);
+		_baseRootVuln = set.getInt("baseRootVuln", 0);
+		_baseMovementVuln = set.getInt("baseMovementVuln", 0);
+		_baseSleepVuln = set.getInt("baseSleepVuln", 0);
+		_baseCritVuln = set.getInt("baseCritVuln", 1);
 		_baseFireRes = set.getInt("baseFireRes", 0);
 		_baseWindRes = set.getInt("baseWindRes", 0);
 		_baseWaterRes = set.getInt("baseWaterRes", 0);
 		_baseEarthRes = set.getInt("baseEarthRes", 0);
 		_baseHolyRes = set.getInt("baseHolyRes", 0);
 		_baseDarkRes = set.getInt("baseDarkRes", 0);
-		_baseElementRes = set.getInt("baseElementRes", 0);
 		
-		// Regenerate Multiplier
-		_sNpcPropHpRate = set.getDouble("sNpcPropHpRate", 1.0D);
+		// C4 Stats
+		_baseMpConsumeRate = set.getInt("baseMpConsumeRate", 0);
+		_baseHpConsumeRate = set.getInt("baseHpConsumeRate", 0);
 		
 		// Geometry
-		_fCollisionHeight = set.getDouble("collisionHeight", 0);
-		_fCollisionRadius = set.getDouble("collisionRadius", 0);
+		_fCollisionHeight = set.getDouble("collision_height", 0);
+		_fCollisionRadius = set.getDouble("collision_radius", 0);
 		_collisionRadius = (int) _fCollisionRadius;
 		_collisionHeight = (int) _fCollisionHeight;
 		
@@ -259,22 +291,6 @@ public class L2CharTemplate extends ListenersContainer
 	public double getBaseDarkRes()
 	{
 		return _baseDarkRes;
-	}
-	
-	/**
-	 * @return the _baseElementRes
-	 */
-	public double getBaseElementRes()
-	{
-		return _baseElementRes;
-	}
-	
-	/**
-	 * * @return the NpcPropHpRate
-	 */
-	public double getNpcPropHpRate()
-	{
-		return _sNpcPropHpRate;
 	}
 	
 	/**
@@ -422,6 +438,14 @@ public class L2CharTemplate extends ListenersContainer
 	}
 	
 	/**
+	 * @return the baseAttackRange
+	 */
+	public int getBaseAttackRange()
+	{
+		return _baseAttackRange;
+	}
+	
+	/**
 	 * @return the baseShldRate
 	 */
 	public int getBaseShldRate()
@@ -461,6 +485,155 @@ public class L2CharTemplate extends ListenersContainer
 	public int getBaseBreath()
 	{
 		return _baseBreath;
+	}
+	
+	/**
+	 * @return the baseAggression
+	 */
+	public int getBaseAggression()
+	{
+		return _baseAggression;
+	}
+	
+	public boolean isAggressive()
+	{
+		return _baseAggression > 0;
+	}
+	
+	/**
+	 * @return the baseBleed
+	 */
+	public int getBaseBleed()
+	{
+		return _baseBleed;
+	}
+	
+	/**
+	 * @return the basePoison
+	 */
+	public int getBasePoison()
+	{
+		return _basePoison;
+	}
+	
+	/**
+	 * @return the baseStun
+	 */
+	public int getBaseStun()
+	{
+		return _baseStun;
+	}
+	
+	/**
+	 * @return the baseRoot
+	 */
+	public int getBaseRoot()
+	{
+		return _baseRoot;
+	}
+	
+	/**
+	 * @return the baseMovement
+	 */
+	public int getBaseMovement()
+	{
+		return _baseMovement;
+	}
+	
+	/**
+	 * @return the baseConfusion
+	 */
+	public int getBaseConfusion()
+	{
+		return _baseConfusion;
+	}
+	
+	/**
+	 * @return the baseSleep
+	 */
+	public int getBaseSleep()
+	{
+		return _baseSleep;
+	}
+	
+	/**
+	 * @return the baseAggressionVuln
+	 */
+	public double getBaseAggressionVuln()
+	{
+		return _baseAggressionVuln;
+	}
+	
+	/**
+	 * @return the baseBleedVuln
+	 */
+	public double getBaseBleedVuln()
+	{
+		return _baseBleedVuln;
+	}
+	
+	/**
+	 * @return the basePoisonVuln
+	 */
+	public double getBasePoisonVuln()
+	{
+		return _basePoisonVuln;
+	}
+	
+	/**
+	 * @return the baseStunVuln
+	 */
+	public double getBaseStunVuln()
+	{
+		return _baseStunVuln;
+	}
+	
+	/**
+	 * @return the baseRootVuln
+	 */
+	public double getBaseRootVuln()
+	{
+		return _baseRootVuln;
+	}
+	
+	/**
+	 * @return the baseMovementVuln
+	 */
+	public double getBaseMovementVuln()
+	{
+		return _baseMovementVuln;
+	}
+	
+	/**
+	 * @return the baseSleepVuln
+	 */
+	public double getBaseSleepVuln()
+	{
+		return _baseSleepVuln;
+	}
+	
+	/**
+	 * @return the baseCritVuln
+	 */
+	public double getBaseCritVuln()
+	{
+		return _baseCritVuln;
+	}
+	
+	/**
+	 * @return the baseMpConsumeRate
+	 */
+	public int getBaseMpConsumeRate()
+	{
+		return _baseMpConsumeRate;
+	}
+	
+	/**
+	 * @return the baseHpConsumeRate
+	 */
+	public int getBaseHpConsumeRate()
+	{
+		return _baseHpConsumeRate;
 	}
 	
 	/**
@@ -592,14 +765,6 @@ public class L2CharTemplate extends ListenersContainer
 	}
 	
 	/**
-	 * @param baseElementRes
-	 */
-	public void setBaseElementRes(double baseElementRes)
-	{
-		_baseElementRes = baseElementRes;
-	}
-	
-	/**
 	 * @return the base attack type (Sword, Fist, Blunt, etc..)
 	 */
 	public WeaponType getBaseAttackType()
@@ -614,14 +779,6 @@ public class L2CharTemplate extends ListenersContainer
 	public void setBaseAttackType(WeaponType type)
 	{
 		_baseAttackType = type;
-	}
-	
-	/**
-	 * @return the baseAtkRange
-	 */
-	public int getBaseAttackRange()
-	{
-		return _baseAttackRange;
 	}
 	
 	/**

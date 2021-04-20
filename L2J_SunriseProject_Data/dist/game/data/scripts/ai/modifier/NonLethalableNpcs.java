@@ -30,6 +30,9 @@ public class NonLethalableNpcs extends AbstractNpcAI
 	private static final int[] NON_LETHAL_NPCS =
 	{
 		//@formatter:off
+		22854, // Bloody Karik
+		22855, // Bloody Berserker
+		22856, // Bloody Karinness
 		// Headquarter
 		35062,
 		

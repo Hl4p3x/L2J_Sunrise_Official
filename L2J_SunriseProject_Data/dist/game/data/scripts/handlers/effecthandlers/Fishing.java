@@ -23,6 +23,7 @@ import l2r.gameserver.GeoData;
 import l2r.gameserver.enums.PcCondOverride;
 import l2r.gameserver.enums.ZoneIdType;
 import l2r.gameserver.instancemanager.ZoneManager;
+import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.effects.EffectTemplate;
@@ -249,12 +250,14 @@ public final class Fishing extends L2Effect
 		// always use water zone, fishing zone high z is high in the air...
 		int baitZ = waterZone.getWaterZ();
 		
-		if (!GeoData.getInstance().canSeeTarget(player.getX(), player.getY(), player.getZ(), baitX, baitY, baitZ))
+		if (!GeoData.getInstance().canSeeTarget(player, new Location(baitX, baitY, baitZ)))
 		{
 			return Integer.MIN_VALUE;
 		}
 		
-		if (GeoData.getInstance().hasGeo(baitX, baitY))
+		// TODO: Need Check
+		if (Config.GEODATA)
+		// if (GeoData.getInstance().hasGeo(baitX, baitY))
 		{
 			if (GeoData.getInstance().getHeight(baitX, baitY, baitZ) > baitZ)
 			{

@@ -76,7 +76,8 @@ public class PartyMatchRoom implements IIdentifiable
 		else
 		{
 			changeLeader(_members.get(1));
-			deleteMember(player);
+			_members.remove(player);
+			notifyMembersAboutExit(player);
 		}
 	}
 	

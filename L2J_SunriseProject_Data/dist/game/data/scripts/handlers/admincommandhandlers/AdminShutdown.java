@@ -21,6 +21,7 @@ package handlers.admincommandhandlers;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
+import l2r.Config;
 import l2r.gameserver.GameTimeController;
 import l2r.gameserver.Shutdown;
 import l2r.gameserver.handler.IAdminCommandHandler;
@@ -103,7 +104,7 @@ public class AdminShutdown implements IAdminCommandHandler
 	
 	private void sendHtmlForm(L2PcInstance activeChar)
 	{
-		final NpcHtmlMessage adminReply = new NpcHtmlMessage();
+		NpcHtmlMessage adminReply = new NpcHtmlMessage();
 		int t = GameTimeController.getInstance().getGameTime();
 		int h = t / 60;
 		int m = t % 60;
@@ -114,9 +115,12 @@ public class AdminShutdown implements IAdminCommandHandler
 		adminReply.setFile(activeChar, activeChar.getHtmlPrefix(), "data/html/admin/shutdown.htm");
 		adminReply.replace("%count%", String.valueOf(L2World.getInstance().getAllPlayersCount()));
 		adminReply.replace("%used%", String.valueOf(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+		adminReply.replace("%xp%", String.valueOf(Config.RATE_XP));
+		adminReply.replace("%sp%", String.valueOf(Config.RATE_SP));
+		adminReply.replace("%adena%", String.valueOf(Config.RATE_DROP_ITEMS_ID.get(57)));
+		adminReply.replace("%drop%", String.valueOf(Config.RATE_DROP_ITEMS));
 		adminReply.replace("%time%", String.valueOf(format.format(cal.getTime())));
 		activeChar.sendPacket(adminReply);
-		
 	}
 	
 	private void serverShutdown(L2PcInstance activeChar, int seconds, boolean restart)

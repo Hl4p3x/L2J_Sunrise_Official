@@ -516,8 +516,11 @@ public final class Antharas extends AbstractNpcAI
 					}
 					else
 					{
+						sandStorm = 2;
+						moveChance = 0;
+						npc.disableCoreAI(false);
 						npc.teleToLocation(177648, 114816, -7735, npc.getHeading());
-						startQuestTimer("TID_FEAR_MOVE_TIMEOVER", 1000, npc, null);
+						INVISIBLE_NPC.entrySet().forEach(entry -> addSpawn(entry.getKey(), entry.getValue()));
 					}
 				}
 				break;
@@ -739,14 +742,21 @@ public final class Antharas extends AbstractNpcAI
 		}
 		else
 		{
-			for (int i = 1; i <= 6; i++)
+			try
 			{
-				final int x = npc.getTemplate().getParameters().getInt("suicide" + i + "_x");
-				final int y = npc.getTemplate().getParameters().getInt("suicide" + i + "_y");
-				final L2Attackable bomber = (L2Attackable) addSpawn(BOMBER, npc.getX(), npc.getY(), npc.getZ(), 0, true, 15000, true);
-				bomber.getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_TO, new Location(x, y, npc.getZ()));
+				for (int i = 1; i <= 6; i++)
+				{
+					final int x = npc.getTemplate().getParameters().getInt("suicide" + i + "_x");
+					final int y = npc.getTemplate().getParameters().getInt("suicide" + i + "_y");
+					final L2Attackable bomber = (L2Attackable) addSpawn(BOMBER, npc.getX(), npc.getY(), npc.getZ(), 0, true, 15000, true);
+					bomber.getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_TO, new Location(x, y, npc.getZ()));
+				}
+				npc.deleteMe();
 			}
-			npc.deleteMe();
+			catch (Exception e)
+			{
+			
+			}
 		}
 		return super.onSpawn(npc);
 	}

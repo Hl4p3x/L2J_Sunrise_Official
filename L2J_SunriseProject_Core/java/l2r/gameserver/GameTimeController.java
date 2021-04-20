@@ -19,11 +19,8 @@
 package l2r.gameserver;
 
 import java.util.Calendar;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import l2r.gameserver.instancemanager.DayNightSpawnManager;
-import l2r.gameserver.model.actor.L2Character;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +44,6 @@ public final class GameTimeController extends Thread
 	
 	private static GameTimeController _instance;
 	
-	private final Set<L2Character> _movingObjects = ConcurrentHashMap.newKeySet();
 	private final long _referenceTime;
 	private final long _startTime;
 	
@@ -102,36 +98,6 @@ public final class GameTimeController extends Thread
 		return (int) ((System.currentTimeMillis() - _referenceTime) / MILLIS_IN_TICK);
 	}
 	
-	/**
-	 * Add a L2Character to movingObjects of GameTimeController.
-	 * @param cha The L2Character to add to movingObjects of GameTimeController
-	 */
-	public final void registerMovingObject(final L2Character cha)
-	{
-		if (cha == null)
-		{
-			return;
-		}
-		
-		_movingObjects.add(cha);
-	}
-	
-	/**
-	 * Move all L2Characters contained in movingObjects of GameTimeController.<BR>
-	 * <B><U> Concept</U> :</B><BR>
-	 * All L2Character in movement are identified in <B>movingObjects</B> of GameTimeController.<BR>
-	 * <B><U> Actions</U> :</B><BR>
-	 * <ul>
-	 * <li>Update the position of each L2Character</li>
-	 * <li>If movement is finished, the L2Character is removed from movingObjects</li>
-	 * <li>Create a task to update the _knownObject and _knowPlayers of each L2Character that finished its movement and of their already known L2Object then notify AI with EVT_ARRIVED</li>
-	 * </ul>
-	 */
-	private final void moveObjects()
-	{
-		_movingObjects.removeIf(L2Character::updatePosition);
-	}
-	
 	public final void stopTimer()
 	{
 		super.interrupt();
@@ -154,15 +120,6 @@ public final class GameTimeController extends Thread
 		while (true)
 		{
 			nextTickTime = ((System.currentTimeMillis() / MILLIS_IN_TICK) * MILLIS_IN_TICK) + 100;
-			
-			try
-			{
-				moveObjects();
-			}
-			catch (final Throwable e)
-			{
-				_log.warn("", e);
-			}
 			
 			sleepTime = nextTickTime - System.currentTimeMillis();
 			if (sleepTime > 0)

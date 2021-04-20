@@ -20,24 +20,25 @@ package l2r.gameserver.util;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Logger;
 
 import l2r.Config;
 import l2r.gameserver.ThreadPoolManager;
 import l2r.gameserver.data.sql.NpcTable;
-import l2r.gameserver.model.Location;
+import l2r.gameserver.model.L2MinionData;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.instance.L2MonsterInstance;
 import l2r.gameserver.model.actor.templates.L2NpcTemplate;
-import l2r.gameserver.model.holders.MinionHolder;
 import l2r.util.Rnd;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author luisantonioa, DS
  */
 public class MinionList
 {
-	private static final Logger _log = Logger.getLogger(MinionList.class.getName());
+	private static final Logger _log = LoggerFactory.getLogger(MinionList.class);
 	
 	protected final L2MonsterInstance _master;
 	/** List containing the current spawned minions */
@@ -70,27 +71,24 @@ public class MinionList
 	 * <li>Get the Minion data of all Minions that must be spawn</li>
 	 * <li>For each Minion type, spawn the amount of Minion needed</li><BR>
 	 * <BR>
-	 * @param minions
 	 */
-	public final void spawnMinions(final List<MinionHolder> minions)
+	public final void spawnMinions()
 	{
 		if (_master.isAlikeDead())
 		{
 			return;
 		}
-		
-		// List<MinionHolder> minions = _master.getTemplate().getParameters().getMinionList("Privates");
+		List<L2MinionData> minions = _master.getTemplate().getMinionData();
 		if (minions == null)
 		{
 			return;
 		}
 		
-		int minionCount, minionId;
-		long minionsToSpawn;
-		for (MinionHolder minion : minions)
+		int minionCount, minionId, minionsToSpawn;
+		for (L2MinionData minion : minions)
 		{
-			minionCount = minion.getCount();
-			minionId = minion.getId();
+			minionCount = minion.getAmount();
+			minionId = minion.getMinionId();
 			
 			minionsToSpawn = minionCount - countSpawnedMinionsById(minionId);
 			if (minionsToSpawn > 0)
@@ -149,7 +147,7 @@ public class MinionList
 		deleteSpawnedMinions();
 		
 		// if master has spawn and can respawn - try to reuse minions
-		if ((_reusedMinionReferences == null) && (_master.getTemplate().getParameters().getSet().get("SummonPrivateRate") == null) && !_master.getTemplate().getParameters().getMinionList("Privates").isEmpty() && (_master.getSpawn() != null) && _master.getSpawn().isRespawnEnabled())
+		if ((_reusedMinionReferences == null) && (_master.getTemplate().getMinionData() != null) && (_master.getSpawn() != null) && _master.getSpawn().isRespawnEnabled())
 		{
 			_reusedMinionReferences = new CopyOnWriteArrayList<>();
 		}
@@ -204,29 +202,36 @@ public class MinionList
 	 */
 	public void onAssist(L2Character caller, L2Character attacker)
 	{
-		if (attacker == null)
+		try
 		{
-			return;
-		}
-		
-		if (!_master.isAlikeDead() && !_master.isInCombat())
-		{
-			_master.addDamageHate(attacker, 0, 1);
-		}
-		
-		final boolean callerIsMaster = caller == _master;
-		int aggro = callerIsMaster ? 10 : 1;
-		if (_master.isRaid())
-		{
-			aggro *= 10;
-		}
-		
-		for (L2MonsterInstance minion : _minionReferences)
-		{
-			if ((minion != null) && !minion.isDead() && (callerIsMaster || !minion.isInCombat()))
+			if (attacker == null)
 			{
-				minion.addDamageHate(attacker, 0, aggro);
+				return;
 			}
+			
+			if (!_master.isAlikeDead() && !_master.isInCombat())
+			{
+				_master.addDamageHate(attacker, 0, 1);
+			}
+			
+			final boolean callerIsMaster = caller == _master;
+			int aggro = callerIsMaster ? 10 : 1;
+			if (_master.isRaid())
+			{
+				aggro *= 10;
+			}
+			
+			for (L2MonsterInstance minion : _minionReferences)
+			{
+				if ((minion != null) && !minion.isDead() && (callerIsMaster || !minion.isInCombat()))
+				{
+					minion.addDamageHate(attacker, 0, aggro);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			// no need to log
 		}
 	}
 	
@@ -262,7 +267,7 @@ public class MinionList
 					newY = (_master.getY() - newY) + minRadius;
 				}
 				
-				minion.teleToLocation(new Location(newX, newY, _master.getZ()));
+				minion.teleToLocation(newX, newY, _master.getZ());
 			}
 		}
 	}
@@ -273,6 +278,7 @@ public class MinionList
 		{
 			return;
 		}
+		
 		// searching in reused minions
 		if (_reusedMinionReferences != null)
 		{
@@ -396,9 +402,17 @@ public class MinionList
 	
 	// Statistics part
 	
-	private final long countSpawnedMinionsById(int minionId)
+	private final int countSpawnedMinionsById(int minionId)
 	{
-		return _minionReferences.stream().filter(npc -> npc.getId() == minionId).count();
+		int count = 0;
+		for (L2MonsterInstance minion : _minionReferences)
+		{
+			if ((minion != null) && (minion.getId() == minionId))
+			{
+				count++;
+			}
+		}
+		return count;
 	}
 	
 	public final int countSpawnedMinions()
@@ -408,6 +422,6 @@ public class MinionList
 	
 	public final long lazyCountSpawnedMinionsGroups()
 	{
-		return _minionReferences.stream().map(L2MonsterInstance::getId).distinct().count();
+		return _minionReferences.stream().distinct().count();
 	}
 }

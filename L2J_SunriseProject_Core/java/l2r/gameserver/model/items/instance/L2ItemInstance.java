@@ -1619,14 +1619,14 @@ public final class L2ItemInstance extends L2Object
 		{
 			assert _itm.getWorldRegion() == null;
 			
-			if (Config.PATHFINDING > 0)
+			if (Config.GEODATA)
 			{
-				_z = GeoData.getInstance().getSpawnHeight(_x, _y, _z);
+				_z = GeoData.getInstance().getSpawnHeight(_x, _y, _z + Config.SHIFT_BY_Z);
 			}
 			
 			if (_dropper != null)
 			{
-				Location dropDest = GeoData.getInstance().moveCheck(_dropper.getX(), _dropper.getY(), _dropper.getZ(), _x, _y, _z, _dropper.getInstanceId());
+				Location dropDest = GeoData.getInstance().moveCheck(_dropper, new Location(_x, _y, _z), true);
 				_x = dropDest.getX();
 				_y = dropDest.getY();
 				_z = dropDest.getZ();

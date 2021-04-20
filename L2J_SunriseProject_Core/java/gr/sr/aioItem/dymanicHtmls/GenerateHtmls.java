@@ -1,7 +1,7 @@
 package gr.sr.aioItem.dymanicHtmls;
 
-import l2r.Config;
 import l2r.gameserver.data.sql.NpcTable;
+import l2r.gameserver.enums.QuickVarType;
 import l2r.gameserver.instancemanager.GrandBossManager;
 import l2r.gameserver.model.ClanPrivilege;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
@@ -19,16 +19,12 @@ import gr.sr.achievementEngine.base.Condition;
 import gr.sr.dataHolder.PlayersTopData;
 import gr.sr.main.TopListsLoader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * @author L2jSunrise Team
  * @Website www.l2jsunrise.com
  */
 public class GenerateHtmls
 {
-	private static Logger _log = LoggerFactory.getLogger(GenerateHtmls.class);
 	private static final int[] BOSSES =
 	{
 		29001,
@@ -269,6 +265,7 @@ public class GenerateHtmls
 			return;
 		}
 		
+		player.setQuickVar(QuickVarType.PORTAL_WH.getCommand(), true);
 		if (itemtype != null)
 		{
 			player.sendPacket(new SortedWareHouseWithdrawalList(player, WareHouseWithdrawalList.CLAN, itemtype, sortorder));
@@ -276,11 +273,6 @@ public class GenerateHtmls
 		else
 		{
 			player.sendPacket(new WareHouseWithdrawalList(player, WareHouseWithdrawalList.CLAN));
-		}
-		
-		if (Config.DEBUG)
-		{
-			_log.info("Source: L2WarehouseInstance.java; Player: " + player.getName() + "; Command: showRetrieveWindowClan; Message: Showing stored items.");
 		}
 	}
 	
@@ -295,6 +287,7 @@ public class GenerateHtmls
 			return;
 		}
 		
+		player.setQuickVar(QuickVarType.PORTAL_WH.getCommand(), true);
 		if (itemtype != null)
 		{
 			player.sendPacket(new SortedWareHouseWithdrawalList(player, WareHouseWithdrawalList.PRIVATE, itemtype, sortorder));
@@ -302,11 +295,6 @@ public class GenerateHtmls
 		else
 		{
 			player.sendPacket(new WareHouseWithdrawalList(player, WareHouseWithdrawalList.PRIVATE));
-		}
-		
-		if (Config.DEBUG)
-		{
-			_log.info("Source: L2WarehouseInstance.java; Player: " + player.getName() + "; Command: showRetrieveWindow; Message: Showing stored items.");
 		}
 	}
 	

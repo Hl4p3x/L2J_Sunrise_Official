@@ -18,10 +18,13 @@
  */
 package l2r.gameserver.network.clientpackets;
 
+import java.util.AbstractMap;
+
 import l2r.Config;
 import l2r.gameserver.data.xml.impl.AdminData;
 import l2r.gameserver.handler.AdminCommandHandler;
 import l2r.gameserver.handler.IAdminCommandHandler;
+import l2r.gameserver.listener.actor.player.OnAnswerListener;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.actor.instance.PcInstance.PcFunc;
 import l2r.gameserver.model.events.EventDispatcher;
@@ -84,6 +87,26 @@ public final class DlgAnswer extends L2GameClientPacket
 		}
 		else if (_messageId == SystemMessageId.S1.getId())
 		{
+			if (activeChar.hasDialogAskActive())
+			{
+				final AbstractMap.SimpleEntry<Integer, OnAnswerListener> entry = activeChar.getAskListener(true);
+				if ((entry == null) || (entry.getKey() != _requesterId))
+				{
+					return;
+				}
+				
+				final OnAnswerListener listener = entry.getValue();
+				if (_answer == 1)
+				{
+					listener.sayYes();
+				}
+				else
+				{
+					listener.sayNo();
+				}
+				return;
+			}
+			
 			String cmd = activeChar.getAdminConfirmCmd();
 			if (cmd == null)
 			{

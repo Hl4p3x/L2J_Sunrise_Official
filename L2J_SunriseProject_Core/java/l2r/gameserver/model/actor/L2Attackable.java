@@ -5,14 +5,12 @@
 package l2r.gameserver.model.actor;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import l2r.Config;
+import l2r.gameserver.SevenSigns;
 import l2r.gameserver.ThreadPoolManager;
 import l2r.gameserver.ai.L2AttackableAI;
 import l2r.gameserver.ai.L2CharacterAI;
@@ -21,6 +19,7 @@ import l2r.gameserver.ai.L2SiegeGuardAI;
 import l2r.gameserver.ai.model.MageAI;
 import l2r.gameserver.data.EventDroplist;
 import l2r.gameserver.data.EventDroplist.DateDrop;
+import l2r.gameserver.data.xml.impl.HerbDropData;
 import l2r.gameserver.data.xml.impl.ItemData;
 import l2r.gameserver.enums.CtrlEvent;
 import l2r.gameserver.enums.CtrlIntention;
@@ -33,6 +32,8 @@ import l2r.gameserver.model.AbsorberInfo;
 import l2r.gameserver.model.AggroInfo;
 import l2r.gameserver.model.DamageDoneInfo;
 import l2r.gameserver.model.L2CommandChannel;
+import l2r.gameserver.model.L2DropCategory;
+import l2r.gameserver.model.L2DropData;
 import l2r.gameserver.model.L2Object;
 import l2r.gameserver.model.L2Party;
 import l2r.gameserver.model.L2Seed;
@@ -44,15 +45,16 @@ import l2r.gameserver.model.actor.instance.L2RaidBossInstance;
 import l2r.gameserver.model.actor.instance.L2ServitorInstance;
 import l2r.gameserver.model.actor.instance.L2TrapInstance;
 import l2r.gameserver.model.actor.knownlist.AttackableKnownList;
+import l2r.gameserver.model.actor.stat.Rates;
 import l2r.gameserver.model.actor.status.AttackableStatus;
 import l2r.gameserver.model.actor.tasks.attackable.CommandChannelTimer;
 import l2r.gameserver.model.actor.templates.L2NpcTemplate;
-import l2r.gameserver.model.drops.DropListScope;
 import l2r.gameserver.model.events.EventDispatcher;
 import l2r.gameserver.model.events.impl.character.npc.attackable.OnAttackableAggroRangeEnter;
 import l2r.gameserver.model.events.impl.character.npc.attackable.OnAttackableAttack;
 import l2r.gameserver.model.events.impl.character.npc.attackable.OnAttackableKill;
 import l2r.gameserver.model.holders.ItemHolder;
+import l2r.gameserver.model.itemcontainer.Inventory;
 import l2r.gameserver.model.items.L2Item;
 import l2r.gameserver.model.items.instance.L2ItemInstance;
 import l2r.gameserver.model.skills.L2Skill;
@@ -83,10 +85,10 @@ public class L2Attackable extends L2Npc
 	private boolean _seeded = false;
 	private L2Seed _seed = null;
 	private int _seederObjId = 0;
-	private final AtomicReference<ItemHolder> _harvestItem = new AtomicReference<>();
+	private ItemHolder _harvestItem;
 	// Spoil
 	private int _spoilerObjectId;
-	private final AtomicReference<Collection<ItemHolder>> _sweepItems = new AtomicReference<>();
+	private ItemHolder[] _sweepItems;
 	// Over-hit
 	private boolean _overhit;
 	private double _overhitDamage;
@@ -103,7 +105,7 @@ public class L2Attackable extends L2Npc
 	private volatile boolean _doItemDrop;
 	public int RANDOM_WALK_RATE = -1;
 	
-	protected int _onKillDelay = 1000;
+	protected int _onKillDelay = 0;
 	protected long _findTargetDelay = 0;
 	
 	/**
@@ -412,7 +414,6 @@ public class L2Attackable extends L2Npc
 			
 			// NOTE: Concurrent-safe map is used because while iterating to verify all conditions sometimes an entry must be removed.
 			final Map<L2PcInstance, DamageDoneInfo> rewards = new ConcurrentHashMap<>();
-			
 			L2PcInstance maxDealer = null;
 			int maxDamage = 0;
 			long totalDamage = 0;
@@ -561,7 +562,7 @@ public class L2Attackable extends L2Npc
 								continue;
 							}
 							
-							// Get the RewardInfo of this L2PcInstance from L2Attackable rewards
+							// Get the DamageDoneInfo of this L2PcInstance from L2Attackable rewards
 							final DamageDoneInfo reward2 = rewards.get(partyPlayer);
 							
 							// If the L2PcInstance is in the L2Attackable rewards add its damages to party damages
@@ -617,7 +618,6 @@ public class L2Attackable extends L2Npc
 						// Calculate the level difference between Party and L2Attackable
 						final int levelDiff = partyLvl - getLevel();
 						
-						// Calculate Exp and SP rewards
 						final double[] expSp = calculateExpAndSp(levelDiff, partyDmg, totalDamage, false);
 						final double[] premiumCheckExpSp = calculateExpAndSp(levelDiff, partyDmg, totalDamage, true);
 						double exp_premium = premiumCheckExpSp[0];
@@ -660,7 +660,7 @@ public class L2Attackable extends L2Npc
 		}
 		catch (Exception e)
 		{
-			_log.error("", e);
+			_log.error(String.valueOf(e));
 		}
 	}
 	
@@ -976,6 +976,464 @@ public class L2Attackable extends L2Npc
 		return ai.getHate();
 	}
 	
+	/**
+	 * Calculates quantity of items for specific drop according to current situation
+	 * @param drop The L2DropData count is being calculated for
+	 * @param lastAttacker The L2PcInstance that has killed the L2Attackable
+	 * @param levelModifier level modifier in %'s (will be subtracted from drop chance)
+	 * @param isSweep
+	 * @return
+	 */
+	private ItemHolder calculateRewardItem(L2PcInstance lastAttacker, L2DropData drop, int levelModifier, boolean isSweep)
+	{
+		// Get default drop chance
+		double dropChance = drop.getChance();
+		
+		int deepBlueDrop = 1;
+		
+		if ((!isRaid() && Config.DEEPBLUE_DROP_RULES) || (isRaid() && Config.DEEPBLUE_DROP_RULES_RAID))
+		{
+			if (levelModifier > 0)
+			{
+				// We should multiply by the server's drop rate, so we always get a low chance of drop for deep blue mobs.
+				// NOTE: This is valid only for adena drops! Others drops will still obey server's rate
+				deepBlueDrop = 3;
+				if (drop.getId() == Inventory.ADENA_ID)
+				{
+					deepBlueDrop *= (int) lastAttacker.getRate(Rates.DROP_ITEM, Inventory.ADENA_ID, (isRaid() && !isRaidMinion()));
+				}
+			}
+		}
+		
+		// Avoid dividing by 0
+		if (deepBlueDrop == 0)
+		{
+			deepBlueDrop = 1;
+		}
+		
+		// Check if we should apply our maths so deep blue mobs will not drop that easy
+		if ((!isRaid() && Config.DEEPBLUE_DROP_RULES) || (isRaid() && Config.DEEPBLUE_DROP_RULES_RAID))
+		{
+			dropChance = ((drop.getChance() - ((drop.getChance() * levelModifier) / 100)) / deepBlueDrop);
+		}
+		
+		// Applies Drop rates
+		dropChance *= lastAttacker.getRate(isSweep ? Rates.SPOIL : Rates.DROP_ITEM, drop.getId(), (isRaid() && !isRaidMinion()));
+		
+		if (Config.L2JMOD_CHAMPION_ENABLE && isChampion())
+		{
+			dropChance *= Config.L2JMOD_CHAMPION_REWARDS;
+		}
+		
+		// Set our limits for chance of drop
+		if (dropChance < 1)
+		{
+			dropChance = 1;
+		}
+		
+		// Get min and max Item quantity that can be dropped in one time
+		int minCount = drop.getMinDrop();
+		int maxCount = drop.getMaxDrop();
+		int itemCount = 0;
+		
+		// Count and chance adjustment for high rate servers
+		if ((dropChance > L2DropData.MAX_CHANCE) && !Config.PRECISE_DROP_CALCULATION)
+		{
+			int multiplier = (int) dropChance / L2DropData.MAX_CHANCE;
+			
+			if (minCount < maxCount)
+			{
+				itemCount += Rnd.get(minCount * multiplier, maxCount * multiplier);
+			}
+			else if (minCount == maxCount)
+			{
+				itemCount += minCount * multiplier;
+			}
+			else
+			{
+				itemCount += multiplier;
+			}
+			
+			dropChance = dropChance % L2DropData.MAX_CHANCE;
+		}
+		// Check if the Item must be dropped
+		int random = Rnd.get(L2DropData.MAX_CHANCE);
+		while (random < dropChance)
+		{
+			// Get the item quantity dropped
+			if (minCount < maxCount)
+			{
+				itemCount += Rnd.get(minCount, maxCount);
+			}
+			else if (minCount == maxCount)
+			{
+				itemCount += minCount;
+			}
+			else
+			{
+				itemCount++;
+			}
+			
+			// Prepare for next iteration if dropChance > L2DropData.MAX_CHANCE
+			dropChance -= L2DropData.MAX_CHANCE;
+		}
+		
+		if (Config.L2JMOD_CHAMPION_ENABLE && isChampion() && ((drop.getId() == Inventory.ADENA_ID) || Util.contains(SevenSigns.SEAL_STONE_IDS, drop.getId())))
+		{
+			itemCount *= Config.L2JMOD_CHAMPION_ADENAS_REWARDS;
+		}
+		
+		if (itemCount > 0)
+		{
+			return new ItemHolder(drop.getId(), itemCount);
+		}
+		return null;
+	}
+	
+	/**
+	 * Calculates quantity of items for specific drop CATEGORY according to current situation.<br>
+	 * Only a max of ONE item from a category is allowed to be dropped.
+	 * @param lastAttacker The L2PcInstance that has killed the L2Attackable
+	 * @param categoryDrops
+	 * @param levelModifier level modifier in %'s (will be subtracted from drop chance)
+	 * @return
+	 */
+	private ItemHolder calculateCategorizedRewardItem(L2PcInstance lastAttacker, L2DropCategory categoryDrops, int levelModifier)
+	{
+		if (categoryDrops == null)
+		{
+			return null;
+		}
+		
+		// Get default drop chance for the category (that's the sum of chances for all items in the category)
+		// keep track of the base category chance as it'll be used later, if an item is drop from the category.
+		// for everything else, use the total "categoryDropChance"
+		int basecategoryDropChance = categoryDrops.getCategoryChance();
+		int categoryDropChance = basecategoryDropChance;
+		
+		int deepBlueDrop = 1;
+		
+		if ((!isRaid() && Config.DEEPBLUE_DROP_RULES) || (isRaid() && Config.DEEPBLUE_DROP_RULES_RAID))
+		{
+			// We should multiply by the server's drop rate, so we always get a low chance of drop for deep blue mobs.
+			// NOTE: This is valid only for adena drops! Others drops will still obey server's rate
+			if (levelModifier > 0)
+			{
+				deepBlueDrop = 3;
+			}
+		}
+		
+		// Avoid dividing by 0
+		if (deepBlueDrop == 0)
+		{
+			deepBlueDrop = 1;
+		}
+		
+		// Check if we should apply our maths so deep blue mobs will not drop that easy
+		if ((!isRaid() && Config.DEEPBLUE_DROP_RULES) || (isRaid() && Config.DEEPBLUE_DROP_RULES_RAID))
+		{
+			categoryDropChance = ((categoryDropChance - ((categoryDropChance * levelModifier) / 100)) / deepBlueDrop);
+		}
+		
+		// Applies Drop rates
+		categoryDropChance *= lastAttacker.getRate(Rates.DROP_ITEM, -1, (isRaid() && !isRaidMinion()));
+		
+		if (Config.L2JMOD_CHAMPION_ENABLE && isChampion())
+		{
+			categoryDropChance *= Config.L2JMOD_CHAMPION_REWARDS;
+		}
+		
+		// Set our limits for chance of drop
+		if (categoryDropChance < 1)
+		{
+			categoryDropChance = 1;
+		}
+		
+		// Check if an Item from this category must be dropped
+		if (Rnd.get(L2DropData.MAX_CHANCE) < categoryDropChance)
+		{
+			L2DropData drop = categoryDrops.dropOne(isRaid() && !isRaidMinion());
+			
+			if (drop == null)
+			{
+				return null;
+			}
+			
+			// Now decide the quantity to drop based on the rates and penalties. To get this value
+			// simply divide the modified categoryDropChance by the base category chance. This
+			// results in a chance that will dictate the drops amounts: for each amount over 100
+			// that it is, it will give another chance to add to the min/max quantities.
+			
+			// For example, If the final chance is 120%, then the item should drop between
+			// its min and max one time, and then have 20% chance to drop again. If the final
+			// chance is 330%, it will similarly give 3 times the min and max, and have a 30%
+			// chance to give a 4th time.
+			// At least 1 item will be dropped for sure. So the chance will be adjusted to 100%
+			// if smaller.
+			double dropChance = drop.getChance() * lastAttacker.getRate(Rates.DROP_ITEM, drop.getId(), (isRaid() && !isRaidMinion()));
+			
+			if (Config.L2JMOD_CHAMPION_ENABLE && isChampion())
+			{
+				dropChance *= Config.L2JMOD_CHAMPION_REWARDS;
+			}
+			
+			dropChance = Math.round(dropChance);
+			
+			if (dropChance < L2DropData.MAX_CHANCE)
+			{
+				dropChance = L2DropData.MAX_CHANCE;
+			}
+			
+			// Get min and max Item quantity that can be dropped in one time
+			int min = drop.getMinDrop();
+			int max = drop.getMaxDrop();
+			
+			// Get the item quantity dropped
+			int itemCount = 0;
+			
+			// Count and chance adjustment for high rate servers
+			if ((dropChance > L2DropData.MAX_CHANCE) && !Config.PRECISE_DROP_CALCULATION)
+			{
+				long multiplier = Math.round(dropChance / L2DropData.MAX_CHANCE);
+				
+				if (min < max)
+				{
+					itemCount += Rnd.get(min * multiplier, max * multiplier);
+				}
+				else if (min == max)
+				{
+					itemCount += min * multiplier;
+				}
+				else
+				{
+					itemCount += multiplier;
+				}
+				
+				dropChance = dropChance % L2DropData.MAX_CHANCE;
+			}
+			
+			// Check if the Item must be dropped
+			int random = Rnd.get(L2DropData.MAX_CHANCE);
+			while (random < dropChance)
+			{
+				// Get the item quantity dropped
+				if (min < max)
+				{
+					itemCount += Rnd.get(min, max);
+				}
+				else if (min == max)
+				{
+					itemCount += min;
+				}
+				else
+				{
+					itemCount++;
+				}
+				
+				// Prepare for next iteration if dropChance > L2DropData.MAX_CHANCE
+				dropChance -= L2DropData.MAX_CHANCE;
+			}
+			
+			if (Config.L2JMOD_CHAMPION_ENABLE && isChampion() && ((drop.getId() == Inventory.ADENA_ID) || Util.contains(SevenSigns.SEAL_STONE_IDS, drop.getId())))
+			{
+				itemCount *= Config.L2JMOD_CHAMPION_ADENAS_REWARDS;
+			}
+			
+			if (!Config.MULTIPLE_ITEM_DROP && !ItemData.getInstance().getTemplate(drop.getId()).isStackable() && (itemCount > 1))
+			{
+				itemCount = 1;
+			}
+			
+			if (itemCount > 0)
+			{
+				return new ItemHolder(drop.getId(), itemCount);
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * Calculates the level modifier for drop.
+	 * @param lastAttacker The L2PcInstance that has killed the L2Attackable
+	 * @return
+	 */
+	private int calculateLevelModifierForDrop(L2PcInstance lastAttacker)
+	{
+		if ((!isRaid() && Config.DEEPBLUE_DROP_RULES) || (isRaid() && Config.DEEPBLUE_DROP_RULES_RAID))
+		{
+			int highestLevel = lastAttacker.getLevel();
+			
+			// Check to prevent very high level player to nearly kill mob and let low level player do the last hit.
+			if (!getAttackByList().isEmpty())
+			{
+				for (L2Character atkChar : getAttackByList())
+				{
+					if ((atkChar != null) && (atkChar.getLevel() > highestLevel))
+					{
+						highestLevel = atkChar.getLevel();
+					}
+				}
+			}
+			
+			// According to official data (Prima), deep blue mobs are 9 or more levels below players
+			if ((highestLevel - 9) >= getLevel())
+			{
+				return ((highestLevel - (getLevel() + 8)) * 9);
+			}
+		}
+		return 0;
+	}
+	
+	private ItemHolder calculateCategorizedHerbItem(L2PcInstance lastAttacker, L2DropCategory categoryDrops)
+	{
+		if (categoryDrops == null)
+		{
+			return null;
+		}
+		
+		// Get default drop chance for the category (that's the sum of chances for all items in the category)
+		// keep track of the base category chance as it'll be used later, if an item is drop from the category.
+		// for everything else, use the total "categoryDropChance"
+		int basecategoryDropChance = categoryDrops.getCategoryChance();
+		int categoryDropChance = basecategoryDropChance;
+		
+		// Applies Drop rates
+		switch (categoryDrops.getCategoryType())
+		{
+			case 0:
+				if (Config.ENABLE_DROP_VITALITY_HERBS)
+				{
+					categoryDropChance *= Config.RATE_DROP_VITALITY_HERBS;
+				}
+				else
+				{
+					return null;
+				}
+				break;
+			case 1:
+				categoryDropChance *= Config.RATE_DROP_HP_HERBS;
+				break;
+			case 2:
+				categoryDropChance *= Config.RATE_DROP_MP_HERBS;
+				break;
+			case 3:
+				categoryDropChance *= Config.RATE_DROP_SPECIAL_HERBS;
+				break;
+			default:
+				categoryDropChance *= Config.RATE_DROP_COMMON_HERBS;
+		}
+		
+		// Set our limits for chance of drop
+		if (categoryDropChance < 1)
+		{
+			categoryDropChance = 1;
+		}
+		
+		// Check if an Item from this category must be dropped
+		if (Rnd.get(L2DropData.MAX_CHANCE) < categoryDropChance)
+		{
+			L2DropData drop = categoryDrops.dropOne(false);
+			
+			if (drop == null)
+			{
+				return null;
+			}
+			
+			// Now decide the quantity to drop based on the rates and penalties. To get this value
+			// simply divide the modified categoryDropChance by the base category chance. This
+			// results in a chance that will dictate the drops amounts: for each amount over 100
+			// that it is, it will give another chance to add to the min/max quantities.
+			
+			// For example, If the final chance is 120%, then the item should drop between
+			// its min and max one time, and then have 20% chance to drop again. If the final
+			// chance is 330%, it will similarly give 3 times the min and max, and have a 30%
+			// chance to give a 4th time.
+			// At least 1 item will be dropped for sure. So the chance will be adjusted to 100%
+			// if smaller.
+			
+			double dropChance = drop.getChance();
+			
+			switch (categoryDrops.getCategoryType())
+			{
+				case 0:
+					dropChance *= Config.RATE_DROP_VITALITY_HERBS;
+					break;
+				case 1:
+					dropChance *= Config.RATE_DROP_HP_HERBS;
+					break;
+				case 2:
+					dropChance *= Config.RATE_DROP_MP_HERBS;
+					break;
+				case 3:
+					dropChance *= Config.RATE_DROP_SPECIAL_HERBS;
+					break;
+				default:
+					dropChance *= Config.RATE_DROP_COMMON_HERBS;
+			}
+			
+			if (dropChance < L2DropData.MAX_CHANCE)
+			{
+				dropChance = L2DropData.MAX_CHANCE;
+			}
+			
+			// Get min and max Item quantity that can be dropped in one time
+			int min = drop.getMinDrop();
+			int max = drop.getMaxDrop();
+			
+			// Get the item quantity dropped
+			int itemCount = 0;
+			
+			// Count and chance adjustment for high rate servers
+			if ((dropChance > L2DropData.MAX_CHANCE) && !Config.PRECISE_DROP_CALCULATION)
+			{
+				long multiplier = Math.round(dropChance / L2DropData.MAX_CHANCE);
+				
+				if (min < max)
+				{
+					itemCount += Rnd.get(min * multiplier, max * multiplier);
+				}
+				else if (min == max)
+				{
+					itemCount += min * multiplier;
+				}
+				else
+				{
+					itemCount += multiplier;
+				}
+				
+				dropChance = dropChance % L2DropData.MAX_CHANCE;
+			}
+			
+			// Check if the Item must be dropped
+			int random = Rnd.get(L2DropData.MAX_CHANCE);
+			while (random < dropChance)
+			{
+				// Get the item quantity dropped
+				if (min < max)
+				{
+					itemCount += Rnd.get(min, max);
+				}
+				else if (min == max)
+				{
+					itemCount += min;
+				}
+				else
+				{
+					itemCount++;
+				}
+				
+				// Prepare for next iteration if dropChance > L2DropData.MAX_CHANCE
+				dropChance -= L2DropData.MAX_CHANCE;
+			}
+			
+			if (itemCount > 0)
+			{
+				return new ItemHolder(drop.getId(), itemCount);
+			}
+		}
+		return null;
+	}
+	
 	public void doItemDrop(L2Character mainDamageDealer)
 	{
 		doItemDrop(getTemplate(), mainDamageDealer);
@@ -1013,89 +1471,171 @@ public class L2Attackable extends L2Npc
 			return;
 		}
 		
-		if (isRaid() && (this instanceof L2RaidBossInstance) && ((L2RaidBossInstance) this).isEventRaid())
-		{
-			return;
-		}
+		// level modifier in %'s (will be subtracted from drop chance)
+		int levelModifier = calculateLevelModifierForDrop(player);
 		
 		CursedWeaponsManager.getInstance().checkDrop(this, player);
 		
-		if (isSpoiled())
+		// now throw all categorized drops and handle spoil.
+		for (L2DropCategory cat : npcTemplate.getDropData())
 		{
-			_sweepItems.set(npcTemplate.calculateDrops(DropListScope.CORPSE, this, player));
-		}
-		
-		Collection<ItemHolder> deathItems = npcTemplate.calculateDrops(DropListScope.DEATH, this, player);
-		if (deathItems != null)
-		{
-			for (ItemHolder drop : deathItems)
+			if (isRaid() && (this instanceof L2RaidBossInstance) && ((L2RaidBossInstance) this).isEventRaid())
 			{
-				L2Item item = ItemData.getInstance().getTemplate(drop.getId());
-				// Check if the autoLoot mode is active
-				if (isFlying() || (!item.hasExImmediateEffect() && ((!isRaid() && Config.AUTO_LOOT) || (isRaid() && Config.AUTO_LOOT_RAIDS))) || (item.hasExImmediateEffect() && Config.AUTO_LOOT_HERBS))
+				break;
+			}
+			
+			ItemHolder item = null;
+			if (cat.isSweep())
+			{
+				if (isSpoiled())
 				{
-					player.doAutoLoot(this, drop); // Give the item(s) to the L2PcInstance that has killed the L2Attackable
+					List<ItemHolder> sweepList = new ArrayList<>();
+					for (L2DropData drop : cat.getAllDrops())
+					{
+						item = calculateRewardItem(player, drop, levelModifier, true);
+						if (item == null)
+						{
+							continue;
+						}
+						sweepList.add(item);
+					}
+					// Set the table _sweepItems of this L2Attackable
+					if (!sweepList.isEmpty())
+					{
+						_sweepItems = sweepList.toArray(new ItemHolder[sweepList.size()]);
+					}
+				}
+			}
+			else
+			{
+				if (isSeeded())
+				{
+					L2DropData drop = cat.dropSeedAllowedDropsOnly();
+					
+					if (drop == null)
+					{
+						continue;
+					}
+					
+					item = calculateRewardItem(player, drop, levelModifier, false);
 				}
 				else
 				{
-					dropItem(player, drop); // drop the item on the ground
+					item = calculateCategorizedRewardItem(player, cat, levelModifier);
 				}
 				
-				// Broadcast message if RaidBoss was defeated
-				if (isRaid() && !isRaidMinion() && (drop.getCount() > 0))
+				if (item != null)
 				{
-					final SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.C1_DIED_DROPPED_S3_S2);
-					sm.addCharName(this);
-					sm.addItemName(item);
-					sm.addLong(drop.getCount());
-					broadcastPacket(sm);
+					// vGodFather we use this for premium engine
+					item.setFromMob(true);
+					
+					// Check if the autoLoot mode is active
+					L2Item itemCheck = ItemData.getInstance().getTemplate(item.getId()); // used to check herbs
+					if (isFlying() || (!itemCheck.hasExImmediateEffect() && ((!isRaid() && Config.AUTO_LOOT) || (isRaid() && Config.AUTO_LOOT_RAIDS))) || (itemCheck.hasExImmediateEffect() && Config.AUTO_LOOT_HERBS))
+					{
+						// vGodFather fix
+						if ((itemCheck.isStackable() && (player.getInventory().getItemByItemId(itemCheck.getId()) != null)) || (player.getInventory().getSize(false) < player.getInventoryLimit()))
+						{
+							player.doAutoLoot(this, item); // Give the item(s) to the L2PcInstance that has killed the L2Attackable
+						}
+						else
+						{
+							dropItem(player, item); // drop the item on the ground
+						}
+					}
+					else
+					{
+						dropItem(player, item); // drop the item on the ground
+					}
+					
+					// Broadcast message if RaidBoss was defeated
+					if (isRaid() && !isRaidMinion())
+					{
+						final SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.C1_DIED_DROPPED_S3_S2);
+						sm.addCharName(this);
+						sm.addItemName(item.getId());
+						sm.addLong(item.getCount());
+						broadcastPacket(sm);
+					}
 				}
 			}
 		}
-		
 		// Apply Special Item drop with random(rnd) quantity(qty) for champions.
 		if (Config.L2JMOD_CHAMPION_ENABLE && isChampion() && ((Config.L2JMOD_CHAMPION_REWARD_LOWER_LVL_ITEM_CHANCE > 0) || (Config.L2JMOD_CHAMPION_REWARD_HIGHER_LVL_ITEM_CHANCE > 0)))
 		{
-			int champqty = Rnd.get(Config.L2JMOD_CHAMPION_REWARD_QTY);
-			ItemHolder item = new ItemHolder(Config.L2JMOD_CHAMPION_REWARD_ID, ++champqty);
-			L2Item itemCheck = ItemData.getInstance().getTemplate(item.getId());
-			
-			if ((player.getLevel() <= getLevel()) && (Rnd.get(100) < Config.L2JMOD_CHAMPION_REWARD_LOWER_LVL_ITEM_CHANCE))
+			for (int itemId : Config.L2JMOD_CHAMPION_REWARD_IDS)
 			{
-				if (Config.AUTO_LOOT || isFlying())
+				int champqty = Rnd.get(Config.L2JMOD_CHAMPION_REWARD_QTY);
+				ItemHolder item = new ItemHolder(itemId, ++champqty, true);
+				L2Item itemCheck = ItemData.getInstance().getTemplate(item.getId());
+				
+				if ((player.getLevel() <= getLevel()) && (Rnd.get(100) < Config.L2JMOD_CHAMPION_REWARD_LOWER_LVL_ITEM_CHANCE))
 				{
-					// vGodFather fix
-					if ((itemCheck.isStackable() && (player.getInventory().getItemByItemId(itemCheck.getId()) != null)) || (player.getInventory().getSize(false) < player.getInventoryLimit()))
+					if (Config.AUTO_LOOT || isFlying())
 					{
-						player.addItem("ChampionLoot", item.getId(), item.getCount(), this, true); // Give the item(s) to the L2PcInstance that has killed the L2Attackable
+						// vGodFather fix
+						if ((itemCheck.isStackable() && (player.getInventory().getItemByItemId(itemCheck.getId()) != null)) || (player.getInventory().getSize(false) < player.getInventoryLimit()))
+						{
+							player.addItem("ChampionLoot", item.getId(), item.getCount(), this, true); // Give the item(s) to the L2PcInstance that has killed the L2Attackable
+						}
+						else
+						{
+							dropItem(player, item); // drop the item on the ground
+						}
 					}
 					else
 					{
-						dropItem(player, item); // drop the item on the ground
+						dropItem(player, item);
 					}
 				}
-				else
+				else if ((player.getLevel() > getLevel()) && (Rnd.get(100) < Config.L2JMOD_CHAMPION_REWARD_HIGHER_LVL_ITEM_CHANCE))
 				{
-					dropItem(player, item);
+					if (Config.AUTO_LOOT || isFlying())
+					{
+						// vGodFather fix
+						if ((itemCheck.isStackable() && (player.getInventory().getItemByItemId(itemCheck.getId()) != null)) || (player.getInventory().getSize(false) < player.getInventoryLimit()))
+						{
+							player.addItem("ChampionLoot", item.getId(), item.getCount(), this, true); // Give the item(s) to the L2PcInstance that has killed the L2Attackable
+						}
+						else
+						{
+							dropItem(player, item); // drop the item on the ground
+						}
+					}
+					else
+					{
+						dropItem(player, item);
+					}
 				}
 			}
-			else if ((player.getLevel() > getLevel()) && (Rnd.get(100) < Config.L2JMOD_CHAMPION_REWARD_HIGHER_LVL_ITEM_CHANCE))
+		}
+		
+		// Instant Item Drop :>
+		if (getTemplate().getDropHerbGroup() > 0)
+		{
+			for (L2DropCategory cat : HerbDropData.getInstance().getHerbDroplist(getTemplate().getDropHerbGroup()))
 			{
-				if (Config.AUTO_LOOT || isFlying())
+				ItemHolder item = calculateCategorizedHerbItem(player, cat);
+				if (item != null)
 				{
-					// vGodFather fix
-					if ((itemCheck.isStackable() && (player.getInventory().getItemByItemId(itemCheck.getId()) != null)) || (player.getInventory().getSize(false) < player.getInventoryLimit()))
+					// more than one herb can't be auto looted!
+					long count = item.getCount();
+					if (count > 1)
 					{
-						player.addItem("ChampionLoot", item.getId(), item.getCount(), this, true); // Give the item(s) to the L2PcInstance that has killed the L2Attackable
+						final ItemHolder herb = new ItemHolder(item.getId(), 1);
+						for (int i = 0; i < count; i++)
+						{
+							dropItem(player, herb);
+						}
+					}
+					else if (isFlying() || Config.AUTO_LOOT_HERBS)
+					{
+						player.addItem("Loot", item.getId(), count, this, true);
 					}
 					else
 					{
-						dropItem(player, item); // drop the item on the ground
+						dropItem(player, item);
 					}
-				}
-				else
-				{
-					dropItem(player, item);
 				}
 			}
 		}
@@ -1138,10 +1678,11 @@ public class L2Attackable extends L2Npc
 		// Go through DateDrop of EventDroplist allNpcDateDrops within the date range
 		for (DateDrop drop : EventDroplist.getInstance().getAllDrops())
 		{
-			if (Rnd.get(1000000) < drop.getEventDrop().getDropChance())
+			if (Rnd.get(L2DropData.MAX_CHANCE) < drop.getEventDrop().getDropChance())
 			{
 				final int itemId = drop.getEventDrop().getItemIdList()[Rnd.get(drop.getEventDrop().getItemIdList().length)];
 				final long itemCount = Rnd.get(drop.getEventDrop().getMinCount(), drop.getEventDrop().getMaxCount());
+				
 				if (Config.AUTO_LOOT || isFlying())
 				{
 					player.doAutoLoot(this, itemId, itemCount); // Give the item(s) to the L2PcInstance that has killed the L2Attackable
@@ -1199,7 +1740,7 @@ public class L2Attackable extends L2Npc
 	@Override
 	public boolean isSweepActive()
 	{
-		return _sweepItems.get() != null;
+		return _sweepItems != null;
 	}
 	
 	/**
@@ -1207,11 +1748,10 @@ public class L2Attackable extends L2Npc
 	 */
 	public List<L2Item> getSpoilLootItems()
 	{
-		final Collection<ItemHolder> sweepItems = _sweepItems.get();
-		final List<L2Item> lootItems = new LinkedList<>();
-		if (sweepItems != null)
+		final List<L2Item> lootItems = new ArrayList<>();
+		if (isSweepActive())
 		{
-			for (ItemHolder item : sweepItems)
+			for (ItemHolder item : _sweepItems)
 			{
 				lootItems.add(ItemData.getInstance().getTemplate(item.getId()));
 			}
@@ -1222,9 +1762,11 @@ public class L2Attackable extends L2Npc
 	/**
 	 * @return table containing all L2ItemInstance that can be spoiled.
 	 */
-	public Collection<ItemHolder> takeSweep()
+	public synchronized ItemHolder[] takeSweep()
 	{
-		return _sweepItems.getAndSet(null);
+		ItemHolder[] sweep = _sweepItems;
+		_sweepItems = null;
+		return sweep;
 	}
 	
 	/**
@@ -1232,7 +1774,9 @@ public class L2Attackable extends L2Npc
 	 */
 	public synchronized ItemHolder takeHarvest()
 	{
-		return _harvestItem.getAndSet(null);
+		ItemHolder harvest = _harvestItem;
+		_harvestItem = null;
+		return harvest;
 	}
 	
 	/**
@@ -1470,7 +2014,7 @@ public class L2Attackable extends L2Npc
 		// Clear all aggro char from list
 		clearAggroList();
 		// Clear Harvester reward
-		_harvestItem.set(null);
+		_harvestItem = null;
 		// Clear mod Seeded stat
 		_seeded = false;
 		_seed = null;
@@ -1478,7 +2022,7 @@ public class L2Attackable extends L2Npc
 		// Clear overhit value
 		overhitEnabled(false);
 		
-		_sweepItems.set(null);
+		_sweepItems = null;
 		resetAbsorbList();
 		
 		setWalking();
@@ -1567,7 +2111,7 @@ public class L2Attackable extends L2Npc
 			{
 				count += diff;
 			}
-			_harvestItem.set(new ItemHolder(_seed.getCropId(), count * Config.RATE_DROP_MANOR));
+			_harvestItem = new ItemHolder(_seed.getCropId(), count * Config.RATE_DROP_MANOR);
 		}
 	}
 	
@@ -1601,7 +2145,7 @@ public class L2Attackable extends L2Npc
 	}
 	
 	/**
-	 * Set delay for onKill() call, in ms Default: 5000 ms
+	 * Set delay for onKill() call, in ms Default: 0 ms
 	 * @param delay
 	 */
 	public final void setOnKillDelay(int delay)

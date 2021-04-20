@@ -18,6 +18,7 @@
  */
 package l2r.gameserver.network.serverpackets;
 
+import l2r.Config;
 import l2r.gameserver.model.items.instance.L2ItemInstance;
 
 public class DropItem extends L2GameServerPacket
@@ -46,7 +47,7 @@ public class DropItem extends L2GameServerPacket
 		
 		writeD(_item.getX());
 		writeD(_item.getY());
-		writeD(_item.getZ());
+		writeD(_item.getZ() + Config.CLIENT_SHIFTZ);
 		// only show item count if it is a stackable item
 		writeD(_item.isStackable() ? 0x01 : 0x00);
 		writeQ(_item.getCount());

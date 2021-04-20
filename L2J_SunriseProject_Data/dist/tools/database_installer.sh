@@ -43,8 +43,8 @@ echo "# No change will be performed in your DB    #"
 echo "# I will just ask you some questions about  #"
 echo "# your hosts and DB.                        #"
 echo "#############################################"
-MYSQLDUMPPATH=`which -a mysqldump 2>/dev/null`
-MYSQLPATH=`which -a mysql 2>/dev/null`
+MYSQLDUMPPATH=/usr/bin/mysqldump
+MYSQLPATH=/usr/bin/mysql
 if [ $? -ne 0 ]; then
 echo "We were unable to find MySQL binaries on your path"
 while :

@@ -600,7 +600,7 @@ public final class SystemMessageId
 	
 	/**
 	 * ID: 94<br>
-	 * Message: 2004-2011 Â© NC Interactive, Inc. All Rights Reserved.
+	 * Message: 2004-2011 (C) NC Interactive, Inc. All Rights Reserved.
 	 */
 	public static final SystemMessageId COPYRIGHT = new SystemMessageId(94);
 	
@@ -6252,7 +6252,7 @@ public final class SystemMessageId
 	
 	/**
 	 * ID: 1082<br>
-	 * Message: Do you wish to use the hair style change potion â€“ Type A? It is permanent.
+	 * Message: Do you wish to use the hair style change potion - Type A? It is permanent.
 	 */
 	public static final SystemMessageId HAIRSTYLE_POTION_TYPE_A = new SystemMessageId(1082);
 	
@@ -6330,37 +6330,37 @@ public final class SystemMessageId
 	
 	/**
 	 * ID: 1095<br>
-	 * Message: Do you wish to use the hair style change potion â€“ Type B? It is permanent.
+	 * Message: Do you wish to use the hair style change potion - Type B? It is permanent.
 	 */
 	public static final SystemMessageId HAIRSTYLE_POTION_TYPE_B = new SystemMessageId(1095);
 	
 	/**
 	 * ID: 1096<br>
-	 * Message: Do you wish to use the hair style change potion â€“ Type C? It is permanent.
+	 * Message: Do you wish to use the hair style change potion - Type C? It is permanent.
 	 */
 	public static final SystemMessageId HAIRSTYLE_POTION_TYPE_C = new SystemMessageId(1096);
 	
 	/**
 	 * ID: 1097<br>
-	 * Message: Do you wish to use the hair style change potion â€“ Type D? It is permanent.
+	 * Message: Do you wish to use the hair style change potion - Type D? It is permanent.
 	 */
 	public static final SystemMessageId HAIRSTYLE_POTION_TYPE_D = new SystemMessageId(1097);
 	
 	/**
 	 * ID: 1098<br>
-	 * Message: Do you wish to use the hair style change potion â€“ Type E? It is permanent.
+	 * Message: Do you wish to use the hair style change potion - Type E? It is permanent.
 	 */
 	public static final SystemMessageId HAIRSTYLE_POTION_TYPE_E = new SystemMessageId(1098);
 	
 	/**
 	 * ID: 1099<br>
-	 * Message: Do you wish to use the hair style change potion â€“ Type F? It is permanent.
+	 * Message: Do you wish to use the hair style change potion - Type F? It is permanent.
 	 */
 	public static final SystemMessageId HAIRSTYLE_POTION_TYPE_F = new SystemMessageId(1099);
 	
 	/**
 	 * ID: 1100<br>
-	 * Message: Do you wish to use the hair style change potion â€“ Type G? It is permanent.
+	 * Message: Do you wish to use the hair style change potion - Type G? It is permanent.
 	 */
 	public static final SystemMessageId HAIRSTYLE_POTION_TYPE_G = new SystemMessageId(1100);
 	
@@ -15223,12 +15223,6 @@ public final class SystemMessageId
 	 * Message: Enchant failed. The enchant level for the corresponding item will be exactly retained.
 	 */
 	public static final SystemMessageId SAFE_ENCHANT_FAILED = new SystemMessageId(6004);
-	
-	/**
-	 * ID: 6050<br>
-	 * Message: If you have a Maestro's Key, you can use it to open the treasure chest.
-	 */
-	public static final SystemMessageId IF_YOU_HAVE_A_MAESTROS_KEY_YOU_CAN_USE_IT_TO_OPEN_THE_TREASURE_CHEST = new SystemMessageId(6050);
 	
 	/**
 	 * ID: 6501<br>

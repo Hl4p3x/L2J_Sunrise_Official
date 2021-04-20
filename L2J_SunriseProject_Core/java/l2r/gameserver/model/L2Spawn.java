@@ -32,8 +32,11 @@ import l2r.gameserver.ThreadPoolManager;
 import l2r.gameserver.data.sql.NpcTable;
 import l2r.gameserver.data.sql.TerritoryTable;
 import l2r.gameserver.data.xml.impl.NpcPersonalAIData;
+import l2r.gameserver.enums.ZoneIdType;
 import l2r.gameserver.model.actor.L2Attackable;
 import l2r.gameserver.model.actor.L2Npc;
+import l2r.gameserver.model.actor.instance.L2MonsterInstance;
+import l2r.gameserver.model.actor.instance.L2NpcInstance;
 import l2r.gameserver.model.actor.templates.L2NpcTemplate;
 import l2r.gameserver.model.interfaces.IIdentifiable;
 import l2r.gameserver.model.interfaces.ILocational;
@@ -599,18 +602,50 @@ public class L2Spawn implements IPositionable, IIdentifiable, INamable
 		}
 		else
 		{
+			boolean doCorrect = false;
+			if (Config.GEODATA)
+			{
+				switch (Config.GEO_CORRECT_Z)
+				{
+					case ALL:
+						doCorrect = true;
+						break;
+					case TOWN:
+						if (mob instanceof L2NpcInstance)
+						{
+							doCorrect = true;
+						}
+						break;
+					case MONSTER:
+						if (mob instanceof L2Attackable)
+						{
+							doCorrect = true;
+						}
+						break;
+					case NONE:
+						doCorrect = false;
+						break;
+					default:
+						_log.warn("Wrong Configuration In GeoData.ini for GeoCorrectSpawnZ values.");
+						doCorrect = false;
+						break;
+				}
+			}
+			
 			// The L2NpcInstance is spawned at the exact position (Lox, Locy, Locz)
 			// Set is not random walk default value
 			mob.setIsNoRndWalk(isNoRndWalk());
 			newlocx = getX();
 			newlocy = getY();
-			newlocz = getZ();
-		}
-		
-		// don't correct z of flying npc's
-		if (!mob.isFlying())
-		{
-			newlocz = GeoData.getInstance().getSpawnHeight(newlocx, newlocy, newlocz);
+			
+			if (doCorrect && !mob.isFlying() && !mob.isInsideZone(ZoneIdType.WATER))
+			{
+				newlocz = GeoData.getInstance().getSpawnHeight(newlocx, newlocy, getZ());
+			}
+			else
+			{
+				newlocz = getZ();
+			}
 		}
 		
 		mob.stopAllEffects();
@@ -636,7 +671,7 @@ public class L2Spawn implements IPositionable, IIdentifiable, INamable
 		if (Config.L2JMOD_CHAMPION_ENABLE)
 		{
 			// Set champion on next spawn
-			if (mob.isMonster() && !getTemplate().isUndying() && !mob.isRaid() && !mob.isRaidMinion() && (Config.L2JMOD_CHAMPION_FREQUENCY > 0) && (mob.getLevel() >= Config.L2JMOD_CHAMP_MIN_LVL) && (mob.getLevel() <= Config.L2JMOD_CHAMP_MAX_LVL) && (Config.L2JMOD_CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
+			if ((mob instanceof L2MonsterInstance) && !getTemplate().isQuestMonster() && !getTemplate().isUndying() && !mob.isRaid() && !((L2MonsterInstance) mob).isRaidMinion() && (Config.L2JMOD_CHAMPION_FREQUENCY > 0) && (mob.getLevel() >= Config.L2JMOD_CHAMP_MIN_LVL) && (mob.getLevel() <= Config.L2JMOD_CHAMP_MAX_LVL) && (Config.L2JMOD_CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
 			{
 				if (Rnd.get(100) < Config.L2JMOD_CHAMPION_FREQUENCY)
 				{
@@ -654,9 +689,6 @@ public class L2Spawn implements IPositionable, IIdentifiable, INamable
 		
 		// Spawn NPC
 		mob.spawnMe(newlocx, newlocy, newlocz);
-		
-		// Initialize undying condition
-		mob.setIsInvul(getTemplate().isUndying());
 		
 		mob.setShowSummonAnimation(false);
 		

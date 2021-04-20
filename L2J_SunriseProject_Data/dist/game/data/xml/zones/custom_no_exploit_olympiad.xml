@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list enabled="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/zones.xsd">
+	<!-- Custom No Exploit Olympiad Arenas -->
+	<zone name="Heros Vestiges Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-88157" Y="-239768" />
+		<node X="-88071" Y="-239768" />
+		<node X="-88035" Y="-239723" />
+		<node X="-87999" Y="-239781" />
+		<node X="-88031" Y="-239810" />
+		<node X="-88032" Y="-239896" />
+		<node X="-88158" Y="-239896" />
+		<spawn X="-16554" Y="109382" Z="-1799" />
+		<spawn X="-88089" Y="-239355" Z="-8450" />
+	</zone>
+	<!-- NoExploit - Olympiad Arena -->
+	<zone name="Heros Vestiges Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-88589" Y="-239280" />
+		<node X="-88593" Y="-239247" />
+		<node X="-88661" Y="-239252" />
+		<node X="-88657" Y="-239360" />
+		<node X="-88650" Y="-239366" />
+		<node X="-88643" Y="-239429" />
+		<node X="-88489" Y="-239425" />
+		<node X="-88492" Y="-239270" />
+		<spawn X="-88089" Y="-239355" Z="-8450" />
+	</zone>
+	<!-- NoExploit - Olympiad Arena -->
+	<zone name="Heros Vestiges Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-88030" Y="-238932" />
+		<node X="-88030" Y="-238954" />
+		<node X="-88044" Y="-238963" />
+		<node X="-88057" Y="-238937" />
+		<node X="-88156" Y="-238934" />
+		<node X="-88155" Y="-238803" />
+		<node X="-88036" Y="-238802" />
+		<node X="-88017" Y="-238817" />
+		<node X="-88016" Y="-238834" />
+		<node X="-88027" Y="-238839" />
+		<spawn X="-88089" Y="-239355" Z="-8450" />
+	</zone>
+	<!-- NoExploit - Olympiad Arena -->
+	<zone name="Heros Vestiges Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-87683" Y="-239416" />
+		<node X="-87683" Y="-239312" />
+		<node X="-87674" Y="-239304" />
+		<node X="-87652" Y="-239290" />
+		<node X="-87638" Y="-239290" />
+		<node X="-87552" Y="-239289" />
+		<node X="-87551" Y="-239417" />
+		<node X="-87627" Y="-239419" />
+		<node X="-87633" Y="-239445" />
+		<node X="-87653" Y="-239452" />
+		<node X="-87664" Y="-239435" />
+		<node X="-87670" Y="-239419" />
+		<spawn X="-88089" Y="-239355" Z="-8450" />
+	</zone>
+	
+	<zone name="Three Bridges Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75586" Y="-252605" />
+		<node X="-75344" Y="-252603" />
+		<node X="-75343" Y="-252770" />
+		<node X="-75587" Y="-252770" />
+		<spawn X="-75451" Y="-252460" Z="-7750" />
+	</zone>
+	
+	<zone name="Three Bridges Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75589" Y="-252313" />
+		<node X="-75587" Y="-252148" />
+		<node X="-75348" Y="-252144" />
+		<node X="-75344" Y="-252314" />
+		<spawn X="-75451" Y="-252460" Z="-7750" />
+	</zone>
+	
+	<zone name="Orbis Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75326" Y="-239084" />
+		<node X="-75361" Y="-239049" />
+		<node X="-75323" Y="-239013" />
+		<node X="-75287" Y="-239048" />
+		<spawn X="-75551" Y="-239220" Z="-8198" />
+	</zone>
+	
+	<zone name="Orbis Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75554" Y="-239050" />
+		<node X="-75589" Y="-239085" />
+		<node X="-75627" Y="-239050" />
+		<node X="-75590" Y="-239013" />
+		<spawn X="-75551" Y="-239220" Z="-8198" />
+	</zone>
+	
+	<zone name="Orbis Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75588" Y="-239279" />
+		<node X="-75553" Y="-239314" />
+		<node X="-75587" Y="-239351" />
+		<node X="-75626" Y="-239315" />
+		<spawn X="-75551" Y="-239220" Z="-8198" />
+	</zone>
+	
+	<zone name="Orbis Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75359" Y="-239313" />
+		<node X="-75324" Y="-239278" />
+		<node X="-75287" Y="-239315" />
+		<node X="-75322" Y="-239350" />
+		<spawn X="-75551" Y="-239220" Z="-8198" />
+	</zone>
+	
+	<!-- Pilar small 1 -->
+	<zone name="Orbis Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75262" Y="-239189" />
+		<node X="-75274" Y="-239188" />
+		<node X="-75276" Y="-239175" />
+		<node X="-75262" Y="-239174" />
+		<spawn X="-75551" Y="-239220" Z="-8198" />
+	</zone>
+	
+	<!-- Pilar small 2 -->
+	<zone name="Orbis Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75451" Y="-239002" />
+		<node X="-75464" Y="-239002" />
+		<node X="-75464" Y="-238987" />
+		<node X="-75451" Y="-238987" />
+		<spawn X="-75551" Y="-239220" Z="-8198" />
+	</zone>
+	
+	<!-- Pilar small 3 -->
+	<zone name="Orbis Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75637" Y="-239176" />
+		<node X="-75637" Y="-239189" />
+		<node X="-75651" Y="-239189" />
+		<node X="-75651" Y="-239176" />
+		<spawn X="-75551" Y="-239220" Z="-8198" />
+	</zone>
+	
+	<!-- Pilar small 4 -->
+	<zone name="Orbis Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75463" Y="-239362" />
+		<node X="-75450" Y="-239362" />
+		<node X="-75450" Y="-239377" />
+		<node X="-75463" Y="-239377" />
+		<spawn X="-75551" Y="-239220" Z="-8198" />
+	</zone>
+	
+	<!-- Orbis Center -->
+	<zone name="Orbis Arena" type="CallBugWallArena" shape="NPoly" minZ="-8800" maxZ="-7400">
+		<stat name="default_enabled" val="false" />
+		<node X="-75522" Y="-239155" />
+		<node X="-75485" Y="-239116" />
+		<node X="-75429" Y="-239114" />
+		<node X="-75389" Y="-239154" />
+		<node X="-75390" Y="-239208" />
+		<node X="-75429" Y="-239250" />
+		<node X="-75485" Y="-239250" />
+		<node X="-75525" Y="-239209" />
+		<spawn X="-75551" Y="-239220" Z="-8198" />
+	</zone>
+</list>

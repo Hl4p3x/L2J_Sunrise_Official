@@ -76,7 +76,7 @@ public class SiegeHealerAI extends L2FortSiegeGuardAI
 							return;
 						}
 						
-						clientStopMoving(null);
+						npc.stopMove();
 						npc.setTarget(obj);
 						npc.doCast(sk);
 						

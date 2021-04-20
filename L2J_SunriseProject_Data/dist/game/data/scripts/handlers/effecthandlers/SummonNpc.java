@@ -35,7 +35,7 @@ import l2r.util.Rnd;
 
 public class SummonNpc extends L2Effect
 {
-	private int _despawnDelay;
+	private final int _despawnDelay;
 	private final int _npcId;
 	private final int _npcCount;
 	private final boolean _randomOffset;
@@ -125,11 +125,6 @@ public class SummonNpc extends L2Effect
 				getSkill().getEffects(player, effectPoint);
 				effectPoint.setIsInvul(true);
 				effectPoint.spawnMe(x, y, z);
-				_despawnDelay = NpcTable.getInstance().getTemplate(_npcId).getParameters().getInt("despawn_time") * 1000;
-				if (_despawnDelay > 0)
-				{
-					effectPoint.scheduleDespawn(_despawnDelay);
-				}
 				break;
 			}
 			default:

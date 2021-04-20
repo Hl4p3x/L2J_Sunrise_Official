@@ -152,4 +152,9 @@ public abstract class L2GameClientPacket extends ReceivablePacket<L2GameClient>
 			getClient().sendPacket(ActionFailed.STATIC_PACKET);
 		}
 	}
+	
+	protected boolean hasRemaining()
+	{
+		return _buf.hasRemaining();
+	}
 }

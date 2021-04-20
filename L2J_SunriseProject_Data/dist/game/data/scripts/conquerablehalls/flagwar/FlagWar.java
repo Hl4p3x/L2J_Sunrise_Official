@@ -65,32 +65,32 @@ public abstract class FlagWar extends ClanHallSiegeEngine
 	private static final String SQL_CLEAR_CLAN = "DELETE FROM siegable_hall_flagwar_attackers WHERE hall_id = ?";
 	private static final String SQL_CLEAR_CLAN_ATTACKERS = "DELETE FROM siegable_hall_flagwar_attackers_members WHERE hall_id = ?";
 	
-	protected static int ROYAL_FLAG;
-	protected static int FLAG_RED;
-	protected static int FLAG_YELLOW;
-	protected static int FLAG_GREEN;
-	protected static int FLAG_BLUE;
-	protected static int FLAG_PURPLE;
+	protected int ROYAL_FLAG;
+	protected int FLAG_RED;
+	protected int FLAG_YELLOW;
+	protected int FLAG_GREEN;
+	protected int FLAG_BLUE;
+	protected int FLAG_PURPLE;
 	
-	protected static int ALLY_1;
-	protected static int ALLY_2;
-	protected static int ALLY_3;
-	protected static int ALLY_4;
-	protected static int ALLY_5;
+	protected int ALLY_1;
+	protected int ALLY_2;
+	protected int ALLY_3;
+	protected int ALLY_4;
+	protected int ALLY_5;
 	
-	protected static int TELEPORT_1;
+	protected int TELEPORT_1;
 	
-	protected static int MESSENGER;
+	protected int MESSENGER;
 	
-	protected static int[] OUTTER_DOORS_TO_OPEN = new int[2];
-	protected static int[] INNER_DOORS_TO_OPEN = new int[2];
-	protected static Location[] FLAG_COORDS = new Location[7];
+	protected int[] OUTTER_DOORS_TO_OPEN = new int[2];
+	protected int[] INNER_DOORS_TO_OPEN = new int[2];
+	protected Location[] FLAG_COORDS = new Location[7];
 	
-	protected static L2ResidenceHallTeleportZone[] TELE_ZONES = new L2ResidenceHallTeleportZone[6];
+	protected L2ResidenceHallTeleportZone[] TELE_ZONES = new L2ResidenceHallTeleportZone[6];
 	
-	protected static int QUEST_REWARD;
+	protected int QUEST_REWARD;
 	
-	protected static Location CENTER;
+	protected Location CENTER;
 	
 	protected Map<Integer, ClanData> _data = new ConcurrentHashMap<>(6);
 	protected L2Clan _winner;

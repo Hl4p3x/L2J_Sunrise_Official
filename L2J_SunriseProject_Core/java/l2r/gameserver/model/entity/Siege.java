@@ -243,6 +243,7 @@ public class Siege implements Siegable
 	private SiegeGuardManager _siegeGuardManager;
 	protected ScheduledFuture<?> _scheduledStartSiegeTask = null;
 	protected int _firstOwnerClanId = -1;
+	private boolean _firstStep = false;
 	
 	public Siege(Castle castle)
 	{
@@ -394,6 +395,13 @@ public class Siege implements Siegable
 	{
 		if (isInProgress()) // Siege still in progress
 		{
+			if (!_firstStep)
+			{
+				_firstStep = true;
+				SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.TEMPORARY_ALLIANCE_DISSOLVED);
+				announceToPlayer(sm, true);
+			}
+			
 			if (getCastle().getOwnerId() > 0)
 			{
 				_siegeGuardManager.removeMercs(); // Remove all merc entry from db
@@ -536,6 +544,13 @@ public class Siege implements Siegable
 			SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.SIEGE_OF_S1_HAS_STARTED);
 			sm.addCastleId(getCastle().getResidenceId());
 			Broadcast.toAllOnlinePlayers(sm);
+			
+			sm = SystemMessage.getSystemMessage(SystemMessageId.PARTICIPATING_IN_SIEGE_OF_S1);
+			sm.addString(getCastle().getName());
+			announceToPlayer(sm, true);
+			
+			sm = SystemMessage.getSystemMessage(SystemMessageId.TEMPORARY_ALLIANCE);
+			announceToPlayer(sm, true);
 			
 			// Notify to scripts.
 			EventDispatcher.getInstance().notifyEventAsync(new OnCastleSiegeStart(this), getCastle());
@@ -1753,5 +1768,10 @@ public class Siege implements Siegable
 	@Override
 	public void updateSiege()
 	{
+	}
+	
+	public boolean isAttackersInAlly()
+	{
+		return !_firstStep;
 	}
 }

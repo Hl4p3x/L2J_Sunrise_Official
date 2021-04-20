@@ -202,6 +202,7 @@ public abstract class AbstractOlympiadGame
 				player.startAntifeedProtection(true);
 			}
 			player.teleToLocation(loc, false);
+			par._arenaLocation = loc;
 			player.sendPacket(new ExOlympiadMode(2));
 		}
 		catch (Exception e)
@@ -517,6 +518,8 @@ public abstract class AbstractOlympiadGame
 	public abstract CompetitionType getType();
 	
 	public abstract String[] getPlayerNames();
+	
+	public abstract List<Participant> getParticipants();
 	
 	public abstract boolean containsParticipant(int playerId);
 	

@@ -18,6 +18,7 @@
  */
 package handlers.itemhandlers;
 
+import l2r.gameserver.enums.ZoneIdType;
 import l2r.gameserver.handler.IItemHandler;
 import l2r.gameserver.model.actor.L2Playable;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
@@ -34,13 +35,20 @@ public class CharmOfCourage implements IItemHandler
 	@Override
 	public boolean useItem(L2Playable playable, L2ItemInstance item, boolean forceUse)
 	{
-		
 		if (!playable.isPlayer())
 		{
 			return false;
 		}
 		
 		final L2PcInstance activeChar = playable.getActingPlayer();
+		
+		if (!activeChar.isInsideZone(ZoneIdType.SIEGE))
+		{
+			SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.S1_CANNOT_BE_USED);
+			sm.addItemName(item.getId());
+			activeChar.sendPacket(sm);
+			return false;
+		}
 		
 		int level = activeChar.getLevel();
 		final int itemLevel = item.getItem().getItemGrade().getId();

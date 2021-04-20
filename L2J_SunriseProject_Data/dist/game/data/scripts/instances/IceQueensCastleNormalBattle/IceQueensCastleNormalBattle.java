@@ -41,6 +41,11 @@ import l2r.gameserver.model.actor.instance.L2NpcInstance;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.actor.instance.L2QuestGuardInstance;
 import l2r.gameserver.model.actor.instance.L2RaidBossInstance;
+import l2r.gameserver.model.events.EventType;
+import l2r.gameserver.model.events.ListenerRegisterType;
+import l2r.gameserver.model.events.annotations.RegisterEvent;
+import l2r.gameserver.model.events.annotations.RegisterType;
+import l2r.gameserver.model.events.impl.character.player.OnPlayerLogout;
 import l2r.gameserver.model.holders.SkillHolder;
 import l2r.gameserver.model.instancezone.InstanceWorld;
 import l2r.gameserver.model.quest.QuestState;
@@ -581,24 +586,31 @@ public final class IceQueensCastleNormalBattle extends AbstractInstance
 					}
 					case "ATTACK_FREYA":
 					{
-						final SkillHolder skill = npc.getTemplate().getParameters().getObject("Skill01_ID", SkillHolder.class);
-						if (npc.isInsideRadius(world.freya, 100, true, false))
+						try
 						{
-							if (npc.checkDoCastConditions(skill.getSkill()) && !npc.isCastingNow())
+							final SkillHolder skill = npc.getTemplate().getParameters().getObject("Skill01_ID", SkillHolder.class);
+							if (npc.isInsideRadius(world.freya, 100, true, false))
 							{
-								npc.setTarget(world.freya);
-								npc.doCast(skill.getSkill());
-								startQuestTimer("ATTACK_FREYA", 20000, npc, null);
+								if (npc.checkDoCastConditions(skill.getSkill()) && !npc.isCastingNow())
+								{
+									npc.setTarget(world.freya);
+									npc.doCast(skill.getSkill());
+									startQuestTimer("ATTACK_FREYA", 20000, npc, null);
+								}
+								else
+								{
+									startQuestTimer("ATTACK_FREYA", 5000, npc, null);
+								}
 							}
 							else
 							{
+								npc.getAI().setIntention(CtrlIntention.AI_INTENTION_FOLLOW, world.freya);
 								startQuestTimer("ATTACK_FREYA", 5000, npc, null);
 							}
 						}
-						else
+						catch (Exception e)
 						{
-							npc.getAI().setIntention(CtrlIntention.AI_INTENTION_FOLLOW, world.freya);
-							startQuestTimer("ATTACK_FREYA", 5000, npc, null);
+						
 						}
 						break;
 					}
@@ -1169,30 +1181,44 @@ public final class IceQueensCastleNormalBattle extends AbstractInstance
 	@Override
 	public void onEnterInstance(L2PcInstance player, InstanceWorld world, boolean firstEntrance)
 	{
+		final IQCNBWorld curworld = (IQCNBWorld) world;
 		if (firstEntrance)
 		{
 			if (!player.isInParty())
 			{
-				managePlayerEnter(player, (IQCNBWorld) world);
+				managePlayerEnter(player, curworld);
 			}
 			else if (player.getParty().isInCommandChannel())
 			{
 				for (L2PcInstance players : player.getParty().getCommandChannel().getMembers())
 				{
-					managePlayerEnter(players, (IQCNBWorld) world);
+					managePlayerEnter(players, curworld);
 				}
 			}
 			else
 			{
 				for (L2PcInstance players : player.getParty().getMembers())
 				{
-					managePlayerEnter(players, (IQCNBWorld) world);
+					managePlayerEnter(players, curworld);
 				}
 			}
 		}
 		else
 		{
+			curworld.playersInside.add(player);
 			teleportPlayer(player, world.isStatus(4) ? BATTLE_PORT : ENTER_LOC[getRandom(ENTER_LOC.length)], world.getInstanceId());
+		}
+	}
+	
+	@RegisterType(ListenerRegisterType.GLOBAL)
+	@RegisterEvent(EventType.ON_PLAYER_LOGOUT)
+	public void onPlayerLogout(OnPlayerLogout event)
+	{
+		final InstanceWorld instanceWorld = InstanceManager.getInstance().getWorld(event.getActiveChar().getInstanceId());
+		if (instanceWorld instanceof IQCNBWorld)
+		{
+			final IQCNBWorld world = (IQCNBWorld) instanceWorld;
+			world.playersInside.remove(event.getActiveChar());
 		}
 	}
 	

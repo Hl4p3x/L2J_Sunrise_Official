@@ -16,8 +16,8 @@
  */
 package handlers.playeractions;
 
-import java.util.Optional;
-
+import l2r.gameserver.data.sql.SummonSkillsTable;
+import l2r.gameserver.data.xml.impl.SkillData;
 import l2r.gameserver.handler.IPlayerActionHandler;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.actor.instance.L2ServitorInstance;
@@ -47,11 +47,18 @@ public final class ServitorSkillUse implements IPlayerActionHandler
 			return;
 		}
 		
-		final Optional<SkillHolder> holder = servitor.getTemplate().getParameters().getSkillHolder(data.getOptionId());
-		if (holder.isPresent())
+		final int skillLevel = SummonSkillsTable.getInstance().getAvailableLevel(servitor, data.getOptionId());
+		if (skillLevel > 0)
 		{
 			servitor.setTarget(activeChar.getTarget());
-			servitor.useMagic(holder.get().getSkill(), ctrlPressed, shiftPressed);
+			servitor.useMagic(SkillData.getInstance().getSkill(data.getOptionId(), skillLevel), ctrlPressed, shiftPressed);
+		}
+		else
+		{
+			final SkillHolder skill = new SkillHolder(data.getOptionId(), 1);
+			
+			servitor.setTarget(activeChar.getTarget());
+			servitor.useMagic(skill.getSkill(), ctrlPressed, shiftPressed);
 		}
 	}
 }

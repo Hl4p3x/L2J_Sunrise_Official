@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -88,6 +89,7 @@ import l2r.gameserver.enums.MountType;
 import l2r.gameserver.enums.PartyDistributionType;
 import l2r.gameserver.enums.PcCondOverride;
 import l2r.gameserver.enums.PrivateStoreType;
+import l2r.gameserver.enums.QuickVarType;
 import l2r.gameserver.enums.Race;
 import l2r.gameserver.enums.Sex;
 import l2r.gameserver.enums.ShortcutType;
@@ -110,11 +112,13 @@ import l2r.gameserver.instancemanager.GrandBossManager;
 import l2r.gameserver.instancemanager.HandysBlockCheckerManager;
 import l2r.gameserver.instancemanager.InstanceManager;
 import l2r.gameserver.instancemanager.ItemsOnGroundManager;
+import l2r.gameserver.instancemanager.KrateiCubeManager;
 import l2r.gameserver.instancemanager.PunishmentManager;
 import l2r.gameserver.instancemanager.QuestManager;
 import l2r.gameserver.instancemanager.SiegeManager;
 import l2r.gameserver.instancemanager.TerritoryWarManager;
 import l2r.gameserver.instancemanager.ZoneManager;
+import l2r.gameserver.listener.actor.player.OnAnswerListener;
 import l2r.gameserver.model.ArenaParticipantsHolder;
 import l2r.gameserver.model.BlockList;
 import l2r.gameserver.model.ClanPrivilege;
@@ -250,6 +254,7 @@ import l2r.gameserver.model.variables.PlayerVariables;
 import l2r.gameserver.model.zone.L2ZoneType;
 import l2r.gameserver.model.zone.type.L2BossZone;
 import l2r.gameserver.model.zone.type.L2NoRestartZone;
+import l2r.gameserver.model.zone.type.L2WaterZone;
 import l2r.gameserver.network.L2GameClient;
 import l2r.gameserver.network.SystemMessageId;
 import l2r.gameserver.network.serverpackets.AbstractHtmlPacket;
@@ -305,7 +310,6 @@ import l2r.gameserver.network.serverpackets.SkillList;
 import l2r.gameserver.network.serverpackets.Snoop;
 import l2r.gameserver.network.serverpackets.SocialAction;
 import l2r.gameserver.network.serverpackets.StatusUpdate;
-import l2r.gameserver.network.serverpackets.StopMove;
 import l2r.gameserver.network.serverpackets.SystemMessage;
 import l2r.gameserver.network.serverpackets.TargetSelected;
 import l2r.gameserver.network.serverpackets.TargetUnselected;
@@ -321,6 +325,8 @@ import l2r.util.EnumIntBitmask;
 import l2r.util.Rnd;
 
 import gr.sr.achievementEngine.AchievementsHandler;
+import gr.sr.advancedBuffer.PlayerScheme;
+import gr.sr.advancedBuffer.SchemeBufferBBSManager;
 import gr.sr.configsEngine.configs.impl.AntibotConfigs;
 import gr.sr.configsEngine.configs.impl.CustomServerConfigs;
 import gr.sr.configsEngine.configs.impl.FlagZoneConfigs;
@@ -519,9 +525,6 @@ public final class L2PcInstance extends L2Playable
 	/** Location before entering Observer Mode */
 	private final Location _lastLoc = new Location(0, 0, 0);
 	private boolean _observerMode = false;
-	
-	/** Stored from last ValidatePosition **/
-	private final Location _lastServerPosition = new Location(0, 0, 0);
 	
 	/** The number of recommendation obtained by the L2PcInstance */
 	private int _recomHave; // how much I was recommended by others
@@ -756,15 +759,8 @@ public final class L2PcInstance extends L2Playable
 	private double _mpUpdateDecCheck = .0;
 	private double _mpUpdateInterval = .0;
 	
-	/** Char Coords from Client */
-	private int _clientX;
-	private int _clientY;
-	private int _clientZ;
-	private int _clientHeading;
-	
-	// during fall validations will be disabled for 10 ms.
-	private static final int FALLING_VALIDATION_DELAY = 10000;
-	private volatile long _fallingTimestamp = 0;
+	private Location _lastClientPosition;
+	private Location _lastServerPosition;
 	
 	private int _multiSocialTarget = 0;
 	private int _multiSociaAction = 0;
@@ -2160,6 +2156,11 @@ public final class L2PcInstance extends L2Playable
 	public void useEquippableItem(L2ItemInstance item, boolean abortAttack)
 	{
 		// Equip or unEquip
+		if (getInventory().getItemByObjectId(item.getObjectId()) == null)
+		{
+			return;
+		}
+		
 		L2ItemInstance[] items = null;
 		final boolean isEquiped = item.isEquipped();
 		final int oldInvLimit = getInventoryLimit();
@@ -4577,7 +4578,7 @@ public final class L2PcInstance extends L2Playable
 		
 		L2ItemInstance target = (L2ItemInstance) object;
 		
-		sendPacket(new StopMove(this));
+		stopMove();
 		
 		SystemMessage smsg = null;
 		synchronized (target)
@@ -5348,6 +5349,11 @@ public final class L2PcInstance extends L2Playable
 					TvTLeaderboard.getInstance().onDeath(getObjectId(), getName());
 				}
 				
+				if (KrateiCubeManager.getInstance().isInProgress(getQuickVarI(QuickVarType.KRATEI_CUBE_LVL.getCommand(), -1)) && KrateiCubeManager.getInstance().isKrateiParticipant(this))
+				{
+					KrateiCubeManager.getInstance().onPlayerKill(killer, this);
+				}
+				
 				EventDispatcher.getInstance().notifyEventAsync(new OnPlayerPvPKill(pk, this), this);
 			}
 			
@@ -5413,7 +5419,8 @@ public final class L2PcInstance extends L2Playable
 					}
 					
 					// If player is Lucky shouldn't get penalized.
-					if (!isLucky() && !(insideSiegeZone || insidePvpZone) && !getNevitSystem().isAdventBlessingActive())
+					boolean noExpLoss = (KrateiCubeManager.getInstance().isInProgress(getQuickVarI(QuickVarType.KRATEI_CUBE_LVL.getCommand(), -1)) && KrateiCubeManager.getInstance().isKrateiParticipant(this));
+					if (!isLucky() && (insideSiegeZone || !insidePvpZone) && !getNevitSystem().isAdventBlessingActive() && !noExpLoss)
 					{
 						calculateDeathExpPenalty(killer, isAtWarWith(pk), Config.ALT_GAME_DELEVEL);
 					}
@@ -5521,7 +5528,7 @@ public final class L2PcInstance extends L2Playable
 					itemDrop.isTimeLimitedItem() || // Dont drop Time Limited Items
 					!itemDrop.isDropable() || (itemDrop.getId() == Inventory.ADENA_ID) || // Adena
 					(itemDrop.getItem().getType2() == L2Item.TYPE2_QUEST) || // Quest Items
-					(hasSummon() && (getSummon().getControlObjectId() == itemDrop.getId())) || // Control Item of active pet
+					(hasSummon() && (getSummon().getControlObjectId() == itemDrop.getObjectId())) || // Control Item of active pet
 					(Arrays.binarySearch(Config.KARMA_LIST_NONDROPPABLE_ITEMS, itemDrop.getId()) >= 0) || // Item listed in the non droppable item list
 					(Arrays.binarySearch(Config.KARMA_LIST_NONDROPPABLE_PET_ITEMS, itemDrop.getId()) >= 0 // Item listed in the non droppable pet item list
 					))
@@ -7510,6 +7517,8 @@ public final class L2PcInstance extends L2Playable
 			
 			DAOFactory.getInstance().getNoRestartZoneDAO().load(player);
 			
+			SchemeBufferBBSManager.loadSchemes(player, con);
+			
 			if (player.isGM())
 			{
 				final long masks = player.getVariables().getLong(COND_OVERRIDE_KEY, PcCondOverride.getAllExceptionsMask());
@@ -8209,33 +8218,6 @@ public final class L2PcInstance extends L2Playable
 			}
 		}
 		
-		// ************************************* Check Casting in Progress *******************************************
-		
-		// If a skill is currently being used, queue this one.
-		if (isCastingNow())
-		{
-			if (isSkillDisabled(skill))
-			{
-				sendPacket(ActionFailed.STATIC_PACKET);
-				return false;
-			}
-			
-			// Create a new SkillDat object and queue it in the player _queuedSkill
-			setQueuedSkill(skill, forceUse, dontMove);
-			sendPacket(ActionFailed.STATIC_PACKET);
-			return false;
-		}
-		setIsCastingNow(true);
-		// Create a new SkillDat object and set the player _currentSkill
-		// This is used mainly to save & queue the button presses, since L2Character has
-		// _lastSkillCast which could otherwise replace it
-		setCurrentSkill(skill, forceUse, dontMove);
-		
-		if (getQueuedSkill() != null)
-		{
-			setQueuedSkill(null, false, false);
-		}
-		
 		// Check if the target is correct and Notify the AI with AI_INTENTION_CAST and target
 		L2Object target = null;
 		switch (skill.getTargetType())
@@ -8257,6 +8239,47 @@ public final class L2PcInstance extends L2Playable
 				break;
 		}
 		
+		// ************************************* Check Casting in Progress *******************************************
+		
+		// If a skill is currently being used or attacking, queue this one.
+		// Attacking now check exists in order to allow hit to land if player tries to use skill before attack is finished
+		if (isCastingNow() || isAttackingNow())
+		{
+			if (isSkillDisabled(skill))
+			{
+				sendPacket(ActionFailed.STATIC_PACKET);
+				return false;
+			}
+			
+			if (!isAttackingNow())
+			{
+				// Create a new SkillDat object and queue it in the player _queuedSkill
+				setQueuedSkill(skill, forceUse, dontMove);
+			}
+			
+			// Notify the AI with AI_INTENTION_CAST and target
+			if ((target != null) && isAttackingNow())
+			{
+				getAI().setIntention(CtrlIntention.AI_INTENTION_CAST, skill, target);
+			}
+			
+			// Create a new SkillDat object and queue it in the player _queuedSkill
+			// setQueuedSkill(skill, forceUse, dontMove);
+			sendPacket(ActionFailed.STATIC_PACKET);
+			return false;
+		}
+		
+		setIsCastingNow(true);
+		// Create a new SkillDat object and set the player _currentSkill
+		// This is used mainly to save & queue the button presses, since L2Character has
+		// _lastSkillCast which could otherwise replace it
+		setCurrentSkill(skill, forceUse, dontMove);
+		
+		if (getQueuedSkill() != null)
+		{
+			setQueuedSkill(null, false, false);
+		}
+		
 		if (target == null)
 		{
 			setIsCastingNow(false);
@@ -8269,7 +8292,7 @@ public final class L2PcInstance extends L2Playable
 		return true;
 	}
 	
-	public boolean checkUseMagicConditions(L2Skill skill, boolean forceUse, boolean dontMove)
+	public boolean checkUseMagicConditions(L2Skill skill, boolean forceUse, boolean dontMove, boolean simultaneous)
 	{
 		// ************************************* Check Player State *******************************************
 		
@@ -8304,7 +8327,7 @@ public final class L2PcInstance extends L2Playable
 		}
 		
 		// Check if the caster is sitting
-		if (isSitting())
+		if (isSitting() && !skill.isSimultaneousCast() && !simultaneous)
 		{
 			// Send a System Message to the caster
 			sendPacket(SystemMessageId.CANT_MOVE_SITTING);
@@ -8372,6 +8395,7 @@ public final class L2PcInstance extends L2Playable
 			case AURA_CORPSE_MOB:
 			case COMMAND_CHANNEL:
 			case AURA_FRIENDLY:
+			case CORPSE_CLAN:
 				target = this;
 				break;
 			case PET:
@@ -8507,18 +8531,35 @@ public final class L2PcInstance extends L2Playable
 				return false;
 			}
 			
-			if (!canAttackSiegier(this, target))
-			{
-				sendPacket(ActionFailed.STATIC_PACKET);
-				return false;
-			}
-			
 			// Check if the target is attackable
-			if (!target.canBeAttacked() && !getAccessLevel().allowPeaceAttack() && !target.isDoor())
+			if (!target.canBeAttacked() && !getAccessLevel().allowPeaceAttack())
 			{
 				// If target is not attackable, send a Server->Client packet ActionFailed
 				sendPacket(ActionFailed.STATIC_PACKET);
 				return false;
+			}
+			
+			if (forceUse && !canAttackSiegier(this, target))
+			{
+				switch (sklTargetType)
+				{
+					case AURA:
+					case FRONT_AURA:
+					case BEHIND_AURA:
+					case AURA_CORPSE_MOB:
+					case CLAN:
+					case PARTY:
+					case SELF:
+					case GROUND:
+					case AREA_SUMMON:
+					case UNLOCKABLE:
+					case AURA_FRIENDLY:
+					case AURA_UNDEAD_ENEMY:
+						break;
+					default:
+						sendPacket(ActionFailed.STATIC_PACKET);
+						return false;
+				}
 			}
 			
 			// Check if a Forced ATTACK is in progress on non-attackable target
@@ -8659,7 +8700,7 @@ public final class L2PcInstance extends L2Playable
 					return false;
 				}
 			}
-			else if (!GeoData.getInstance().canSeeTarget(this, target))
+			else if (!GeoData.getInstance().canSeeTarget(this, target) && ((skill.getTargetType() != L2TargetType.HOLY) && (skill.getTargetType() != L2TargetType.FLAGPOLE)))
 			{
 				sendPacket(SystemMessageId.CANT_SEE_TARGET);
 				sendPacket(ActionFailed.STATIC_PACKET);
@@ -8667,13 +8708,13 @@ public final class L2PcInstance extends L2Playable
 			}
 		}
 		
-		if ((skill.getFlyType() == FlyType.CHARGE) && (Config.PATHFINDING > 0) && !GeoData.getInstance().canMove(this, target))
+		if ((skill.getFlyType() == FlyType.CHARGE) && (Config.GEODATA) && !GeoData.getInstance().canMove(this, target))
 		{
 			sendPacket(SystemMessageId.THE_TARGET_IS_LOCATED_WHERE_YOU_CANNOT_CHARGE);
 			return false;
 		}
 		
-		if (((skill.getFlyType() == FlyType.DUMMY) || skill.hasEffectType(L2EffectType.TELEPORT_TO_TARGET)) && (Config.PATHFINDING > 0) && !GeoData.getInstance().canMove(this, target))
+		if (((skill.getFlyType() == FlyType.DUMMY) || skill.hasEffectType(L2EffectType.TELEPORT_TO_TARGET)) && (Config.GEODATA) && !GeoData.getInstance().canMove(this, target))
 		{
 			sendMessage("The target is located where you cannot jump.");
 			return false;
@@ -9324,7 +9365,7 @@ public final class L2PcInstance extends L2Playable
 			getAI().setIntention(CtrlIntention.AI_INTENTION_IDLE);
 		}
 		
-		setFalling(); // prevent receive falling damage
+		// setFalling(); // prevent receive falling damage
 		_observerMode = false;
 		
 		broadcastUserInfo();
@@ -10171,19 +10212,10 @@ public final class L2PcInstance extends L2Playable
 		}
 	}
 	
-	public boolean isInWater()
-	{
-		if (_taskWater != null)
-		{
-			return true;
-		}
-		
-		return false;
-	}
-	
 	public void checkWaterState()
 	{
-		if (isInsideZone(ZoneIdType.WATER))
+		final L2WaterZone waterZone = ZoneManager.getInstance().getZone(this, L2WaterZone.class);
+		if (isInsideZone(ZoneIdType.WATER) && (waterZone != null) && (Math.abs(Math.abs(waterZone.getWaterZ()) - Math.abs(getZ())) > 16))
 		{
 			startWaterTask();
 		}
@@ -10295,6 +10327,9 @@ public final class L2PcInstance extends L2Playable
 				instance.cancelEjectDeadPlayer(this);
 			}
 		}
+		
+		// Prims - Block the community buffer 10 seconds so the player cannot buff when resurrected
+		_resurrectionBuffBlockedTime = System.currentTimeMillis() + (10 * 1000);
 	}
 	
 	@Override
@@ -10374,6 +10409,7 @@ public final class L2PcInstance extends L2Playable
 		if ((_reviveRequested != 1) || (!isDead() && !_revivePet) || (_revivePet && hasSummon() && !getSummon().isDead()))
 		{
 			_restoreStatsOnRevive = false;
+			_reviveRequested = 0;
 			return;
 		}
 		
@@ -10511,6 +10547,9 @@ public final class L2PcInstance extends L2Playable
 		// Force a revalidation
 		revalidateZone(true);
 		
+		setLastClientPosition(getLocation());
+		setLastServerPosition(getLocation());
+		
 		checkItemRestriction();
 		
 		if ((Config.PLAYER_TELEPORT_PROTECTION > 0) && !isInOlympiadMode())
@@ -10574,25 +10613,6 @@ public final class L2PcInstance extends L2Playable
 				_teleportWatchdog = null;
 			}
 		}
-	}
-	
-	public void setLastServerPosition(int x, int y, int z)
-	{
-		_lastServerPosition.setXYZ(x, y, z);
-	}
-	
-	public Location getLastServerPosition()
-	{
-		return _lastServerPosition;
-	}
-	
-	public int getLastServerDistance(int x, int y, int z)
-	{
-		double dx = (x - _lastServerPosition.getX());
-		double dy = (y - _lastServerPosition.getY());
-		double dz = (z - _lastServerPosition.getZ());
-		
-		return (int) Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
 	}
 	
 	@Override
@@ -10813,6 +10833,7 @@ public final class L2PcInstance extends L2Playable
 	/**
 	 * @return Returns the inBoat.
 	 */
+	@Override
 	public boolean isInBoat()
 	{
 		return (_vehicle != null) && _vehicle.isBoat();
@@ -11247,6 +11268,18 @@ public final class L2PcInstance extends L2Playable
 						}
 					}
 				}
+			}
+		}
+		catch (Exception e)
+		{
+			_log.error("deleteMe()", e);
+		}
+		
+		try
+		{
+			if (KrateiCubeManager.getInstance().isKrateiParticipant(this))
+			{
+				KrateiCubeManager.getInstance().onDisconnect(this);
 			}
 		}
 		catch (Exception e)
@@ -11734,6 +11767,11 @@ public final class L2PcInstance extends L2Playable
 	public void calculateDeathPenaltyBuffLevel(L2Character killer)
 	{
 		if (killer == null)
+		{
+			return;
+		}
+		
+		if (KrateiCubeManager.getInstance().isInProgress(getQuickVarI(QuickVarType.KRATEI_CUBE_LVL.getCommand(), -1)) && KrateiCubeManager.getInstance().isKrateiParticipant(this))
 		{
 			return;
 		}
@@ -12512,44 +12550,24 @@ public final class L2PcInstance extends L2Playable
 		return isMounted() ? (NpcTable.getInstance().getTemplate(getMountNpcId()).getfCollisionHeight()) : (isTransformed() && !getTransformation().isStance() ? getTransformation().getCollisionHeight(this) : (getAppearance().getSex() ? getBaseTemplate().getFCollisionHeightFemale() : getBaseTemplate().getfCollisionHeight()));
 	}
 	
-	public final int getClientX()
+	public void setLastClientPosition(Location position)
 	{
-		return _clientX;
+		_lastClientPosition = position;
 	}
 	
-	public final int getClientY()
+	public Location getLastClientPosition()
 	{
-		return _clientY;
+		return _lastClientPosition;
 	}
 	
-	public final int getClientZ()
+	public void setLastServerPosition(Location position)
 	{
-		return _clientZ;
+		_lastServerPosition = position;
 	}
 	
-	public final int getClientHeading()
+	public Location getLastServerPosition()
 	{
-		return _clientHeading;
-	}
-	
-	public final void setClientX(int val)
-	{
-		_clientX = val;
-	}
-	
-	public final void setClientY(int val)
-	{
-		_clientY = val;
-	}
-	
-	public final void setClientZ(int val)
-	{
-		_clientZ = val;
-	}
-	
-	public final void setClientHeading(int val)
-	{
-		_clientHeading = val;
+		return _lastServerPosition;
 	}
 	
 	@Override
@@ -12679,35 +12697,39 @@ public final class L2PcInstance extends L2Playable
 		return (getSiegeState() > 0) && isInsideZone(ZoneIdType.SIEGE) && (getSiegeState() == target.getSiegeState()) && (getSiegeSide() == target.getSiegeSide());
 	}
 	
-	/**
-	 * @param z
-	 * @return true if character falling now on the start of fall return false for correct coord sync!
-	 */
-	public final boolean isFalling(int z)
+	public void teleToClosestTown()
 	{
-		if (isDead() || isFlying() || isFlyingMounted() || isInsideZone(ZoneIdType.WATER))
+		teleToLocation(TeleportWhereType.TOWN);
+	}
+	
+	private final int _incorrectValidateCount = 0;
+	
+	public int getIncorrectValidateCount()
+	{
+		return _incorrectValidateCount;
+	}
+	
+	public int setIncorrectValidateCount(int count)
+	{
+		return _incorrectValidateCount;
+	}
+	
+	private long _lastFalling;
+	
+	public boolean isFalling()
+	{
+		return (System.currentTimeMillis() - _lastFalling) < 5000;
+	}
+	
+	public void falling(int height)
+	{
+		if (!Config.ENABLE_FALLING_DAMAGE || isDead() || isFlying() || isFlyingMounted() || isInWater() || isInBoat())
 		{
-			return false;
+			return;
 		}
+		_lastFalling = System.currentTimeMillis();
 		
-		if (System.currentTimeMillis() < _fallingTimestamp)
-		{
-			return true;
-		}
-		
-		final int deltaZ = getZ() - z;
-		if (deltaZ <= getBaseTemplate().getSafeFallHeight())
-		{
-			return false;
-		}
-		
-		// If there is no geodata loaded for the place we are client Z correction might cause falling damage.
-		if (!GeoData.getInstance().hasGeo(getX(), getY()))
-		{
-			return false;
-		}
-		
-		final int damage = (int) Formulas.calcFallDam(this, deltaZ);
+		final int damage = (int) Formulas.calcFallDam(this, height);
 		if (damage > 0)
 		{
 			reduceCurrentHp(Math.min(damage, getCurrentHp() - 1), null, false, true, null);
@@ -12715,18 +12737,6 @@ public final class L2PcInstance extends L2Playable
 			sm.addInt(damage);
 			sendPacket(sm);
 		}
-		
-		setFalling();
-		
-		return false;
-	}
-	
-	/**
-	 * Set falling timestamp
-	 */
-	public final void setFalling()
-	{
-		_fallingTimestamp = System.currentTimeMillis() + FALLING_VALIDATION_DELAY;
 	}
 	
 	/**
@@ -12987,7 +12997,7 @@ public final class L2PcInstance extends L2Playable
 	
 	public boolean canMakeSocialAction()
 	{
-		return (!isInStoreMode() && (getActiveRequester() == null) && !isAlikeDead() && !isAllSkillsDisabled() && !isCastingNow() && !isCastingSimultaneouslyNow() && (getAI().getIntention() == CtrlIntention.AI_INTENTION_IDLE));
+		return (!isInStoreMode() && (getActiveRequester() == null) && !isAlikeDead() && !isAllSkillsDisabled() && !isCastingNow() && !isCastingSimultaneouslyNow() && ((getAI().getIntention() == CtrlIntention.AI_INTENTION_IDLE) || (getAI().getIntention() == CtrlIntention.AI_INTENTION_ACTIVE)));
 	}
 	
 	public void setMultiSocialAction(int id, int targetId)
@@ -13687,7 +13697,7 @@ public final class L2PcInstance extends L2Playable
 		if (isInsideSiegeZone && isInSiege() && (getSiegeState() != 0) && (target.getSiegeState() != 0))
 		{
 			final Siege siege = SiegeManager.getInstance().getSiege(getX(), getY(), getZ());
-			if (siege != null)
+			if ((siege != null) && siege.isAttackersInAlly())
 			{
 				if ((siege.checkIsDefender(getClan()) && siege.checkIsDefender(target.getClan())))
 				{
@@ -13734,6 +13744,12 @@ public final class L2PcInstance extends L2Playable
 			return false;
 		}
 		
+		// Check if the attacker is in Kratei Cube game
+		if (KrateiCubeManager.getInstance().isKrateiParticipant(attacker) && KrateiCubeManager.getInstance().isKrateiParticipant(this) && KrateiCubeManager.getInstance().isInProgress(attacker.getQuickVarI(QuickVarType.KRATEI_CUBE_LVL.getCommand(), -1)))
+		{
+			return true;
+		}
+		
 		// Duel
 		if (attacker.isPlayable() && (getDuelState() == DuelState.DUELLING) && (getDuelId() == attacker.getActingPlayer().getDuelId()))
 		{
@@ -13772,8 +13788,8 @@ public final class L2PcInstance extends L2Playable
 		
 		if (getClan() != null)
 		{
-			Siege siege = SiegeManager.getInstance().getSiege(getX(), getY(), getZ());
-			if (siege != null)
+			final Siege siege = SiegeManager.getInstance().getSiege(getX(), getY(), getZ());
+			if ((siege != null) && siege.isAttackersInAlly())
 			{
 				// Check if a siege is in progress and if attacker and the L2PcInstance aren't in the Defender clan
 				if (siege.checkIsDefender(attacker.getClan()) && siege.checkIsDefender(getClan()))
@@ -14019,9 +14035,11 @@ public final class L2PcInstance extends L2Playable
 	// Alternative rate system
 	/**
 	 * @param rateType type of rate to check
-	 * @return rate value for given rate type
+	 * @param itemId item id to check
+	 * @param isRaid {@code true} if rate should be calculated against Raid boss
+	 * @return rate value for given rate type and item id
 	 */
-	public float getRate(Rates rateType)
+	public float getRate(Rates rateType, int itemId, boolean isRaid)
 	{
 		switch (rateType)
 		{
@@ -14029,7 +14047,21 @@ public final class L2PcInstance extends L2Playable
 				return isPremium() ? PremiumServiceConfigs.PREMIUM_RATE_XP : 1;
 			case PREMIUM_BONUS_SP:
 				return isPremium() ? PremiumServiceConfigs.PREMIUM_RATE_SP : 1;
+			case SPOIL:
+			case DROP_ITEM:
+				switch (rateType)
+				{
+					case SPOIL:
+						return Config.RATE_DROP_ITEMS_ID.containsKey(itemId) ? Config.RATE_DROP_ITEMS_ID.get(itemId) : Config.RATE_DROP_SPOIL;
+					case DROP_ITEM:
+						if (Config.RATE_DROP_ITEMS_ID.containsKey(itemId)) // check for overridden rate in general list first
+						{
+							return Config.RATE_DROP_ITEMS_ID.get(itemId);
+						}
+						return isRaid ? Config.RATE_DROP_ITEMS_BY_RAID : Config.RATE_DROP_ITEMS;
+				}
 		}
+		
 		return 0;
 	}
 	
@@ -14040,6 +14072,15 @@ public final class L2PcInstance extends L2Playable
 			return PremiumServiceConfigs.PR_RATE_DROP_ITEMS_ID.get(itemId);
 		}
 		return PremiumServiceConfigs.PREMIUM_RATE_DROP_ITEMS;
+	}
+	
+	/**
+	 * @param rateType type of rate to check
+	 * @return rate value for given rate type
+	 */
+	public float getRate(Rates rateType)
+	{
+		return getRate(rateType, -1, false);
 	}
 	
 	/**
@@ -14352,5 +14393,85 @@ public final class L2PcInstance extends L2Playable
 	public int getLoadedImagesSize()
 	{
 		return loadedImages.size();
+	}
+	
+	private final List<PlayerScheme> buffSchemes = new CopyOnWriteArrayList<>();
+	
+	public List<PlayerScheme> getBuffSchemes()
+	{
+		return buffSchemes;
+	}
+	
+	public PlayerScheme getBuffSchemeById(int id)
+	{
+		for (PlayerScheme scheme : buffSchemes)
+		{
+			if (scheme.schemeId == id)
+			{
+				return scheme;
+			}
+		}
+		return null;
+	}
+	
+	public PlayerScheme getBuffSchemeByName(String name)
+	{
+		for (PlayerScheme scheme : buffSchemes)
+		{
+			if (scheme.schemeName.equals(name))
+			{
+				return scheme;
+			}
+		}
+		return null;
+	}
+	
+	private long _resurrectionBuffBlockedTime = 0;
+	
+	public long getResurrectionBuffBlockedTime()
+	{
+		return _resurrectionBuffBlockedTime;
+	}
+	
+	public boolean isInEvents()
+	{
+		return SunriseEvents.isInEvent(this) || SunriseEvents.isRegistered(this);
+	}
+	
+	public boolean isBlocked()
+	{
+		return isInEvents() || isInOfflineMode() || isInOlympiad() || isInOlympiadMode() || OlympiadManager.getInstance().isRegistered(this) || OlympiadManager.getInstance().isRegisteredInComp(this);
+	}
+	
+	private AbstractMap.SimpleEntry<Integer, OnAnswerListener> _askDialog = null;
+	
+	public void ask(ConfirmDlg dlg, OnAnswerListener listener)
+	{
+		if (_askDialog != null)
+		{
+			return;
+		}
+		
+		int rnd = Rnd.nextInt();
+		_askDialog = new AbstractMap.SimpleEntry<>(rnd, listener);
+		dlg.addRequesterId(rnd);
+		sendPacket(dlg);
+	}
+	
+	public AbstractMap.SimpleEntry<Integer, OnAnswerListener> getAskListener(boolean clear)
+	{
+		if (!clear)
+		{
+			return _askDialog;
+		}
+		
+		final AbstractMap.SimpleEntry<Integer, OnAnswerListener> ask = _askDialog;
+		_askDialog = null;
+		return ask;
+	}
+	
+	public boolean hasDialogAskActive()
+	{
+		return _askDialog != null;
 	}
 }

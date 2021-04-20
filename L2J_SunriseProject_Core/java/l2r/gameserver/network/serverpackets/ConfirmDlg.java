@@ -45,6 +45,12 @@ public class ConfirmDlg extends AbstractMessagePacket<ConfirmDlg>
 		addString(text);
 	}
 	
+	public ConfirmDlg(SystemMessageId smId, int time)
+	{
+		super(smId);
+		_time = time;
+	}
+	
 	public ConfirmDlg addTime(int time)
 	{
 		_time = time;

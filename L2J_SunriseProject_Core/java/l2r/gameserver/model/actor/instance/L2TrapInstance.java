@@ -36,7 +36,6 @@ import l2r.gameserver.model.actor.templates.L2NpcTemplate;
 import l2r.gameserver.model.entity.olympiad.OlympiadGameManager;
 import l2r.gameserver.model.events.EventDispatcher;
 import l2r.gameserver.model.events.impl.character.trap.OnTrapAction;
-import l2r.gameserver.model.holders.SkillHolder;
 import l2r.gameserver.model.items.L2Weapon;
 import l2r.gameserver.model.items.instance.L2ItemInstance;
 import l2r.gameserver.model.skills.L2Skill;
@@ -59,7 +58,7 @@ public final class L2TrapInstance extends L2Npc
 	private final int _lifeTime;
 	private L2PcInstance _owner;
 	private final List<Integer> _playersWhoDetectedMe = new ArrayList<>();
-	private final SkillHolder _skill;
+	private L2Skill _skill;
 	private int _remainingTime;
 	// Tasks
 	private ScheduledFuture<?> _trapTask = null;
@@ -79,7 +78,21 @@ public final class L2TrapInstance extends L2Npc
 		setIsInvul(false);
 		
 		_isTriggered = false;
-		_skill = getTemplate().getParameters().getObject("trap_skill", SkillHolder.class);
+		// TODO: Manage this properly when NPC templates are complete and in XML.
+		for (L2Skill skill : template.getSkills().values())
+		{
+			//@formatter:off
+			if ((skill.getId() == 4072) || (skill.getId() == 4186) || (skill.getId() == 5267)
+				|| (skill.getId() == 5268) || (skill.getId() == 5269) || (skill.getId() == 5270)
+				|| (skill.getId() == 5271) || (skill.getId() == 5340) || (skill.getId() == 5422)
+				|| (skill.getId() == 5423) || (skill.getId() == 5424) || (skill.getId() == 5679))
+			{
+				_skill = skill;
+				break;
+			}
+			//@formatter:on
+		}
+		// _skill = getTemplate().getParameters().getObject("trap_skill", SkillHolder.class);
 		_hasLifeTime = lifeTime >= 0;
 		_lifeTime = lifeTime != 0 ? lifeTime : 30000;
 		_remainingTime = _lifeTime;
@@ -175,12 +188,12 @@ public final class L2TrapInstance extends L2Npc
 	
 	public boolean checkTarget(L2Character target)
 	{
-		if (!L2Skill.checkForAreaOffensiveSkills(this, target, _skill.getSkill(), _isInArena))
+		if (!L2Skill.checkForAreaOffensiveSkills(this, target, _skill, _isInArena))
 		{
 			return false;
 		}
 		
-		if (!target.isInsideRadius(this, _skill.getSkill().getEffectRange(), false, false) && !target.isInsideRadius(this, _skill.getSkill().getAffectRange(), false, false))
+		if (!target.isInsideRadius(this, _skill.getEffectRange(), false, false) && !target.isInsideRadius(this, _skill.getAffectRange(), false, false))
 		{
 			return false;
 		}
@@ -284,7 +297,7 @@ public final class L2TrapInstance extends L2Npc
 	
 	public L2Skill getSkill()
 	{
-		return _skill.getSkill();
+		return _skill;
 	}
 	
 	@Override

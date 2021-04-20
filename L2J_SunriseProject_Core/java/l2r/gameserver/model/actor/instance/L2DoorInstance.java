@@ -29,7 +29,6 @@ import l2r.gameserver.ai.L2CharacterAI;
 import l2r.gameserver.ai.L2DoorAI;
 import l2r.gameserver.data.xml.impl.DoorData;
 import l2r.gameserver.enums.InstanceType;
-import l2r.gameserver.enums.Race;
 import l2r.gameserver.instancemanager.CastleManager;
 import l2r.gameserver.instancemanager.ClanHallManager;
 import l2r.gameserver.instancemanager.FortManager;
@@ -57,14 +56,20 @@ import l2r.gameserver.network.serverpackets.DoorStatusUpdate;
 import l2r.gameserver.network.serverpackets.OnEventTrigger;
 import l2r.gameserver.network.serverpackets.StaticObject;
 import l2r.gameserver.network.serverpackets.SystemMessage;
+import l2r.geoserver.geodata.geometry.Shape;
+import l2r.geoserver.model.GeoCollision;
 import l2r.util.Rnd;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class L2DoorInstance extends L2Character
+/**
+ * This class ...
+ * @version $Revision: 1.3.2.2.2.5 $ $Date: 2005/03/27 15:29:32 $
+ */
+public class L2DoorInstance extends L2Character implements GeoCollision
 {
-	private static final Logger LOG = LoggerFactory.getLogger(L2DoorInstance.class);
+	protected static final Logger log = LoggerFactory.getLogger(L2DoorInstance.class);
 	
 	public static final byte OPEN_BY_CLICK = 1;
 	public static final byte OPEN_BY_TIME = 2;
@@ -83,6 +88,8 @@ public class L2DoorInstance extends L2Character
 	private int _meshindex = 1;
 	// used for autoclose on open
 	private Future<?> _autoCloseTask;
+	
+	private byte[][] _geoAround;
 	
 	/**
 	 * Creates a door.
@@ -259,6 +266,7 @@ public class L2DoorInstance extends L2Character
 	public void setOpen(boolean open)
 	{
 		_open = open;
+		
 		if (getChildId() > 0)
 		{
 			L2DoorInstance sibling = getSiblingDoor(getChildId());
@@ -268,7 +276,7 @@ public class L2DoorInstance extends L2Character
 			}
 			else
 			{
-				LOG.warn(getClass().getSimpleName() + ": cannot find child id: " + getChildId());
+				_log.warn(getClass().getSimpleName() + ": cannot find child id: " + getChildId());
 			}
 		}
 	}
@@ -643,18 +651,9 @@ public class L2DoorInstance extends L2Character
 	@Override
 	public void reduceCurrentHp(double damage, L2Character attacker, boolean awake, boolean isDOT, L2Skill skill)
 	{
-		if (isWall() && (getInstanceId() == 0))
+		if (isWall() && !(attacker instanceof L2SiegeSummonInstance) && (getInstanceId() == 0))
 		{
-			if (!attacker.isServitor())
-			{
-				return;
-			}
-			
-			final L2ServitorInstance servitor = (L2ServitorInstance) attacker;
-			if (servitor.getTemplate().getRace() != Race.SIEGE_WEAPON)
-			{
-				return;
-			}
+			return;
 		}
 		
 		super.reduceCurrentHp(damage, attacker, awake, isDOT, skill);
@@ -686,8 +685,9 @@ public class L2DoorInstance extends L2Character
 	}
 	
 	@Override
-	public void moveToLocation(int x, int y, int z, int offset)
+	public boolean moveToLocation(int x, int y, int z, int offset, boolean pathfinding)
 	{
+		return false;
 	}
 	
 	@Override
@@ -812,5 +812,29 @@ public class L2DoorInstance extends L2Character
 	public boolean isDoor()
 	{
 		return true;
+	}
+	
+	@Override
+	public byte[][] getGeoAround()
+	{
+		return _geoAround;
+	}
+	
+	@Override
+	public Shape getShape()
+	{
+		return getTemplate().getPolygon();
+	}
+	
+	@Override
+	public boolean isConcrete()
+	{
+		return true;
+	}
+	
+	@Override
+	public void setGeoAround(byte[][] arg0)
+	{
+		_geoAround = arg0;
 	}
 }

@@ -18,30 +18,31 @@
  */
 package l2r.gameserver.model.actor.instance;
 
-import l2r.gameserver.ai.L2AirShipAI;
 import l2r.gameserver.enums.InstanceType;
 import l2r.gameserver.instancemanager.AirShipManager;
 import l2r.gameserver.model.Location;
-import l2r.gameserver.model.actor.L2Vehicle;
 import l2r.gameserver.model.actor.templates.L2CharTemplate;
 import l2r.gameserver.network.serverpackets.ExAirShipInfo;
 import l2r.gameserver.network.serverpackets.ExGetOffAirShip;
 import l2r.gameserver.network.serverpackets.ExGetOnAirShip;
 import l2r.gameserver.network.serverpackets.ExMoveToLocationAirShip;
+import l2r.gameserver.network.serverpackets.ExMoveToLocationInAirShip;
 import l2r.gameserver.network.serverpackets.ExStopMoveAirShip;
+import l2r.gameserver.network.serverpackets.ExStopMoveInAirShip;
+import l2r.gameserver.network.serverpackets.ExValidateLocationInAirShip;
+import l2r.gameserver.network.serverpackets.L2GameServerPacket;
 
 /**
  * Flying airships. Very similar to Maktakien boats (see L2BoatInstance) but these do fly :P
  * @author DrHouse, DS
  */
-public class L2AirShipInstance extends L2Vehicle
+public class L2AirShipInstance extends L2BoatInstance
 {
 	public L2AirShipInstance(L2CharTemplate template)
 	{
 		super(template);
 		setInstanceType(InstanceType.L2AirShipInstance);
 		setIsFlying(true);
-		setAI(new L2AirShipAI(this));
 	}
 	
 	@Override
@@ -112,50 +113,33 @@ public class L2AirShipInstance extends L2Vehicle
 	}
 	
 	@Override
-	public boolean moveToNextRoutePoint()
+	public L2GameServerPacket movePacket()
 	{
-		final boolean result = super.moveToNextRoutePoint();
-		if (result)
-		{
-			broadcastPacket(new ExMoveToLocationAirShip(this));
-		}
-		
-		return result;
+		return new ExMoveToLocationAirShip(this);
 	}
 	
 	@Override
-	public boolean addPassenger(L2PcInstance player)
+	public L2GameServerPacket stopMovePacket()
 	{
-		if (!super.addPassenger(player))
+		return new ExStopMoveAirShip(this);
+	}
+	
+	@Override
+	public boolean addPassenger(L2PcInstance player, Location loc)
+	{
+		if (!super.addPassenger(player, loc))
 		{
 			return false;
 		}
 		
 		player.setVehicle(this);
-		player.setInVehiclePosition(new Location(0, 0, 0));
-		player.broadcastPacket(new ExGetOnAirShip(player, this));
+		player.setInVehiclePosition(loc);
+		player.broadcastPacket(getOnPacket(player, loc));
 		player.getKnownList().removeAllKnownObjects();
-		player.setXYZ(getX(), getY(), getZ());
+		player.setXYZ(loc);
 		player.revalidateZone(true);
 		player.stopMove(null);
 		return true;
-	}
-	
-	@Override
-	public void oustPlayer(L2PcInstance player)
-	{
-		super.oustPlayer(player);
-		final Location loc = getOustLoc();
-		if (player.isOnline())
-		{
-			player.broadcastPacket(new ExGetOffAirShip(player, this, loc.getX(), loc.getY(), loc.getZ()));
-			player.setXYZ(loc.getX(), loc.getY(), loc.getZ());
-			player.teleToLocation(loc);
-		}
-		else
-		{
-			player.setXYZInvisible(loc.getX(), loc.getY(), loc.getZ());
-		}
 	}
 	
 	@Override
@@ -166,25 +150,50 @@ public class L2AirShipInstance extends L2Vehicle
 	}
 	
 	@Override
-	public void stopMove(Location loc, boolean updateKnownObjects)
+	public L2GameServerPacket validateLocationPacket(L2PcInstance player)
 	{
-		super.stopMove(loc, updateKnownObjects);
-		
-		broadcastPacket(new ExStopMoveAirShip(this));
+		return new ExValidateLocationInAirShip(player);
 	}
 	
 	@Override
-	public void updateAbnormalEffect()
+	public L2GameServerPacket getOnPacket(final L2PcInstance player, final Location location)
 	{
-		broadcastPacket(new ExAirShipInfo(this));
+		return new ExGetOnAirShip(player, this);
 	}
 	
 	@Override
-	public void sendInfo(L2PcInstance activeChar)
+	public L2GameServerPacket getOffPacket(final L2PcInstance player, final Location location)
 	{
-		if (isVisibleFor(activeChar))
-		{
-			activeChar.sendPacket(new ExAirShipInfo(this));
-		}
+		return new ExGetOffAirShip(player, this, location.getX(), location.getY(), location.getZ());
+	}
+	
+	@Override
+	public L2GameServerPacket inMovePacket(final L2PcInstance player, final Location src, final Location desc)
+	{
+		return new ExMoveToLocationInAirShip(player, src, desc);
+	}
+	
+	@Override
+	public L2GameServerPacket inStopMovePacket(final L2PcInstance player)
+	{
+		return new ExStopMoveInAirShip(player, getObjectId());
+	}
+	
+	@Override
+	public L2GameServerPacket startPacket()
+	{
+		return null;
+	}
+	
+	@Override
+	public L2GameServerPacket checkLocationPacket()
+	{
+		return null;
+	}
+	
+	@Override
+	public L2GameServerPacket infoPacket()
+	{
+		return new ExAirShipInfo(this);
 	}
 }

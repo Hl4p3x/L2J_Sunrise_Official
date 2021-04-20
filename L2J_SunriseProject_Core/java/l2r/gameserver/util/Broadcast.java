@@ -109,6 +109,35 @@ public final class Broadcast
 	}
 	
 	/**
+	 * Send a packet to all L2PcInstance in the _KnownPlayers of the L2Character.<BR>
+	 * <B><U> Concept</U> :</B><BR>
+	 * L2PcInstance in the detection area of the L2Character are identified in <B>_knownPlayers</B>.<BR>
+	 * In order to inform other players of state modification on the L2Character, server just need to go through _knownPlayers to send Server->Client Packet<BR>
+	 * <FONT COLOR=#FF0000><B> <U>Caution</U> : This method DOESN'T SEND Server->Client packet to this L2Character (to do this use method toSelfAndKnownPlayers)</B></FONT><BR>
+	 * @param character
+	 * @param mov
+	 */
+	public static void broadcastPacketToOthers(L2Character character, L2GameServerPacket mov)
+	{
+		Collection<L2PcInstance> plrs = character.getKnownList().getKnownPlayers().values();
+		for (L2PcInstance player : plrs)
+		{
+			if ((player == null) || (player.getObjectId() == character.getObjectId()))
+			{
+				continue;
+			}
+			try
+			{
+				player.sendPacket(mov);
+			}
+			catch (NullPointerException e)
+			{
+				_log.warn(e.getMessage(), e);
+			}
+		}
+	}
+	
+	/**
 	 * Send a packet to all L2PcInstance in the _KnownPlayers (in the specified radius) of the L2Character.<BR>
 	 * <B><U> Concept</U> :</B><BR>
 	 * L2PcInstance in the detection area of the L2Character are identified in <B>_knownPlayers</B>.<BR>

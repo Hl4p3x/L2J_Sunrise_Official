@@ -45,6 +45,7 @@ import l2r.gameserver.network.SystemMessageId;
 import l2r.gameserver.network.serverpackets.SpecialCamera;
 import l2r.gameserver.network.serverpackets.SystemMessage;
 import l2r.gameserver.util.Util;
+import l2r.util.Rnd;
 
 /**
  * @author vGodFather TODO: confirm stage1 and stage2 drop chance
@@ -210,6 +211,20 @@ public class PailakaInjuredDragon extends Quest
 		{ 4352, 2 }, // Berserker Spirit Lv2
 		{ 4354, 4 }, // Vampiric Rage Lv4
 		{ 4347, 6 } // Blessed Body Lv6
+	};
+	
+	private static final int[][] HP_HERBS_DROPLIST =
+	{
+		// itemId, count, chance
+		{ 8601, 1, 40 },
+		{ 8600, 1, 70 }
+	};
+	
+	private static final int[][] MP_HERBS_DROPLIST =
+	{
+		// itemId, count, chance
+		{ 8604, 1, 40 },
+		{ 8603, 1, 70 }
 	};
 	//@formatter:on
 	
@@ -624,6 +639,7 @@ public class PailakaInjuredDragon extends Quest
 		{
 			case VARKA_SILENOS_FOOTMAN:
 			case VARKA_SILENOS_RECRUIT:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
 				if ((cond == 3) && st.hasQuestItems(SPEAR) && !st.hasQuestItems(STAGE1) && (getRandom(100) < 70))
 				{
 					st.set("cond", "4");
@@ -634,6 +650,7 @@ public class PailakaInjuredDragon extends Quest
 				checkIfLastInWall(npc, player);
 				break;
 			case VARKA_SILENOS_WARRIOR:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
 				if ((cond == 3) && st.hasQuestItems(SPEAR) && !st.hasQuestItems(STAGE1) && (getRandom(100) < 70))
 				{
 					st.set("cond", "4");
@@ -644,6 +661,7 @@ public class PailakaInjuredDragon extends Quest
 				checkIfLastInWall(npc, player);
 				break;
 			case VARKA_ELITE_GUARD:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
 				if ((cond == 3) && st.hasQuestItems(SPEAR) && !st.hasQuestItems(STAGE1) && (getRandom(100) < 70))
 				{
 					st.set("cond", "4");
@@ -655,6 +673,7 @@ public class PailakaInjuredDragon extends Quest
 				break;
 			case VARKAS_COMMANDER:
 			case VARKA_SILENOS_OFFICER:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
 				if ((cond == 3) && st.hasQuestItems(SPEAR) && !st.hasQuestItems(STAGE1) && (getRandom(100) < 30))
 				{
 					st.set("cond", "4");
@@ -666,6 +685,7 @@ public class PailakaInjuredDragon extends Quest
 				break;
 			case VARKA_SILENOS_GREAT_MAGUS:
 			case VARKA_SILENOS_GENERAL:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
 				if ((cond == 5) && st.hasQuestItems(ENCHSPEAR) && !st.hasQuestItems(STAGE2) && (getRandom(100) < 70))
 				{
 					st.set("cond", "6");
@@ -676,6 +696,7 @@ public class PailakaInjuredDragon extends Quest
 				checkIfLastInWall(npc, player);
 				break;
 			case VARKAS_PROPHET:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
 				if ((cond == 5) && st.hasQuestItems(ENCHSPEAR) && !st.hasQuestItems(STAGE2) && (getRandom(100) < 70))
 				{
 					st.set("cond", "6");
@@ -686,6 +707,7 @@ public class PailakaInjuredDragon extends Quest
 				checkIfLastInWall(npc, player);
 				break;
 			case VARKA_SILENOS_HEAD_GUARD:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
 				if ((cond == 5) && st.hasQuestItems(ENCHSPEAR) && !st.hasQuestItems(STAGE2) && (getRandom(100) < 70))
 				{
 					st.set("cond", "6");
@@ -696,6 +718,7 @@ public class PailakaInjuredDragon extends Quest
 				checkIfLastInWall(npc, player);
 				break;
 			case PROPHET_GUARD:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
 				if ((cond == 5) && st.hasQuestItems(ENCHSPEAR) && !st.hasQuestItems(STAGE2) && (getRandom(100) < 70))
 				{
 					st.set("cond", "6");
@@ -718,6 +741,8 @@ public class PailakaInjuredDragon extends Quest
 				dropItem(npc, player);
 				break;
 			default:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
+				dropHerb(npc, player, MP_HERBS_DROPLIST);
 				break;
 		}
 		return super.onKill(npc, player, isSummon);
@@ -977,6 +1002,19 @@ public class PailakaInjuredDragon extends Quest
 		public int getChance()
 		{
 			return _chance;
+		}
+	}
+	
+	private static final void dropHerb(L2Npc mob, L2PcInstance player, int[][] drop)
+	{
+		final int chance = Rnd.get(100);
+		for (int[] element : drop)
+		{
+			if (chance < element[2])
+			{
+				((L2MonsterInstance) mob).dropItem(player, element[0], element[1]);
+				return;
+			}
 		}
 	}
 }

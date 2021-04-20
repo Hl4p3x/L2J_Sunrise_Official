@@ -11,5 +11,6 @@
 	<classpathentry kind="lib" path="/L2J_SunriseProject_Core/dist/libs/event-engine.jar"/>
 	<classpathentry kind="lib" path="/L2J_SunriseProject_Core/dist/libs/protocols.jar"/>
 	<classpathentry kind="lib" path="/L2J_SunriseProject_Core/dist/libs/sutil.jar"/>
+	<classpathentry kind="lib" path="/L2J_SunriseProject_Core/dist/libs/javabuffer.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

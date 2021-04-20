@@ -23,6 +23,7 @@ import instances.JiniaGuildHideout2.JiniaGuildHideout2;
 import instances.JiniaGuildHideout3.JiniaGuildHideout3;
 import instances.JiniaGuildHideout4.JiniaGuildHideout4;
 import instances.Kamaloka.Kamaloka;
+import instances.KrateiCube.KrateiCube;
 import instances.LibraryOfSages.LibraryOfSages;
 import instances.MithrilMine.MithrilMine;
 import instances.NornilsGarden.NornilsGarden;
@@ -65,6 +66,7 @@ public class InstanceLoader extends ABLoader
 		JiniaGuildHideout3.class,
 		JiniaGuildHideout4.class,
 		Kamaloka.class,
+		KrateiCube.class,
 		LibraryOfSages.class,
 		MithrilMine.class,
 		NornilsGarden.class,

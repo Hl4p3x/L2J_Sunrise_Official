@@ -18,14 +18,9 @@
  */
 package l2r.gameserver.network.clientpackets;
 
-import l2r.Config;
-import l2r.gameserver.enums.CtrlIntention;
-import l2r.gameserver.enums.ZoneIdType;
-import l2r.gameserver.model.L2World;
+import l2r.gameserver.GeoData;
+import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
-import l2r.gameserver.network.serverpackets.GetOnVehicle;
-import l2r.gameserver.network.serverpackets.ValidateLocation;
-import l2r.gameserver.util.Util;
 
 /**
  * This class ...
@@ -35,20 +30,21 @@ public class ValidatePosition extends L2GameClientPacket
 {
 	private static final String _C__59_VALIDATEPOSITION = "[C] 59 ValidatePosition";
 	
-	private int _x;
-	private int _y;
-	private int _z;
-	private int _heading;
-	private int _data; // vehicle id
+	private final Location _loc = new Location();
+	
+	private int _boatObjectId;
+	private Location _lastClientPosition;
+	private Location _lastServerPosition;
 	
 	@Override
 	protected void readImpl()
 	{
-		_x = readD();
-		_y = readD();
-		_z = readD();
-		_heading = readD();
-		_data = readD();
+		_loc.setX(readD());
+		_loc.setY(readD());
+		_loc.setZ(readD());
+		_loc.setHeading(readD());
+		
+		_boatObjectId = readD();
 	}
 	
 	@Override
@@ -60,166 +56,152 @@ public class ValidatePosition extends L2GameClientPacket
 			return;
 		}
 		
-		final int realX = activeChar.getX();
-		final int realY = activeChar.getY();
-		int realZ = activeChar.getZ();
+		_lastClientPosition = activeChar.getLastClientPosition();
+		_lastServerPosition = activeChar.getLastServerPosition();
 		
-		if (Config.DEVELOPER)
+		if (_lastClientPosition == null)
 		{
-			_log.info("client pos: " + _x + " " + _y + " " + _z + " head " + _heading);
-			_log.info("server pos: " + realX + " " + realY + " " + realZ + " head " + activeChar.getHeading());
+			_lastClientPosition = activeChar.getLocation();
+		}
+		if (_lastServerPosition == null)
+		{
+			_lastServerPosition = activeChar.getLocation();
 		}
 		
-		if ((_x == 0) && (_y == 0))
+		if ((activeChar.getX() == 0) && (activeChar.getY() == 0) && (activeChar.getZ() == 0))
 		{
-			if (realX != 0)
+			correctPosition(activeChar);
+			return;
+		}
+		
+		if (activeChar.isFlyingMounted())
+		{
+			if (_loc.getX() > -166168)
 			{
+				activeChar.untransform();
 				return;
-			}
-		}
-		
-		int dx, dy, dz;
-		double diffSq;
-		
-		if (activeChar.isInBoat())
-		{
-			if (Config.COORD_SYNCHRONIZE == 2)
-			{
-				dx = _x - activeChar.getInVehiclePosition().getX();
-				dy = _y - activeChar.getInVehiclePosition().getY();
-				// dz = _z - activeChar.getInVehiclePosition().getZ();
-				diffSq = ((dx * dx) + (dy * dy));
-				if (diffSq > 250000)
-				{
-					sendPacket(new GetOnVehicle(activeChar.getObjectId(), _data, activeChar.getInVehiclePosition()));
-				}
-			}
-			return;
-		}
-		if (activeChar.isInAirShip())
-		{
-			// Zoey76: TODO: Implement or cleanup.
-			// if (Config.COORD_SYNCHRONIZE == 2)
-			// {
-			// dx = _x - activeChar.getInVehiclePosition().getX();
-			// dy = _y - activeChar.getInVehiclePosition().getY();
-			// dz = _z - activeChar.getInVehiclePosition().getZ();
-			// diffSq = ((dx * dx) + (dy * dy));
-			// if (diffSq > 250000)
-			// {
-			// sendPacket(new GetOnVehicle(activeChar.getObjectId(), _data, activeChar.getInBoatPosition()));
-			// }
-			// }
-			return;
-		}
-		
-		if (activeChar.isFalling(_z))
-		{
-			// vGodFather: temporary fix when fall in textures
-			// teleport player up
-			int dz2 = Math.abs(_z - activeChar.getZ());
-			if (dz2 >= 512)
-			{
-				activeChar.teleToLocation(activeChar.getLocation());
 			}
 			
-			return; // disable validations during fall to avoid "jumping"
-		}
-		
-		dx = _x - realX;
-		dy = _y - realY;
-		dz = _z - realZ;
-		diffSq = ((dx * dx) + (dy * dy));
-		
-		// Zoey76: TODO: Implement or cleanup.
-		// L2Party party = activeChar.getParty();
-		// if ((party != null) && (activeChar.getLastPartyPositionDistance(_x, _y, _z) > 150))
-		// {
-		// activeChar.setLastPartyPosition(_x, _y, _z);
-		// party.broadcastToPartyMembers(activeChar, new PartyMemberPosition(activeChar));
-		// }
-		
-		// Don't allow flying transformations outside gracia area!
-		if (activeChar.isFlyingMounted() && (_x > L2World.GRACIA_MAX_X))
-		{
-			activeChar.untransform();
-		}
-		
-		if (activeChar.isFlying() || activeChar.isInsideZone(ZoneIdType.WATER))
-		{
-			activeChar.setXYZ(realX, realY, _z);
-			if (diffSq > 90000)
+			if ((_loc.getZ() <= 0) || (_loc.getZ() >= 6000))
 			{
-				activeChar.sendPacket(new ValidateLocation(activeChar));
-			}
-		}
-		else if (diffSq < 360000) // if too large, messes observation
-		{
-			if (Config.COORD_SYNCHRONIZE == -1) // Only Z coordinate synched to server,
-			// mainly used when no geodata but can be used also with geodata
-			{
-				activeChar.setXYZ(realX, realY, _z);
+				activeChar.teleToLocation(activeChar.getLocation().setZAndGet(Math.min(5950, Math.max(50, _loc.getZ()))));
 				return;
 			}
-			if (Config.COORD_SYNCHRONIZE == 1) // Trusting also client x,y coordinates (should not be used with geodata)
-			{
-				if (!activeChar.isMoving() || !activeChar.validateMovementHeading(_heading)) // Heading changed on client = possible obstacle
-				{
-					// character is not moving, take coordinates from client
-					if (diffSq < 2500)
-					{
-						activeChar.setXYZ(realX, realY, _z);
-					}
-					else
-					{
-						activeChar.setXYZ(_x, _y, _z);
-					}
-				}
-				else
-				{
-					activeChar.setXYZ(realX, realY, _z);
-				}
-				
-				activeChar.setHeading(_heading);
-				return;
-			}
-			// Sync 2 (or other),
-			// intended for geodata. Sends a validation packet to client
-			// when too far from server calculated true coordinate.
-			// Due to geodata/zone errors, some Z axis checks are made. (maybe a temporary solution)
-			// Important: this code part must work together with L2Character.updatePosition
-			if ((diffSq > 250000) || (Math.abs(dz) > 200))
-			{
-				// if ((_z - activeChar.getClientZ()) < 200 && Math.abs(activeChar.getLastServerPosition().getZ()-realZ) > 70)
-				
-				if ((Math.abs(dz) > 200) && (Math.abs(dz) < 1500) && (Math.abs(_z - activeChar.getClientZ()) < 800))
-				{
-					activeChar.setXYZ(realX, realY, _z);
-					realZ = _z;
-				}
-				else
-				{
-					if (Config.DEVELOPER)
-					{
-						_log.info(activeChar.getName() + ": Synchronizing position Server --> Client");
-					}
-					
-					activeChar.sendPacket(new ValidateLocation(activeChar));
-				}
-			}
 		}
 		
-		// vGodFather: movement tweaks we will send validate location on client
-		if (activeChar.hasAI() && activeChar.isMoving() && (activeChar.getAI().getIntention() == CtrlIntention.AI_INTENTION_FOLLOW) && (Util.calculateDistance(_x, _y, realX, realY) > 200))
+		double diff = Math.sqrt(activeChar.getPlanDistanceSq(_loc.getX(), _loc.getY()));
+		int dz = Math.abs(_loc.getZ() - activeChar.getZ());
+		int h = _lastServerPosition.getZ() - activeChar.getZ();
+		
+		if (_boatObjectId > 0)
 		{
-			activeChar.sendPacket(new ValidateLocation(activeChar));
+			if (activeChar.isInBoat())
+			{
+				activeChar.setHeading(_loc.getHeading());
+				activeChar.getBoat().validateLocationPacket(activeChar);
+			}
+			activeChar.setLastClientPosition(_loc.setH(activeChar.getHeading()));
+			activeChar.setLastServerPosition(activeChar.getLocation());
+			return;
 		}
 		
-		activeChar.setClientX(_x);
-		activeChar.setClientY(_y);
-		activeChar.setClientZ(_z);
-		activeChar.setClientHeading(_heading); // No real need to validate heading.
-		activeChar.setLastServerPosition(realX, realY, realZ);
+		if (activeChar.isFalling())
+		{
+			diff = 0;
+			dz = 0;
+			h = 0;
+		}
+		
+		if (h >= 256)
+		{
+			activeChar.falling(h);
+		}
+		else if (dz >= (activeChar.isFlying() ? 1024 : 512))
+		{
+			if (activeChar.getIncorrectValidateCount() >= 3)
+			{
+				activeChar.teleToClosestTown();
+			}
+			else
+			{
+				activeChar.teleToLocation(activeChar.getLocation());
+				activeChar.setIncorrectValidateCount(activeChar.getIncorrectValidateCount() + 1);
+			}
+		}
+		else if (dz >= 256)
+		{
+			activeChar.validateLocation(0);
+		}
+		else if ((_loc.getZ() < -30000) || (_loc.getZ() > 30000))
+		{
+			if (activeChar.getIncorrectValidateCount() >= 3)
+			{
+				activeChar.teleToClosestTown();
+			}
+			else
+			{
+				correctPosition(activeChar);
+				activeChar.setIncorrectValidateCount(activeChar.getIncorrectValidateCount() + 1);
+			}
+		}
+		else if (diff > 1024)
+		{
+			if (activeChar.getIncorrectValidateCount() >= 3)
+			{
+				activeChar.teleToClosestTown();
+			}
+			else
+			{
+				activeChar.teleToLocation(activeChar.getLocation());
+				activeChar.setIncorrectValidateCount(activeChar.getIncorrectValidateCount() + 1);
+			}
+		}
+		else if (diff > 256)
+		{
+			activeChar.validateLocation(1);
+		}
+		else
+		{
+			activeChar.setIncorrectValidateCount(0);
+		}
+		
+		activeChar.setLastClientPosition(_loc.setH(activeChar.getHeading()));
+		activeChar.setLastServerPosition(activeChar.getLocation());
+	}
+	
+	private void correctPosition(L2PcInstance activeChar)
+	{
+		if (activeChar.isGM())
+		{
+			activeChar.sendMessage("Server loc: " + activeChar.getLocation());
+			activeChar.sendMessage("Correcting position...");
+		}
+		if ((_lastServerPosition.getX() != 0) && (_lastServerPosition.getY() != 0) && (_lastServerPosition.getZ() != 0))
+		{
+			if (GeoData.getInstance().getNSWE(_lastServerPosition.getX(), _lastServerPosition.getY(), _lastServerPosition.getZ(), activeChar.getInstanceId()) == GeoData.getInstance().getNSWE_ALL())
+			{
+				activeChar.teleToLocation(_lastServerPosition);
+			}
+			else
+			{
+				activeChar.teleToClosestTown();
+			}
+		}
+		else if ((_lastClientPosition.getX() != 0) && (_lastClientPosition.getY() != 0) && (_lastClientPosition.getZ() != 0))
+		{
+			if (GeoData.getInstance().getNSWE(_lastClientPosition.getX(), _lastClientPosition.getY(), _lastClientPosition.getZ(), activeChar.getInstanceId()) == GeoData.getInstance().getNSWE_ALL())
+			{
+				activeChar.teleToLocation(_lastClientPosition);
+			}
+			else
+			{
+				activeChar.teleToClosestTown();
+			}
+		}
+		else
+		{
+			activeChar.teleToClosestTown();
+		}
 	}
 	
 	@Override

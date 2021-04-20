@@ -54,7 +54,8 @@ public enum CommonSkill
 	CARAVANS_SECRET_MEDICINE(2341, 1),
 	PET_SWITCH_STANCE(6054, 1),
 	UNISTALL_BASE(845, 1),
-	SIN_EATER_ID(12564, 1);
+	SIN_EATER_ID(12564, 1),
+	BATTLEFIELD_DEATH_SYNDROME(5660, 1);
 	
 	private final SkillHolder _holder;
 	

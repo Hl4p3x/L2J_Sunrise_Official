@@ -20,12 +20,12 @@ package handlers.effecthandlers;
 
 import l2r.gameserver.GeoData;
 import l2r.gameserver.enums.CtrlIntention;
-import l2r.gameserver.enums.Race;
 import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.instance.L2DefenderInstance;
 import l2r.gameserver.model.actor.instance.L2FortCommanderInstance;
 import l2r.gameserver.model.actor.instance.L2NpcInstance;
 import l2r.gameserver.model.actor.instance.L2SiegeFlagInstance;
+import l2r.gameserver.model.actor.instance.L2SiegeSummonInstance;
 import l2r.gameserver.model.effects.EffectFlag;
 import l2r.gameserver.model.effects.EffectTemplate;
 import l2r.gameserver.model.effects.L2Effect;
@@ -57,7 +57,7 @@ public class Fear extends L2Effect
 	@Override
 	public boolean onStart()
 	{
-		if ((getEffected() instanceof L2NpcInstance) || (getEffected() instanceof L2DefenderInstance) || (getEffected() instanceof L2FortCommanderInstance) || (getEffected() instanceof L2SiegeFlagInstance) || (getEffected().getTemplate().getRace() == Race.SIEGE_WEAPON))
+		if ((getEffected() instanceof L2NpcInstance) || (getEffected() instanceof L2DefenderInstance) || (getEffected() instanceof L2FortCommanderInstance) || (getEffected() instanceof L2SiegeFlagInstance) || (getEffected() instanceof L2SiegeSummonInstance))
 		{
 			return false;
 		}

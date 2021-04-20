@@ -35,6 +35,8 @@ import ai.npc.AbstractNpcAI;
  */
 public final class DelusionTeleport extends AbstractNpcAI
 {
+	private final int START_NPC = 32484;
+	
 	// NPCs
 	private static final int[] NPCS =
 	{
@@ -73,6 +75,14 @@ public final class DelusionTeleport extends AbstractNpcAI
 		super(DelusionTeleport.class.getSimpleName(), "ai/npc/Teleports");
 		addStartNpc(NPCS);
 		addTalkId(NPCS);
+		
+		addFirstTalkId(START_NPC);
+	}
+	
+	@Override
+	public String onAdvEvent(String event, L2Npc npc, L2PcInstance player)
+	{
+		return event;
 	}
 	
 	@Override
@@ -92,5 +102,11 @@ public final class DelusionTeleport extends AbstractNpcAI
 			player.getVariables().remove(DELUSION_RETURN);
 		}
 		return super.onTalk(npc, player);
+	}
+	
+	@Override
+	public String onFirstTalk(L2Npc npc, L2PcInstance player)
+	{
+		return "32484.htm";
 	}
 }

@@ -244,7 +244,7 @@ public abstract class AirShipController extends Quest
 			
 			if (_dockedShip != null)
 			{
-				_dockedShip.addPassenger(player);
+				_dockedShip.addPassenger(player, _dockedShip.getLocation());
 			}
 			
 			return null;

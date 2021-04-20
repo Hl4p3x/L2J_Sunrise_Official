@@ -7,16 +7,12 @@ import ai.individual.Ballista;
 import ai.individual.CrimsonHatuOtis;
 import ai.individual.DarkWaterDragon;
 import ai.individual.DivineBeast;
-import ai.individual.DrChaos;
 import ai.individual.Epidos;
 import ai.individual.EvasGiftBox;
 import ai.individual.FrightenedRagnaOrc;
+import ai.individual.GiganticGolem;
 import ai.individual.Gordon;
-import ai.individual.GraveRobbers;
 import ai.individual.QueenShyeed;
-import ai.individual.RagnaOrcCommander;
-import ai.individual.RagnaOrcHero;
-import ai.individual.RagnaOrcSeer;
 import ai.individual.SinEater;
 import ai.individual.SinWardens;
 import ai.individual.Venom.Venom;
@@ -55,16 +51,12 @@ public final class IndividualLoader extends ABLoader
 		CrimsonHatuOtis.class,
 		DarkWaterDragon.class,
 		DivineBeast.class,
-		DrChaos.class,
 		Epidos.class,
 		EvasGiftBox.class,
 		FrightenedRagnaOrc.class,
+		GiganticGolem.class,
 		Gordon.class,
-		GraveRobbers.class,
 		QueenShyeed.class,
-		RagnaOrcCommander.class,
-		RagnaOrcHero.class,
-		RagnaOrcSeer.class,
 		SinEater.class,
 		SinWardens.class,
 		

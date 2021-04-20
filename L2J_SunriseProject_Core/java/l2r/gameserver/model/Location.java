@@ -18,8 +18,10 @@
  */
 package l2r.gameserver.model;
 
+import l2r.gameserver.GeoData;
 import l2r.gameserver.model.interfaces.ILocational;
 import l2r.gameserver.model.interfaces.IPositionable;
+import l2r.geoserver.model.MoveTrick;
 
 /**
  * Location data transfer object.<br>
@@ -28,11 +30,16 @@ import l2r.gameserver.model.interfaces.IPositionable;
  */
 public class Location implements IPositionable
 {
-	private int _x;
-	private int _y;
-	private int _z;
-	private int _heading;
-	private int _instanceId;
+	public int x;
+	public int y;
+	public int z;
+	public int heading;
+	private int instanceId;
+	private MoveTrick[] tricks;
+	
+	public Location()
+	{
+	}
 	
 	public Location(int x, int y, int z)
 	{
@@ -51,11 +58,11 @@ public class Location implements IPositionable
 	
 	public Location(int x, int y, int z, int heading, int instanceId)
 	{
-		_x = x;
-		_y = y;
-		_z = z;
-		_heading = heading;
-		_instanceId = instanceId;
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.heading = heading;
+		this.instanceId = instanceId;
 	}
 	
 	/**
@@ -65,7 +72,7 @@ public class Location implements IPositionable
 	@Override
 	public int getX()
 	{
-		return _x;
+		return this.x;
 	}
 	
 	/**
@@ -75,7 +82,7 @@ public class Location implements IPositionable
 	@Override
 	public void setX(int x)
 	{
-		_x = x;
+		this.x = x;
 	}
 	
 	/**
@@ -85,7 +92,7 @@ public class Location implements IPositionable
 	@Override
 	public int getY()
 	{
-		return _y;
+		return this.y;
 	}
 	
 	/**
@@ -95,7 +102,7 @@ public class Location implements IPositionable
 	@Override
 	public void setY(int y)
 	{
-		_y = y;
+		this.y = y;
 	}
 	
 	/**
@@ -105,7 +112,7 @@ public class Location implements IPositionable
 	@Override
 	public int getZ()
 	{
-		return _z;
+		return this.z;
 	}
 	
 	/**
@@ -115,7 +122,13 @@ public class Location implements IPositionable
 	@Override
 	public void setZ(int z)
 	{
-		_z = z;
+		this.z = z;
+	}
+	
+	public Location setZAndGet(int z)
+	{
+		this.z = z;
+		return this;
 	}
 	
 	/**
@@ -149,7 +162,7 @@ public class Location implements IPositionable
 	@Override
 	public int getHeading()
 	{
-		return _heading;
+		return this.heading;
 	}
 	
 	/**
@@ -159,7 +172,7 @@ public class Location implements IPositionable
 	@Override
 	public void setHeading(int heading)
 	{
-		_heading = heading;
+		this.heading = heading;
 	}
 	
 	/**
@@ -169,7 +182,7 @@ public class Location implements IPositionable
 	@Override
 	public int getInstanceId()
 	{
-		return _instanceId;
+		return this.instanceId;
 	}
 	
 	/**
@@ -179,7 +192,7 @@ public class Location implements IPositionable
 	@Override
 	public void setInstanceId(int instanceId)
 	{
-		_instanceId = instanceId;
+		this.instanceId = instanceId;
 	}
 	
 	@Override
@@ -191,11 +204,120 @@ public class Location implements IPositionable
 	@Override
 	public void setLocation(Location loc)
 	{
-		_x = loc.getX();
-		_y = loc.getY();
-		_z = loc.getZ();
-		_heading = loc.getHeading();
-		_instanceId = loc.getInstanceId();
+		this.x = loc.getX();
+		this.y = loc.getY();
+		this.z = loc.getZ();
+		this.heading = loc.getHeading();
+		this.instanceId = loc.getInstanceId();
+	}
+	
+	public synchronized void setTricks(MoveTrick[] mt)
+	{
+		this.tricks = mt;
+	}
+	
+	public MoveTrick[] getTricks()
+	{
+		return this.tricks;
+	}
+	
+	public void setAll(int x, int y, int z)
+	{
+		this.x = x;
+		this.y = y;
+		this.z = z;
+	}
+	
+	public Location geo2world()
+	{
+		// the size of one block of (16 * 16) points + 8 + 8 is its middle
+		this.x = (this.x << 4) + L2World.MAP_MIN_X + 8;
+		this.y = (this.y << 4) + L2World.MAP_MIN_Y + 8;
+		return this;
+	}
+	
+	public Location world2geo()
+	{
+		this.x = (this.x - L2World.MAP_MIN_X) >> 4;
+		this.y = (this.y - L2World.MAP_MIN_Y) >> 4;
+		return this;
+	}
+	
+	public Location correctGeoZ()
+	{
+		this.z = GeoData.getInstance().getHeight(this.x, this.y, this.z, 0);
+		return this;
+	}
+	
+	@Override
+	public Location clone()
+	{
+		return new Location(this.x, this.y, this.z, this.heading, this.instanceId);
+	}
+	
+	public double distance(Location loc)
+	{
+		return distance(loc.x, loc.y);
+	}
+	
+	public double distance(int x, int y)
+	{
+		long dx = this.x - x;
+		long dy = this.y - y;
+		return Math.sqrt((dx * dx) + (dy * dy));
+	}
+	
+	public double distance3D(Location loc)
+	{
+		return distance3D(loc.x, loc.y, loc.z);
+	}
+	
+	public double distance3D(int x, int y, int z)
+	{
+		long dx = this.x - x;
+		long dy = this.y - y;
+		long dz = this.z - z;
+		return Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
+	}
+	
+	public Location set(Location loc)
+	{
+		this.x = loc.getX();
+		this.y = loc.getY();
+		this.z = loc.getZ();
+		this.heading = loc.heading;
+		return this;
+	}
+	
+	public Location set(int x, int y, int z, int h)
+	{
+		set(x, y, z);
+		this.heading = h;
+		return this;
+	}
+	
+	public Location set(int x, int y, int z)
+	{
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		return this;
+	}
+	
+	public Location setH(int h)
+	{
+		this.heading = h;
+		return this;
+	}
+	
+	public boolean equals(Location loc)
+	{
+		return (loc.getX() == this.x) && (loc.getY() == this.y) && (loc.getZ() == this.z);
+	}
+	
+	public boolean equals(int x, int y, int z)
+	{
+		return (this.x == x) && (this.y == y) && (this.z == z);
 	}
 	
 	@Override
@@ -212,6 +334,6 @@ public class Location implements IPositionable
 	@Override
 	public String toString()
 	{
-		return "[" + getClass().getSimpleName() + "] X: " + getX() + " Y: " + getY() + " Z: " + getZ() + " Heading: " + _heading + " InstanceId: " + _instanceId;
+		return "[" + getClass().getSimpleName() + "] X: " + getX() + " Y: " + getY() + " Z: " + getZ() + " Heading: " + this.heading + " InstanceId: " + this.instanceId;
 	}
 }

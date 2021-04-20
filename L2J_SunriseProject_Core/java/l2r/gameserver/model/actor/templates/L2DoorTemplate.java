@@ -21,6 +21,8 @@ package l2r.gameserver.model.actor.templates;
 import l2r.gameserver.model.StatsSet;
 import l2r.gameserver.model.actor.instance.L2DoorInstance;
 import l2r.gameserver.model.interfaces.IIdentifiable;
+import l2r.geoserver.geodata.geometry.Polygon;
+import l2r.geoserver.geodata.geometry.Shape;
 
 /**
  * Doors template.
@@ -58,6 +60,8 @@ public class L2DoorTemplate extends L2CharTemplate implements IIdentifiable
 	private final boolean _isAttackableDoor;
 	private final int _clanhallId;
 	private final boolean _stealth;
+	
+	private final Polygon _polygon;
 	
 	public L2DoorTemplate(StatsSet set)
 	{
@@ -109,6 +113,16 @@ public class L2DoorTemplate extends L2CharTemplate implements IIdentifiable
 		_isAttackableDoor = set.getBoolean("is_attackable", false);
 		_clanhallId = set.getInt("clanhall_id", 0);
 		_stealth = set.getBoolean("stealth", false);
+		
+		final Polygon shape = new Polygon();
+		
+		shape.add(_nodeX[0], _nodeY[0]);
+		shape.add(_nodeX[1], _nodeY[1]);
+		shape.add(_nodeX[2], _nodeY[2]);
+		shape.add(_nodeX[3], _nodeY[3]);
+		shape.setZmin(_nodeZ);
+		shape.setZmax(_nodeZ + _height);
+		_polygon = shape;
 	}
 	
 	/**
@@ -249,5 +263,10 @@ public class L2DoorTemplate extends L2CharTemplate implements IIdentifiable
 	public boolean isStealth()
 	{
 		return _stealth;
+	}
+	
+	public Shape getPolygon()
+	{
+		return _polygon;
 	}
 }

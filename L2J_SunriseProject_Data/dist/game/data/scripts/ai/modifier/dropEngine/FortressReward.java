@@ -242,7 +242,7 @@ public class FortressReward extends AbstractNpcAI
 		if (getRandom(100) < (drop[2] - (player.getLevel() - npc.getLevel())))
 		{
 			final QuestState st = player.getQuestState(getName());
-			st.giveItems(KE, (long) (getRandom(drop[0], drop[1]) * (Config.RATE_DROP_AMOUNT_MULTIPLIER.get(KE) != null ? Config.RATE_DROP_AMOUNT_MULTIPLIER.get(KE) : 1)));
+			st.giveItems(KE, (long) (getRandom(drop[0], drop[1]) * Config.RATE_DROP_ITEMS));
 			playSound(player, Sound.ITEMSOUND_QUEST_ITEMGET);
 		}
 	}

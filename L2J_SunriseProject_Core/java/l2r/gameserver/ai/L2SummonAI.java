@@ -98,7 +98,8 @@ public class L2SummonAI extends L2PlayableAI implements Runnable
 		{
 			return;
 		}
-		clientStopMoving(null);
+		
+		clientStopMoving();
 		_actor.doAttack(getAttackTarget());
 	}
 	
@@ -115,7 +116,8 @@ public class L2SummonAI extends L2PlayableAI implements Runnable
 		{
 			return;
 		}
-		clientStopMoving(null);
+		
+		clientStopMoving();
 		summon.setFollowStatus(false);
 		setIntention(AI_INTENTION_IDLE);
 		_startFollow = val;
@@ -130,6 +132,7 @@ public class L2SummonAI extends L2PlayableAI implements Runnable
 		}
 		if (maybeMoveToPawn(getTarget(), 36))
 		{
+			moveToPawn(getTarget(), 20);
 			return;
 		}
 		setIntention(AI_INTENTION_IDLE);
@@ -227,7 +230,7 @@ public class L2SummonAI extends L2PlayableAI implements Runnable
 		{
 			_startAvoid = false;
 			
-			if (!_clientMoving && !_actor.isDead() && !_actor.isMovementDisabled() && !_actor.isCastingNow())
+			if (!_actor.isDead() && !_actor.isMovementDisabled() && !_actor.isCastingNow())
 			{
 				final int ownerX = ((L2Summon) _actor).getOwner().getX();
 				final int ownerY = ((L2Summon) _actor).getOwner().getY();
@@ -235,7 +238,7 @@ public class L2SummonAI extends L2PlayableAI implements Runnable
 				
 				final int targetX = ownerX + (int) (AVOID_RADIUS * Math.cos(angle));
 				final int targetY = ownerY + (int) (AVOID_RADIUS * Math.sin(angle));
-				if (GeoData.getInstance().canMove(_actor.getX(), _actor.getY(), _actor.getZ(), targetX, targetY, _actor.getZ(), _actor.getInstanceId()))
+				if (GeoData.getInstance().canMoveToCoord(_actor, targetX, targetY, _actor.getZ(), true))
 				{
 					moveTo(targetX, targetY, _actor.getZ());
 				}

@@ -206,8 +206,9 @@ public final class L2StaticObjectInstance extends L2Character
 	}
 	
 	@Override
-	public void moveToLocation(int x, int y, int z, int offset)
+	public boolean moveToLocation(int x, int y, int z, int offset, boolean pathfinding)
 	{
+		return false;
 	}
 	
 	@Override

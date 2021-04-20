@@ -123,6 +123,10 @@ public final class RequestExEnchantSkillSafe extends L2GameClientPacket
 		{
 			return;
 		}
+		if (s.isMaxEnchant(beforeEnchantSkillLevel))
+		{
+			return;
+		}
 		
 		int requiredSp = esd.getSpCost() * costMultiplier;
 		int requireditems = esd.getAdenaCost() * costMultiplier;

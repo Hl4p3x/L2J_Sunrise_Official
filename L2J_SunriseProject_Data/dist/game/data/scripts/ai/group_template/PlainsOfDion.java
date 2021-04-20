@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2015 L2J DataPack
+ * Copyright (C) 2004-2013 L2J DataPack
  * 
  * This file is part of L2J DataPack.
  * 
@@ -21,6 +21,7 @@ package ai.group_template;
 import l2r.gameserver.GeoData;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.L2Npc;
+import l2r.gameserver.model.actor.instance.L2MonsterInstance;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.network.NpcStringId;
 import l2r.gameserver.network.clientpackets.Say2;
@@ -68,7 +69,7 @@ public final class PlainsOfDion extends AbstractNpcAI
 	{
 		if (npc.isScriptValue(0))
 		{
-			final int i = getRandom(5);
+			int i = getRandom(5);
 			if (i < 2)
 			{
 				broadcastNpcSay(npc, Say2.NPC_ALL, MONSTERS_MSG[i], player.getName());
@@ -78,12 +79,12 @@ public final class PlainsOfDion extends AbstractNpcAI
 				broadcastNpcSay(npc, Say2.NPC_ALL, MONSTERS_MSG[i]);
 			}
 			
-			for (L2Character obj : npc.getKnownList().getKnownCharactersInRadius(npc.getTemplate().getClanHelpRange()))
+			for (L2Character obj : npc.getKnownList().getKnownCharactersInRadius(npc.getFactionRange()))
 			{
-				if (obj.isMonster() && Util.contains(DELU_LIZARDMEN, obj.getId()) && !obj.isAttackingNow() && !obj.isDead() && GeoData.getInstance().canSeeTarget(npc, obj))
+				if (obj.isMonster() && Util.contains(DELU_LIZARDMEN, ((L2MonsterInstance) obj).getId()) && !obj.isAttackingNow() && !obj.isDead() && GeoData.getInstance().canSeeTarget(npc, obj))
 				{
-					final L2Npc monster = (L2Npc) obj;
-					addAttackDesire(monster, player);
+					final L2MonsterInstance monster = (L2MonsterInstance) obj;
+					attackPlayer(monster, player);
 					broadcastNpcSay(monster, Say2.NPC_ALL, MONSTERS_ASSIST_MSG[getRandom(3)]);
 				}
 			}

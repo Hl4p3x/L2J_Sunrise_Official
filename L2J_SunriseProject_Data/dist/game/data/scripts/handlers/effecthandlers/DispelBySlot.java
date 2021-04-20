@@ -77,11 +77,6 @@ public class DispelBySlot extends L2Effect
 			
 			for (L2Effect e : target.getAllEffects())
 			{
-				if (!e.getSkill().canBeDispeled())
-				{
-					continue;
-				}
-				
 				// Fist check for stacktype
 				if (stackType.equalsIgnoreCase(e.getAbnormalType()) && (e.getSkill().getId() != skillCast))
 				{

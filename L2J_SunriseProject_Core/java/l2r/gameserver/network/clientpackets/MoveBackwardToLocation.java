@@ -24,6 +24,7 @@ import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.network.SystemMessageId;
 import l2r.gameserver.network.serverpackets.ActionFailed;
+import l2r.gameserver.network.serverpackets.MoveToLocation;
 import l2r.gameserver.network.serverpackets.StopMove;
 import l2r.gameserver.util.Util;
 
@@ -104,14 +105,6 @@ public class MoveBackwardToLocation extends L2GameClientPacket
 			return;
 		}
 		
-		// Correcting targetZ from floor level to head level (?)
-		// Client is giving floor level as targetZ but that floor level doesn't
-		// match our current geodata and teleport coords as good as head level!
-		// L2J uses floor, not head level as char coordinates. This is some
-		// sort of incompatibility fix.
-		// Validate position packets sends head level.
-		_targetZ += activeChar.getTemplate().getCollisionHeight();
-		
 		if (activeChar.getTeleMode() > 0)
 		{
 			if (activeChar.getTeleMode() == 1)
@@ -123,10 +116,14 @@ public class MoveBackwardToLocation extends L2GameClientPacket
 			return;
 		}
 		
-		double dx = _targetX - activeChar.getX();
-		double dy = _targetY - activeChar.getY();
+		if (activeChar.inObserverMode())
+		{
+			activeChar.sendPacket(new MoveToLocation(activeChar.getObjectId(), new Location(_originX, _originY, _originZ), new Location(_targetX, _targetY, _targetZ)));
+			return;
+		}
+		
 		// Can't move if character is confused, or trying to move a huge distance
-		if (activeChar.isOutOfControl() || (((dx * dx) + (dy * dy)) > 98010000)) // 9900*9900
+		if (activeChar.isOutOfControl())
 		{
 			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
 			return;

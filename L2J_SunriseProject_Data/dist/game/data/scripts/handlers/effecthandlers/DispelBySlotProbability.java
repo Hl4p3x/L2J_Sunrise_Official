@@ -88,7 +88,8 @@ public class DispelBySlotProbability extends L2Effect
 						continue;
 					}
 					
-					if (!Formulas.calcStealSuccess(getEffector(), target, getSkill(), _rate))
+					// Calculate steal success only if rate is less than 100 otherwise must proceed
+					if ((_rate < 100) && !Formulas.calcStealSuccess(getEffector(), target, getSkill(), _rate))
 					{
 						continue;
 					}

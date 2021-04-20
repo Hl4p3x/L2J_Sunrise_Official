@@ -823,6 +823,16 @@ public abstract class OlympiadGameNormal extends AbstractOlympiadGame
 	}
 	
 	@Override
+	public List<Participant> getParticipants()
+	{
+		List<Participant> _l = new ArrayList<>();
+		_l.add(_playerOne);
+		_l.add(_playerTwo);
+		
+		return _l;
+	}
+	
+	@Override
 	public boolean checkDefaulted()
 	{
 		SystemMessage reason;

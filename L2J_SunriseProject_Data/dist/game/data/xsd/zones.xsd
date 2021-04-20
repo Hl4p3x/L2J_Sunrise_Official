@@ -152,6 +152,7 @@
 									<xs:enumeration value="ChaoticZone" />
 									<xs:enumeration value="QueenAntZone" />
 									<xs:enumeration value="FlagZone" />
+									<xs:enumeration value="CallBugWallArena" />
 								</xs:restriction>
 							</xs:simpleType>
 						</xs:attribute>

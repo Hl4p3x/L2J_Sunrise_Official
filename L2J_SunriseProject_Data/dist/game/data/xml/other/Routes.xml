@@ -190,7 +190,7 @@
 		<target id="22851" spawnX="146439" spawnY="112836" spawnZ="-3725" />
 		<target id="22851" spawnX="149111" spawnY="119685" spawnZ="-3725" />
 		<target id="22851" spawnX="149155" spawnY="119791" spawnZ="-3725" />
-		<point X="145663" Y="112880" Z="-3725" delay="0" run="true" />
+		<point X="145656" Y="112880" Z="-3725" delay="0" run="true" />
 		<point X="146119" Y="112677" Z="-3725" delay="0" run="true" />
 		<point X="146607" Y="112628" Z="-3725" delay="0" run="true" />
 		<point X="147323" Y="112403" Z="-3725" delay="0" run="true" />
@@ -449,7 +449,7 @@
 	</route>
 	<route name="knoriks_03" repeat="true" repeatStyle="back">
 		<target id="22857" spawnX="147896" spawnY="110033" spawnZ="-3941" />
-		<point X="147895" Y="110043" Z="-3946" delay="0" run="true" />
+		<point X="147816" Y="109928" Z="-3944" delay="0" run="true" />
 		<point X="145685" Y="109132" Z="-3953" delay="0" run="true" />
 		<point X="144924" Y="108192" Z="-3928" delay="0" run="true" />
 		<point X="144558" Y="107723" Z="-3953" delay="0" run="true" />
@@ -759,7 +759,7 @@
 		<point X="-83215" Y="241170" Z="-3728" delay="0" run="true" />
 		<point X="-82364" Y="242944" Z="-3720" delay="0" run="true" />
 		<point npcStringId="1010201" X="-81675" Y="243411" Z="-3717" delay="60" run="true" />
-		<point X="-81926" Y="243894" Z="-3712" delay="0" run="true" />
+		<point X="-81736" Y="243592" Z="-3712" delay="0" run="true" />
 	</route>
 	<!-- Yakand -->
 	<route name="flame_keeper_yakand" repeat="true" repeatStyle="cycle">

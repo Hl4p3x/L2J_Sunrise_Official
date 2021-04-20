@@ -14,6 +14,7 @@ import l2r.gameserver.model.L2Party;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.skills.L2Skill;
+import l2r.gameserver.model.stats.Formulas;
 import l2r.gameserver.network.serverpackets.MagicSkillUse;
 import l2r.util.Rnd;
 
@@ -38,23 +39,24 @@ public class CubicInstance
 	
 	private void activate()
 	{
-		_skillUseTask = ThreadPoolManager.getInstance().scheduleGeneralAtFixedRate(this::tryToUseSkill, 0, 666, TimeUnit.MILLISECONDS);
+		_skillUseTask = ThreadPoolManager.getInstance().scheduleGeneralAtFixedRate(this::tryToUseSkill, 0, _template.getDelay() * 1000, TimeUnit.MILLISECONDS);
 		_expireTask = ThreadPoolManager.getInstance().scheduleGeneral(this::deactivate, _template.getDuration() * 1000, TimeUnit.MILLISECONDS);
 	}
 	
 	public void deactivate()
 	{
-		if ((_skillUseTask != null) && !_skillUseTask.isDone())
+		if (_skillUseTask != null)
 		{
 			_skillUseTask.cancel(true);
+			_skillUseTask = null;
 		}
-		_skillUseTask = null;
 		
-		if ((_expireTask != null) && !_expireTask.isDone())
+		if (_expireTask != null)
 		{
 			_expireTask.cancel(true);
+			_expireTask = null;
 		}
-		_expireTask = null;
+		
 		_owner.getCubics().remove(_template.getId());
 		_owner.broadcastUserInfo();
 	}
@@ -83,7 +85,7 @@ public class CubicInstance
 						{
 							if (!_template.isUseUp())
 							{
-								nextLaunch = System.currentTimeMillis() + (_template.getDelay() * 5); // delay * 5
+								nextLaunch = System.currentTimeMillis() + (_template.getDelay() * 1000 * 5); // delay * 5
 							}
 							else
 							{
@@ -93,13 +95,25 @@ public class CubicInstance
 						}
 						else
 						{
-							nextLaunch = System.currentTimeMillis() + _template.getDelay();
+							nextLaunch = System.currentTimeMillis() + (_template.getDelay() * 1000);
 						}
 						
 						usedCount++;
 						
 						_caster.broadcastPacket(new MagicSkillUse(_owner, target, skill.getDisplayId(), skill.getDisplayLevel(), skill.getHitTime(), skill.getReuseDelay()));
-						skill.getEffects(_owner, target);
+						
+						if (skill.isOffensive() || skill.isDebuff())
+						{
+							final byte shld = Formulas.calcShldUse(_owner, target, skill);
+							if (Formulas.calcSkillSuccess(_owner, target, skill, shld, false, false, false))
+							{
+								skill.getEffects(_owner, target);
+							}
+						}
+						else
+						{
+							skill.getEffects(_owner, target);
+						}
 						break;
 					}
 				}

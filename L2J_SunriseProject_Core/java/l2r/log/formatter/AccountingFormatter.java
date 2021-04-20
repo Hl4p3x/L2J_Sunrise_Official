@@ -57,7 +57,7 @@ public class AccountingFormatter extends Formatter
 					{
 						if (!client.isDetached())
 						{
-							address = client.getConnection().getInetAddress().getHostAddress();
+							address = client.getInetAddress().getHostAddress();
 						}
 					}
 					catch (Exception e)

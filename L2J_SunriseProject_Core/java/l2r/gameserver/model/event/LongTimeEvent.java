@@ -33,10 +33,9 @@ import l2r.gameserver.data.EventDroplist;
 import l2r.gameserver.data.sql.AnnouncementsTable;
 import l2r.gameserver.data.sql.NpcTable;
 import l2r.gameserver.data.xml.impl.ItemData;
+import l2r.gameserver.model.L2DropData;
 import l2r.gameserver.model.Location;
 import l2r.gameserver.model.announce.EventAnnouncement;
-import l2r.gameserver.model.drops.DropListScope;
-import l2r.gameserver.model.drops.GeneralDropItem;
 import l2r.gameserver.model.quest.Quest;
 import l2r.gameserver.script.DateRange;
 import l2r.gameserver.util.Broadcast;
@@ -64,7 +63,7 @@ public class LongTimeEvent extends Quest
 	private final List<NpcSpawn> _spawnList = new ArrayList<>();
 	
 	// Drop data for event
-	private final List<GeneralDropItem> _dropList = new ArrayList<>();
+	private final List<L2DropData> _dropList = new ArrayList<>();
 	
 	private class NpcSpawn
 	{
@@ -182,13 +181,13 @@ public class LongTimeEvent extends Quest
 										continue;
 									}
 									
-									if ((finalChance < 10000) || (finalChance > 1000000))
+									if ((finalChance < 10000) || (finalChance > L2DropData.MAX_CHANCE))
 									{
 										_log.warn(getName() + " event: item " + itemId + " - incorrect drop chance, item was not added in droplist");
 										continue;
 									}
 									
-									_dropList.add((GeneralDropItem) DropListScope.STATIC.newDropItem(itemId, minCount, maxCount, finalChance));
+									_dropList.add(new L2DropData(itemId, minCount, maxCount, finalChance));
 								}
 								catch (NumberFormatException nfe)
 								{
@@ -270,9 +269,9 @@ public class LongTimeEvent extends Quest
 		{
 			if (currentTime < _dropPeriod.getEndDate().getTime())
 			{
-				for (GeneralDropItem drop : _dropList)
+				for (L2DropData drop : _dropList)
 				{
-					EventDroplist.getInstance().addGlobalDrop(drop.getItemId(), drop.getMin(), drop.getMax(), (int) drop.getChance(), _dropPeriod);
+					EventDroplist.getInstance().addGlobalDrop(drop.getId(), drop.getMinDrop(), drop.getMaxDrop(), (int) drop.getChance(), _dropPeriod);
 				}
 			}
 		}

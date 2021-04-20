@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import l2r.Config;
 import l2r.L2DatabaseFactory;
@@ -73,6 +74,8 @@ public final class TerritoryWarManager implements Siegable
 	private static final String DELETE = "DELETE FROM territory_registrations WHERE castleId = ? and registeredId = ?";
 	private static final String INSERT = "INSERT INTO territory_registrations (castleId, registeredId) values (?, ?)";
 	public static final Map<Integer, Integer> TERRITORY_ITEM_IDS = new HashMap<>();
+	
+	private final ReentrantReadWriteLock _outpostLock = new ReentrantReadWriteLock();
 	
 	public static String qn = "TerritoryWarSuperClass";
 	public static String GLOBAL_VARIABLE = "nextTWStartDate";
@@ -475,26 +478,39 @@ public final class TerritoryWarManager implements Siegable
 	
 	public L2SiegeFlagInstance getHQForClan(L2Clan clan)
 	{
-		if (clan.getCastleId() > 0)
+		_outpostLock.readLock().lock();
+		
+		try
 		{
-			return _outposts.get(clan.getCastleId());
+			return _outposts.get(clan.getId());
 		}
-		return null;
+		finally
+		{
+			_outpostLock.readLock().unlock();
+		}
 	}
 	
 	public void setHQForClan(L2Clan clan, L2SiegeFlagInstance hq)
 	{
-		if (clan.getCastleId() > 0)
+		_outpostLock.writeLock().lock();
+		
+		try
 		{
-			_outposts.put(clan.getCastleId(), hq);
+			_outposts.put(clan.getId(), hq);
+		}
+		finally
+		{
+			_outpostLock.writeLock().unlock();
 		}
 	}
 	
 	public void removeHQForClan(L2Clan clan)
 	{
-		if (clan.getCastleId() > 0)
+		_outpostLock.writeLock().lock();
+		
+		try
 		{
-			final L2SiegeFlagInstance flag = _outposts.remove(clan.getCastleId());
+			final L2SiegeFlagInstance flag = _outposts.remove(clan.getId());
 			if (flag != null)
 			{
 				flag.deleteMe();
@@ -505,6 +521,10 @@ public final class TerritoryWarManager implements Siegable
 			{
 				_log.warn("Flag does not exists in world.");
 			}
+		}
+		finally
+		{
+			_outpostLock.writeLock().unlock();
 		}
 	}
 	

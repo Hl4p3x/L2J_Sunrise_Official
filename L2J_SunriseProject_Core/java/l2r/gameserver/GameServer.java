@@ -46,6 +46,7 @@ import l2r.gameserver.data.sql.CrestTable;
 import l2r.gameserver.data.sql.NpcBufferTable;
 import l2r.gameserver.data.sql.NpcTable;
 import l2r.gameserver.data.sql.OfflineTradersTable;
+import l2r.gameserver.data.sql.SummonSkillsTable;
 import l2r.gameserver.data.sql.TeleportLocationTable;
 import l2r.gameserver.data.xml.impl.ActionData;
 import l2r.gameserver.data.xml.impl.AdminData;
@@ -66,6 +67,7 @@ import l2r.gameserver.data.xml.impl.FishData;
 import l2r.gameserver.data.xml.impl.FishingMonstersData;
 import l2r.gameserver.data.xml.impl.FishingRodsData;
 import l2r.gameserver.data.xml.impl.HennaData;
+import l2r.gameserver.data.xml.impl.HerbDropData;
 import l2r.gameserver.data.xml.impl.HitConditionBonusData;
 import l2r.gameserver.data.xml.impl.InitialEquipmentData;
 import l2r.gameserver.data.xml.impl.InitialShortcutData;
@@ -102,6 +104,7 @@ import l2r.gameserver.instancemanager.CoupleManager;
 import l2r.gameserver.instancemanager.CursedWeaponsManager;
 import l2r.gameserver.instancemanager.DayNightSpawnManager;
 import l2r.gameserver.instancemanager.DimensionalRiftManager;
+import l2r.gameserver.instancemanager.FishingChampionshipManager;
 import l2r.gameserver.instancemanager.FortManager;
 import l2r.gameserver.instancemanager.FortSiegeManager;
 import l2r.gameserver.instancemanager.FourSepulchersManager;
@@ -132,7 +135,6 @@ import l2r.gameserver.model.entity.Hero;
 import l2r.gameserver.model.entity.olympiad.Olympiad;
 import l2r.gameserver.model.events.EventDispatcher;
 import l2r.gameserver.network.L2GameClient;
-import l2r.gameserver.pathfinding.PathFinding;
 import l2r.gameserver.script.faenor.FaenorScriptEngine;
 import l2r.gameserver.scripting.L2ScriptEngineManager;
 import l2r.gameserver.taskmanager.KnownListUpdateTaskManager;
@@ -141,6 +143,7 @@ import l2r.status.Status;
 import l2r.util.DeadLockDetector;
 import l2r.util.IPv4Filter;
 
+import gr.sr.advancedBuffer.AdvancedBufferLoader;
 import gr.sr.configsEngine.ConfigsController;
 import gr.sr.interf.SunriseEvents;
 import gr.sr.main.PlayerValues;
@@ -209,11 +212,6 @@ public class GameServer
 		printSection("Geodata");
 		GeoData.getInstance();
 		
-		if (Config.PATHFINDING > 0)
-		{
-			PathFinding.getInstance();
-		}
-		
 		printSection("World");
 		// start game time control early
 		GameTimeController.init();
@@ -241,6 +239,7 @@ public class GameServer
 		printSection("Skills");
 		SkillData.getInstance();
 		SkillIconData.getInstance();
+		SummonSkillsTable.getInstance();
 		
 		printSection("Items");
 		ItemData.getInstance();
@@ -284,6 +283,7 @@ public class GameServer
 		AuctionManager.getInstance();
 		
 		printSection("NPCs");
+		HerbDropData.getInstance();
 		SkillLearnData.getInstance();
 		NpcTable.getInstance();
 		WalkingManager.getInstance();
@@ -379,6 +379,12 @@ public class GameServer
 		AutoSpawnHandler.getInstance();
 		
 		FaenorScriptEngine.getInstance();
+		
+		if (Config.ALT_FISH_CHAMPIONSHIP_ENABLED)
+		{
+			FishingChampionshipManager.getInstance();
+		}
+		
 		TaskManager.getInstance();
 		AntiFeedManager.getInstance().registerEvent(AntiFeedManager.GAME_ID);
 		PunishmentManager.getInstance();
@@ -389,6 +395,8 @@ public class GameServer
 		
 		printSection("Sunrise Systems");
 		SunriseServerMods.getInstance().checkSunriseMods();
+		
+		AdvancedBufferLoader.getInstance();
 		
 		if (Config.SAVE_DROPPED_ITEM)
 		{

@@ -779,7 +779,7 @@ public final class Util
 				}
 				
 				final L2Character cha = (L2Character) obj;
-				if (((cha.getZ() < (npc.getZ() - 100)) && (cha.getZ() > (npc.getZ() + 100))) || !(GeoData.getInstance().canSeeTarget(cha.getX(), cha.getY(), cha.getZ(), npc.getX(), npc.getY(), npc.getZ())))
+				if (((cha.getZ() < (npc.getZ() - 100)) && (cha.getZ() > (npc.getZ() + 100))) || !(GeoData.getInstance().canSeeTarget(cha, npc)))
 				{
 					continue;
 				}
@@ -1163,41 +1163,6 @@ public final class Util
 	public static double constrain(double input, double min, double max)
 	{
 		return (input < min) ? min : (input > max) ? max : input;
-	}
-	
-	/**
-	 * @param array - the array to look into
-	 * @param obj - the object to search for
-	 * @return {@code true} if the {@code array} contains the {@code obj}, {@code false} otherwise.
-	 */
-	public static boolean startsWith(String[] array, String obj)
-	{
-		for (String element : array)
-		{
-			if (element.startsWith(obj))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * @param array - the array to look into
-	 * @param obj - the object to search for
-	 * @param ignoreCase
-	 * @return {@code true} if the {@code array} contains the {@code obj}, {@code false} otherwise.
-	 */
-	public static boolean contains(String[] array, String obj, boolean ignoreCase)
-	{
-		for (String element : array)
-		{
-			if (element.equals(obj) || (ignoreCase && element.equalsIgnoreCase(obj)))
-			{
-				return true;
-			}
-		}
-		return false;
 	}
 	
 	// vGodFather addons

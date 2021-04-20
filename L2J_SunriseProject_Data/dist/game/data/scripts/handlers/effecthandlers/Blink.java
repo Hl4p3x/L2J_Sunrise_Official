@@ -73,6 +73,14 @@ public class Blink extends L2Effect
 		effected.abortAttack();
 		effected.abortCast();
 		effected.setXYZ(destination);
+		
+		if (effected.isPlayer())
+		{
+			// It is necessary at the teleport from a higher point to a lower, otherwise harmed by the "fall"
+			effected.getActingPlayer().setLastClientPosition(null);
+			effected.getActingPlayer().setLastServerPosition(null);
+		}
+		
 		// effected.broadcastPacket(new ValidateLocation(effected));
 		return true;
 	}

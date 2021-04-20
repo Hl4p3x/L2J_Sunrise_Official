@@ -60,6 +60,7 @@ import l2r.gameserver.network.serverpackets.WareHouseDepositList;
 import l2r.gameserver.util.Broadcast;
 import l2r.gameserver.util.Util;
 
+import gr.sr.advancedBuffer.SchemeBufferBBSManager;
 import gr.sr.configsEngine.configs.impl.CommunityServicesConfigs;
 import gr.sr.configsEngine.configs.impl.IndividualVoteSystemConfigs;
 import gr.sr.interf.SunriseEvents;
@@ -782,9 +783,10 @@ public class ServicesBBSManager extends BaseBBSManager
 		}
 		else if (command.startsWith(_servicesBBSCommand + "_buffer"))
 		{
-			BoardsManager.getInstance().addBypass(activeChar, "Service Buffer", command);
-			content = HtmCache.getInstance().getHtm(activeChar, activeChar.getHtmlPrefix(), "data/html/CommunityBoard/services/buffer/main.htm");
-			separateAndSend(content, activeChar);
+			// BoardsManager.getInstance().addBypass(activeChar, "Service Buffer", command);
+			// content = HtmCache.getInstance().getHtm(activeChar, activeChar.getHtmlPrefix(), "data/html/CommunityBoard/services/buffer/main.htm");
+			// separateAndSend(content, activeChar);
+			SchemeBufferBBSManager.onBypass(activeChar, "redirect main 0 0");
 		}
 		else if (command.startsWith(_servicesBBSCommand + "_functions_buffer"))
 		{

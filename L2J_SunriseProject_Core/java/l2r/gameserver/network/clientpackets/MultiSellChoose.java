@@ -118,6 +118,12 @@ public class MultiSellChoose extends L2GameClientPacket
 			return;
 		}
 		
+		if (player.isProcessingTransaction())
+		{
+			player.setMultiSell(null);
+			return;
+		}
+		
 		final L2Npc npc = player.getLastFolkNPC();
 		
 		if (list.isNpcOnly())

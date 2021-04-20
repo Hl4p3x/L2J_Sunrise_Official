@@ -134,6 +134,11 @@ public final class Q00257_TheGuardIsBusy extends Quest
 			return super.onKill(npc, killer, isSummon);
 		}
 		
+		if (killer.getInventory().getItemByItemId(GLUDIO_LORDS_MARK) == null)
+		{
+			return super.onKill(npc, killer, isSummon);
+		}
+		
 		for (MobDrop drop : MONSTERS.get(npc.getId()))
 		{
 			if (drop.getDrop())

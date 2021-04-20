@@ -171,7 +171,7 @@
 		<set name="abnormalTime" val="60" />
 		<set name="abnormalType" val="bleeding" />
 		<set name="blockedInOlympiad" val="true" />
-		<set name="castRange" val="40" />
+		<set name="castRange" val="80" />
 		<set name="hitTime" val="1500" />
 		<set name="effectRange" val="400" />
 		<set name="isDebuff" val="true" />
@@ -197,7 +197,7 @@
 		<set name="abnormalTime" val="60" />
 		<set name="abnormalType" val="bleeding" />
 		<set name="blockedInOlympiad" val="true" />
-		<set name="castRange" val="40" />
+		<set name="castRange" val="80" />
 		<set name="effectRange" val="400" />
 		<set name="hitTime" val="1500" />
 		<set name="isDebuff" val="true" />
@@ -223,7 +223,7 @@
 		<set name="abnormalTime" val="15" />
 		<set name="abnormalType" val="turn_flee" />
 		<set name="blockedInOlympiad" val="true" />
-		<set name="castRange" val="40" />
+		<set name="castRange" val="80" />
 		<set name="effectRange" val="400" />
 		<set name="hitTime" val="1500" />
 		<set name="isDebuff" val="true" />
@@ -249,7 +249,7 @@
 		<set name="abnormalTime" val="30" />
 		<set name="abnormalType" val="pd_down" />
 		<set name="blockedInOlympiad" val="true" />
-		<set name="castRange" val="40" />
+		<set name="castRange" val="80" />
 		<set name="effectRange" val="400" />
 		<set name="hitTime" val="1500" />
 		<set name="isDebuff" val="true" />
@@ -276,7 +276,7 @@
 		<set name="abnormalTime" val="9" />
 		<set name="abnormalType" val="stun" />
 		<set name="blockedInOlympiad" val="true" />
-		<set name="castRange" val="40" />
+		<set name="castRange" val="80" />
 		<set name="effectRange" val="400" />
 		<set name="hitTime" val="1500" />
 		<set name="isDebuff" val="true" />
@@ -304,8 +304,8 @@
 		<set name="abnormalTime" val="15" />
 		<set name="abnormalType" val="casting_time_down" />
 		<set name="blockedInOlympiad" val="true" />
-		<!-- <set name="castRange" val="40" /> -->
-		<!-- <set name="effectRange" val="400" /> -->
+		<set name="castRange" val="80" />
+		<set name="effectRange" val="400" />
 		<set name="element" val="2" /> <!-- Wind -->
 		<set name="elementPower" val="20" />
 		<set name="hitTime" val="1500" />

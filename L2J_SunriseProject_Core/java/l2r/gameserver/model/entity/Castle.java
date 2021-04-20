@@ -492,7 +492,7 @@ public final class Castle extends AbstractResidence
 		// Remove old owner
 		if ((getOwnerId() > 0) && ((clan == null) || (clan.getId() != getOwnerId())))
 		{
-			L2Clan oldOwner = ClanTable.getInstance().getClan(getOwnerId()); // Try to find clan instance
+			final L2Clan oldOwner = ClanTable.getInstance().getClan(getOwnerId()); // Try to find clan instance
 			if (oldOwner != null)
 			{
 				if (_formerOwner == null)
@@ -505,7 +505,7 @@ public final class Castle extends AbstractResidence
 				}
 				try
 				{
-					L2PcInstance oldleader = oldOwner.getLeader().getPlayerInstance();
+					final L2PcInstance oldleader = oldOwner.getLeader().getPlayerInstance();
 					if (oldleader != null)
 					{
 						if (oldleader.getMountType() == MountType.WYVERN)
@@ -523,6 +523,7 @@ public final class Castle extends AbstractResidence
 				{
 					removeResidentialSkills(member);
 					member.sendSkillList();
+					member.broadcastUserInfo();
 				}
 			}
 		}

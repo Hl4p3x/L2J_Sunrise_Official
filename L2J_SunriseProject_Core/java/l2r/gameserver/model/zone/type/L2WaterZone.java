@@ -18,15 +18,10 @@
  */
 package l2r.gameserver.model.zone.type;
 
-import java.util.Collection;
-
 import l2r.gameserver.enums.ZoneIdType;
 import l2r.gameserver.model.actor.L2Character;
-import l2r.gameserver.model.actor.L2Npc;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.zone.L2ZoneType;
-import l2r.gameserver.network.serverpackets.AbstractNpcInfo;
-import l2r.gameserver.network.serverpackets.ServerObjectInfo;
 
 public class L2WaterZone extends L2ZoneType
 {
@@ -55,19 +50,7 @@ public class L2WaterZone extends L2ZoneType
 		}
 		else if (character.isNpc())
 		{
-			Collection<L2PcInstance> plrs = character.getKnownList().getKnownPlayers().values();
-			
-			for (L2PcInstance player : plrs)
-			{
-				if (character.getRunSpeed() == 0)
-				{
-					player.sendPacket(new ServerObjectInfo((L2Npc) character, player));
-				}
-				else
-				{
-					player.sendPacket(new AbstractNpcInfo.NpcInfo((L2Npc) character, player));
-				}
-			}
+			character.broadcastInfo();
 		}
 	}
 	
@@ -76,25 +59,13 @@ public class L2WaterZone extends L2ZoneType
 	{
 		character.setInsideZone(ZoneIdType.WATER, false);
 		
-		// TODO: update to only send speed status when that packet is known
 		if (character.isPlayer())
 		{
-			character.getActingPlayer().broadcastUserInfo();
+			character.getActingPlayer().broadcastUserInfo(false);
 		}
 		else if (character.isNpc())
 		{
-			Collection<L2PcInstance> plrs = character.getKnownList().getKnownPlayers().values();
-			for (L2PcInstance player : plrs)
-			{
-				if (character.getRunSpeed() == 0)
-				{
-					player.sendPacket(new ServerObjectInfo((L2Npc) character, player));
-				}
-				else
-				{
-					player.sendPacket(new AbstractNpcInfo.NpcInfo((L2Npc) character, player));
-				}
-			}
+			character.broadcastInfo();
 		}
 	}
 	

@@ -68,14 +68,14 @@ public class PetStat extends SummonStat
 	}
 	
 	@Override
-	public final boolean addLevel(byte value)
+	public final boolean addLevel(byte value, long exp)
 	{
 		if ((getLevel() + value) > (getMaxLevel() - 1))
 		{
 			return false;
 		}
 		
-		boolean levelIncreased = super.addLevel(value);
+		boolean levelIncreased = super.addLevel(value, exp);
 		
 		// Sync up exp with current level
 		// if (getExp() > getExpForLevel(getLevel() + 1) || getExp() < getExpForLevel(getLevel())) setExp(Experience.LEVEL[getLevel()]);

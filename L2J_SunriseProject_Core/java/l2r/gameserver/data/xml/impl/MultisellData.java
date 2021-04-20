@@ -251,6 +251,11 @@ public final class MultisellData implements IXmlReader
 	 */
 	public final void separateAndSend(int listId, L2PcInstance player, L2Npc npc, boolean inventoryOnly, double productMultiplier, double ingredientMultiplier)
 	{
+		if (player.isProcessingTransaction())
+		{
+			return;
+		}
+		
 		ListContainer template = _entries.get(listId);
 		if (template == null)
 		{

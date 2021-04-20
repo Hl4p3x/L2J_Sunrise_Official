@@ -42,7 +42,6 @@ import l2r.gameserver.model.walk.WalkRoute;
 import l2r.gameserver.network.NpcStringId;
 import l2r.gameserver.network.clientpackets.Say2;
 import l2r.gameserver.network.serverpackets.NpcSay;
-import l2r.gameserver.pathfinding.PathFinding;
 import l2r.gameserver.util.Broadcast;
 import l2r.util.data.xml.IXmlReader.IXmlReader;
 
@@ -245,11 +244,11 @@ public final class WalkingManager implements IXmlReader
 						npc.sendDebugMessage("Route '" + routeName + "': spawn point is same with first waypoint, adjusted to next");
 					}
 					
-					if (!npc.isInsideRadius(node, 3000, true, false))
+					if (npc.isInsideRadius(node, 20, false, false))
 					{
-						final String message = "Route '" + routeName + "': NPC (id=" + npc.getId() + ", x=" + npc.getX() + ", y=" + npc.getY() + ", z=" + npc.getZ() + ") is too far from starting point (node x=" + node.getX() + ", y=" + node.getY() + ", z=" + node.getZ() + ", range=" + npc.calculateDistance(node, true, true) + "), walking will not start";
-						npc.sendDebugMessage(message);
-						return;
+						walk.calculateNextNode(npc);
+						node = walk.getCurrentNode();
+						npc.sendDebugMessage("Route '" + routeName + "': first point is the same with first waypoint, adjusted to next");
 					}
 					
 					npc.sendDebugMessage("Starting to move at route '" + routeName + "'");
@@ -292,17 +291,15 @@ public final class WalkingManager implements IXmlReader
 						npc.sendDebugMessage("Route '" + routeName + "', continuing to node " + walk.getCurrentNodeId());
 						npc.setIsRunning(node.runToLocation());
 						
-						if (Config.PATHFINDING > 0)
+						if (Config.GEODATA)
 						{
-							final Location destiny = GeoData.getInstance().moveCheck(npc, node);
-							
-							if (GeoData.getInstance().canMove(npc, destiny) || (PathFinding.getInstance().findPath(npc.getX(), npc.getY(), npc.getZ(), destiny.getX(), destiny.getY(), destiny.getZ(), npc.getInstanceId(), true) != null))
+							if (GeoData.getInstance().canMove(npc, node) || (GeoData.getInstance().findMovePath(npc.getX(), npc.getY(), npc.getZ(), node.clone(), npc, true, npc.getInstanceId()).size() > 0))
 							{
-								npc.getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_TO, destiny);
+								npc.getAI().setIntention(CtrlIntention.AI_INTENTION_MOVE_TO, node);
 							}
 							else
 							{
-								npc.teleToLocation(destiny);
+								npc.teleToLocation(node);
 								WalkingManager.getInstance().onArrived(npc); // Walking Manager support
 							}
 						}
@@ -316,7 +313,7 @@ public final class WalkingManager implements IXmlReader
 					}
 					catch (Exception e)
 					{
-						// LOGGER.error(getClass().getSimpleName() + ": Failed start movement for NPC ID: " + npc.getId(), e);
+						LOGGER.error(getClass().getSimpleName() + ": Failed start movement for NPC ID: " + npc.getId(), e);
 					}
 				}
 				else
@@ -417,7 +414,7 @@ public final class WalkingManager implements IXmlReader
 			if ((walk.getCurrentNodeId() >= 0) && (walk.getCurrentNodeId() < walk.getRoute().getNodesCount()))
 			{
 				final WalkNode node = walk.getRoute().getNodeList().get(walk.getCurrentNodeId());
-				if (npc.isInsideRadius(node, 10, false, false))
+				if (npc.isInsideRadius(node, 50, false, false))
 				{
 					npc.sendDebugMessage("Route '" + walk.getRoute().getName() + "', arrived to node " + walk.getCurrentNodeId());
 					npc.sendDebugMessage("Done in " + ((System.currentTimeMillis() - walk.getLastAction()) / 1000) + " s");

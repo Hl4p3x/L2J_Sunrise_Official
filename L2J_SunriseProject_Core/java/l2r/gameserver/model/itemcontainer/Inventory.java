@@ -1585,7 +1585,7 @@ public abstract class Inventory extends ItemContainer
 				weight += item.getItem().getWeight() * item.getCount();
 			}
 		}
-		_totalWeight = (int) Math.min(weight, Integer.MAX_VALUE);
+		_totalWeight = Math.max((int) Math.min(weight - getOwner().getBonusWeightPenalty(), Integer.MAX_VALUE), 0);
 	}
 	
 	/**

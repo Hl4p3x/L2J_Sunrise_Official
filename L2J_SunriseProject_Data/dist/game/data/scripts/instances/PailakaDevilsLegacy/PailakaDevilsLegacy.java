@@ -27,11 +27,13 @@ import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.L2Attackable;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.L2Npc;
+import l2r.gameserver.model.actor.instance.L2MonsterInstance;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.holders.SkillHolder;
 import l2r.gameserver.model.instancezone.InstanceWorld;
 import l2r.gameserver.model.quest.QuestState;
 import l2r.gameserver.model.zone.L2ZoneType;
+import l2r.util.Rnd;
 
 import instances.AbstractInstance;
 import quests.Q00129_PailakaDevilsLegacy.Q00129_PailakaDevilsLegacy;
@@ -88,6 +90,29 @@ public final class PailakaDevilsLegacy extends AbstractInstance
 	private static final int TEMPLATE_ID = 44;
 	private static final int ZONE = 20109;
 	
+	//@formatter:off
+	private static final int[] MONSTERS =
+	{
+		18623, 18624, 18625, 18626, 18627
+	};
+	
+	private static final int[][] HP_HERBS_DROPLIST =
+	{
+		// itemId, count, chance
+		{ 8602, 1, 10 }, 
+		{ 8601, 1, 40 },
+		{ 8600, 1, 70 }
+	};
+	
+	private static final int[][] MP_HERBS_DROPLIST =
+	{
+		// itemId, count, chance
+		{ 8605, 1, 10 },
+		{ 8604, 1, 40 },
+		{ 8603, 1, 70 }
+	};
+	//@formatter:on
+	
 	public PailakaDevilsLegacy()
 	{
 		super(PailakaDevilsLegacy.class.getSimpleName());
@@ -97,6 +122,8 @@ public final class PailakaDevilsLegacy extends AbstractInstance
 		addSpawnId(FOLLOWERS);
 		addEnterZoneId(ZONE);
 		addMoveFinishedId(LEMATAN);
+		
+		addKillId(MONSTERS);
 	}
 	
 	@Override
@@ -280,6 +307,18 @@ public final class PailakaDevilsLegacy extends AbstractInstance
 				world._adventurerNpc = addSpawn(ADVENTURER2, ADVENTURER_LOC, false, 0, false, npc.getInstanceId());
 			}
 		}
+		
+		switch (npc.getId())
+		{
+			case 18623:
+			case 18624:
+			case 18625:
+			case 18626:
+			case 18627:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
+				dropHerb(npc, player, MP_HERBS_DROPLIST);
+		}
+		
 		return super.onKill(npc, player, isSummon);
 	}
 	
@@ -317,5 +356,18 @@ public final class PailakaDevilsLegacy extends AbstractInstance
 			((DIWorld) world)._lematanNpc = (L2Attackable) addSpawn(LEMATAN, LEMATAN_SPAWN, false, 0, false, world.getInstanceId());
 		}
 		teleportPlayer(player, TELEPORT, world.getInstanceId());
+	}
+	
+	private static final void dropHerb(L2Npc mob, L2PcInstance player, int[][] drop)
+	{
+		final int chance = Rnd.get(100);
+		for (int[] element : drop)
+		{
+			if (chance < element[2])
+			{
+				((L2MonsterInstance) mob).dropItem(player, element[0], element[1]);
+				return;
+			}
+		}
 	}
 }

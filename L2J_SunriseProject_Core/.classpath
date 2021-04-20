@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="dist/libs/event-engine.jar"/>
 	<classpathentry kind="lib" path="dist/libs/protocols.jar"/>
 	<classpathentry kind="lib" path="dist/libs/sutil.jar"/>
+	<classpathentry kind="lib" path="dist/libs/javabuffer.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

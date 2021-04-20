@@ -121,9 +121,4 @@ public abstract class L2VehicleAI extends L2CharacterAI
 	protected void moveToPawn(L2Object pawn, int offset)
 	{
 	}
-	
-	@Override
-	protected void clientStoppedMoving()
-	{
-	}
 }

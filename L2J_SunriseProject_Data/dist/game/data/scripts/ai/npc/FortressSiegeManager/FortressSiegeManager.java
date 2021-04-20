@@ -18,6 +18,11 @@
  */
 package ai.npc.FortressSiegeManager;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import l2r.gameserver.instancemanager.FortSiegeManager;
 import l2r.gameserver.model.ClanPrivilege;
 import l2r.gameserver.model.L2Clan;
@@ -62,6 +67,70 @@ public final class FortressSiegeManager extends AbstractNpcAI
 		36318, // Demon Fortress
 		36356, // Monastic Fortress
 	};
+	
+	// TODO: vGodFather unhardcode me
+	private static Map<Integer, List<Integer>> _relatedFortress = new HashMap<>();
+	
+	static
+	{
+		for (int i = 1; i <= 9; i++)
+		{
+			if (_relatedFortress.get(i) == null)
+			{
+				_relatedFortress.put(i, new ArrayList<>());
+			}
+		}
+		
+		// Gludio
+		_relatedFortress.get(1).add(101); // Shanty Fortress
+		_relatedFortress.get(1).add(102); // Southern Fortress
+		_relatedFortress.get(1).add(112); // Floran Fortress
+		_relatedFortress.get(1).add(113); // Cloud Mountain Fortress
+		
+		// Dion
+		_relatedFortress.get(2).add(103); // Hive Fortress
+		_relatedFortress.get(2).add(112); // Floran Fortress
+		_relatedFortress.get(2).add(114); // Tanor Fortress
+		_relatedFortress.get(2).add(115); // Dragonspine Fortress
+		
+		// Giran
+		_relatedFortress.get(3).add(104); // Valley Fortress
+		_relatedFortress.get(3).add(114); // Tanor Fortress
+		_relatedFortress.get(3).add(116); // Antharas Fortress
+		_relatedFortress.get(3).add(118); // Hunters Fortress
+		_relatedFortress.get(3).add(119); // Aaru Fortress
+		
+		// Oren
+		_relatedFortress.get(4).add(105); // Ivory Fortress
+		_relatedFortress.get(4).add(113); // Cloud Mountain Fortress
+		_relatedFortress.get(4).add(115); // Dragonspine Fortress
+		_relatedFortress.get(4).add(116); // Antharas Fortress
+		_relatedFortress.get(4).add(117); // Western Fortress
+		
+		// Aden
+		_relatedFortress.get(5).add(106); // Narsell Fortress
+		_relatedFortress.get(5).add(107); // Bayou Fortress
+		_relatedFortress.get(5).add(117); // Western Fortress
+		_relatedFortress.get(5).add(118); // Hunters Fortress
+		
+		// Innadril
+		_relatedFortress.get(6).add(108); // White Sands Fortress
+		_relatedFortress.get(6).add(119); // Aaru Fortress
+		
+		// Goddard
+		_relatedFortress.get(7).add(109); // Borderland Fortress
+		_relatedFortress.get(7).add(117); // Western Fortress
+		_relatedFortress.get(7).add(120); // Demon Fortress
+		
+		// Rune
+		_relatedFortress.get(8).add(110); // Swamp Fortress
+		_relatedFortress.get(8).add(120); // Demon Fortress
+		_relatedFortress.get(8).add(121); // Monastic Fortress
+		
+		// Schuttgard
+		_relatedFortress.get(9).add(111); // Archaic Fortress
+		_relatedFortress.get(9).add(121); // Monastic Fortress
+	}
 	
 	public FortressSiegeManager()
 	{
@@ -116,7 +185,7 @@ public final class FortressSiegeManager extends AbstractNpcAI
 					{
 						htmltext = "FortressSiegeManager-18.html";
 					}
-					else if ((clan.getCastleId() != 0) && (clan.getCastleId() != castle.getResidenceId()) && FortSiegeManager.getInstance().canRegisterJustTerritory())
+					else if ((clan.getCastleId() != 0) && (!_relatedFortress.get(clan.getCastleId()).contains(fortress.getResidenceId())) && FortSiegeManager.getInstance().canRegisterJustTerritory())
 					{
 						htmltext = "FortressSiegeManager-17.html";
 					}

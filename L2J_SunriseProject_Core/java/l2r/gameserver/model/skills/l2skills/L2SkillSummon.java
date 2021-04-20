@@ -27,6 +27,7 @@ import l2r.gameserver.model.StatsSet;
 import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
 import l2r.gameserver.model.actor.instance.L2ServitorInstance;
+import l2r.gameserver.model.actor.instance.L2SiegeSummonInstance;
 import l2r.gameserver.model.actor.templates.L2NpcTemplate;
 import l2r.gameserver.model.skills.L2Skill;
 
@@ -90,7 +91,16 @@ public class L2SkillSummon extends L2Skill
 			return; // npcID doesn't exist
 		}
 		
-		L2ServitorInstance summon = new L2ServitorInstance(summonTemplate, activeChar, this);
+		L2ServitorInstance summon;
+		if (summonTemplate.isType("L2SiegeSummon"))
+		{
+			summon = new L2SiegeSummonInstance(summonTemplate, activeChar, this);
+		}
+		else
+		{
+			summon = new L2ServitorInstance(summonTemplate, activeChar, this);
+		}
+		
 		summon.setName(summonTemplate.getName());
 		summon.setTitle(activeChar.getName());
 		summon.setExpPenalty(_expPenalty);

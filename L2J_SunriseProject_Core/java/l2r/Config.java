@@ -36,8 +36,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -49,7 +47,6 @@ import java.util.StringTokenizer;
 import java.util.stream.IntStream;
 
 import l2r.gameserver.enums.IllegalActionPunishmentType;
-import l2r.gameserver.model.L2World;
 import l2r.gameserver.model.itemcontainer.Inventory;
 import l2r.gameserver.util.Util;
 import l2r.util.PropertiesParser;
@@ -113,7 +110,7 @@ public final class Config extends AbstractConfigs
 	public static final String FEATURE_CONFIG_FILE = "./config/main/Feature.ini";
 	public static final String FORTSIEGE_CONFIGURATION_FILE = "./config/main/FortSiege.ini";
 	public static final String GENERAL_CONFIG_FILE = "./config/main/General.ini";
-	public static final String GEODATA_CONFIG_FILE = "./config/main/Geodata.ini";
+	public static final String GEODATA_CONFIG_FILE = "./config/main/GeoData.ini";
 	public static final String GRACIASEEDS_CONFIG_FILE = "./config/main/GraciaSeeds.ini";
 	public static final String HUNTING_BONUS_CONFIG = "./config/main/HuntingBonus.ini";
 	public static final String ID_CONFIG_FILE = "./config/main/IdFactory.ini";
@@ -590,6 +587,7 @@ public final class Config extends AbstractConfigs
 	public static int ALT_OLY_PERIOD_MULTIPLIER;
 	public static boolean ENABLE_OLYMPIAD;
 	public static int[] ALT_OLY_END_HOUR = new int[3];
+	public static boolean ENABLE_AUTO_CORRECT_LOCATION;
 	public static int ALT_MANOR_REFRESH_TIME;
 	public static int ALT_MANOR_REFRESH_MIN;
 	public static int ALT_MANOR_APPROVE_TIME;
@@ -631,9 +629,10 @@ public final class Config extends AbstractConfigs
 	public static boolean JAIL_DISABLE_TRANSACTION;
 	public static boolean CUSTOM_SPAWNLIST_TABLE;
 	public static boolean SAVE_GMSPAWN_ON_CUSTOM;
-	public static boolean CUSTOM_NPC_DATA;
+	public static boolean CUSTOM_NPC_TABLE;
+	public static boolean CUSTOM_NPC_SKILLS_TABLE;
 	public static boolean CUSTOM_TELEPORT_TABLE;
-	public static boolean CUSTOM_NPCBUFFER_TABLES;
+	public static boolean CUSTOM_DROPLIST_TABLE;
 	public static boolean CUSTOM_SKILLS_LOAD;
 	public static boolean CUSTOM_ITEMS_LOAD;
 	public static boolean CUSTOM_MULTISELL_LOAD;
@@ -652,6 +651,13 @@ public final class Config extends AbstractConfigs
 	public static String[] BOTREPORT_RESETPOINT_HOUR;
 	public static long BOTREPORT_REPORT_DELAY;
 	public static boolean BOTREPORT_ALLOW_REPORTS_FROM_SAME_CLAN_MEMBERS;
+	public static boolean ALT_FISH_CHAMPIONSHIP_ENABLED;
+	public static int ALT_FISH_CHAMPIONSHIP_REWARD_ITEM;
+	public static int ALT_FISH_CHAMPIONSHIP_REWARD_1;
+	public static int ALT_FISH_CHAMPIONSHIP_REWARD_2;
+	public static int ALT_FISH_CHAMPIONSHIP_REWARD_3;
+	public static int ALT_FISH_CHAMPIONSHIP_REWARD_4;
+	public static int ALT_FISH_CHAMPIONSHIP_REWARD_5;
 	
 	// --------------------------------------------------
 	// Knownlist Settings
@@ -697,18 +703,16 @@ public final class Config extends AbstractConfigs
 	public static int L2JMOD_CHAMP_MIN_LVL;
 	public static int L2JMOD_CHAMP_MAX_LVL;
 	public static int L2JMOD_CHAMPION_HP;
+	public static int L2JMOD_CHAMPION_REWARDS;
 	public static int L2JMOD_CHAMPION_REWARDS_EXP;
 	public static int L2JMOD_CHAMPION_REWARDS_SP;
-	public static float L2JMOD_CHAMPION_REWARDS_CHANCE;
-	public static float L2JMOD_CHAMPION_REWARDS_AMOUNT;
-	public static float L2JMOD_CHAMPION_ADENAS_REWARDS_CHANCE;
-	public static float L2JMOD_CHAMPION_ADENAS_REWARDS_AMOUNT;
+	public static float L2JMOD_CHAMPION_ADENAS_REWARDS;
 	public static float L2JMOD_CHAMPION_HP_REGEN;
 	public static float L2JMOD_CHAMPION_ATK;
 	public static float L2JMOD_CHAMPION_SPD_ATK;
 	public static int L2JMOD_CHAMPION_REWARD_LOWER_LVL_ITEM_CHANCE;
 	public static int L2JMOD_CHAMPION_REWARD_HIGHER_LVL_ITEM_CHANCE;
-	public static int L2JMOD_CHAMPION_REWARD_ID;
+	public static int[] L2JMOD_CHAMPION_REWARD_IDS;
 	public static int L2JMOD_CHAMPION_REWARD_QTY;
 	public static boolean L2JMOD_CHAMPION_ENABLE_VITALITY;
 	public static boolean L2JMOD_CHAMPION_ENABLE_IN_INSTANCES;
@@ -778,7 +782,6 @@ public final class Config extends AbstractConfigs
 	public static boolean ALT_ATTACKABLE_NPCS;
 	public static boolean ALT_GAME_VIEWNPC;
 	public static int MAX_DRIFT_RANGE;
-	public static int MAX_AGGRO_RANGE;
 	public static boolean SHOW_NPC_LVL;
 	public static boolean SHOW_CREST_WITHOUT_QUEST;
 	public static boolean ENABLE_RANDOM_ENCHANT_EFFECT;
@@ -788,9 +791,9 @@ public final class Config extends AbstractConfigs
 	public static Map<Integer, Float> NPC_SKILL_DMG_PENALTY;
 	public static int MIN_NPC_LVL_MAGIC_PENALTY;
 	public static Map<Integer, Float> NPC_SKILL_CHANCE_PENALTY;
-	public static int DECAY_TIME_TASK;
 	public static int DEFAULT_CORPSE_TIME;
 	public static int SPOILED_CORPSE_EXTEND_TIME;
+	public static int RAID_BOSS_DECAY_TIME;
 	public static int CORPSE_CONSUME_SKILL_ALLOWED_TIME_BEFORE_DECAY;
 	public static boolean GUARD_ATTACK_AGGRO_MOB;
 	public static boolean ALLOW_WYVERN_UPGRADER;
@@ -812,12 +815,6 @@ public final class Config extends AbstractConfigs
 	public static int INVENTORY_MAXIMUM_PET;
 	public static double PET_HP_REGEN_MULTIPLIER;
 	public static double PET_MP_REGEN_MULTIPLIER;
-	public static int DROP_ADENA_MIN_LEVEL_DIFFERENCE;
-	public static int DROP_ADENA_MAX_LEVEL_DIFFERENCE;
-	public static double DROP_ADENA_MIN_LEVEL_GAP_CHANCE;
-	public static int DROP_ITEM_MIN_LEVEL_DIFFERENCE;
-	public static int DROP_ITEM_MAX_LEVEL_DIFFERENCE;
-	public static double DROP_ITEM_MIN_LEVEL_GAP_CHANCE;
 	
 	// --------------------------------------------------
 	// PvP Settings
@@ -843,6 +840,9 @@ public final class Config extends AbstractConfigs
 	public static float RATE_HB_TRUST_INCREASE;
 	public static float RATE_HB_TRUST_DECREASE;
 	public static float RATE_EXTRACTABLE;
+	public static float RATE_DROP_ITEMS;
+	public static float RATE_DROP_ITEMS_BY_RAID;
+	public static float RATE_DROP_SPOIL;
 	public static int RATE_DROP_MANOR;
 	public static float RATE_QUEST_DROP;
 	public static float RATE_QUEST_REWARD;
@@ -854,15 +854,7 @@ public final class Config extends AbstractConfigs
 	public static float RATE_QUEST_REWARD_SCROLL;
 	public static float RATE_QUEST_REWARD_RECIPE;
 	public static float RATE_QUEST_REWARD_MATERIAL;
-	public static float RATE_DEATH_DROP_AMOUNT_MULTIPLIER;
-	public static float RATE_CORPSE_DROP_AMOUNT_MULTIPLIER;
-	public static float RATE_HERB_DROP_AMOUNT_MULTIPLIER;
-	public static float RATE_RAID_DROP_AMOUNT_MULTIPLIER;
-	public static float RATE_DEATH_DROP_CHANCE_MULTIPLIER;
-	public static float RATE_CORPSE_DROP_CHANCE_MULTIPLIER;
-	public static float RATE_RAID_DROP_CHANCE_MULTIPLIER;
-	public static Map<Integer, Float> RATE_DROP_AMOUNT_MULTIPLIER;
-	public static Map<Integer, Float> RATE_DROP_CHANCE_MULTIPLIER;
+	public static Map<Integer, Float> RATE_DROP_ITEMS_ID;
 	public static float RATE_KARMA_LOST;
 	public static float RATE_KARMA_EXP_LOST;
 	public static float RATE_SIEGE_GUARDS_PRICE;
@@ -1023,22 +1015,48 @@ public final class Config extends AbstractConfigs
 	// --------------------------------------------------
 	// Geodata Settings
 	// --------------------------------------------------
-	public static int PATHFINDING;
-	public static File PATHNODE_DIR;
-	public static String PATHFIND_BUFFERS;
-	public static float LOW_WEIGHT;
-	public static float MEDIUM_WEIGHT;
-	public static float HIGH_WEIGHT;
-	public static boolean ADVANCED_DIAGONAL_STRATEGY;
-	public static float DIAGONAL_WEIGHT;
-	public static int MAX_POSTFILTER_PASSES;
-	public static boolean DEBUG_PATH;
-	public static boolean FORCE_GEODATA;
-	public static int COORD_SYNCHRONIZE;
-	public static Path GEODATA_PATH;
-	public static boolean TRY_LOAD_UNSPECIFIED_REGIONS;
-	public static Map<String, Boolean> GEODATA_REGIONS;
+	public static enum CorrectSpawnsZ
+	{
+		TOWN,
+		MONSTER,
+		ALL,
+		NONE
+	}
+	
+	// Geodata settings
+	public static boolean GEODATA;
+	public static File GEODATA_DIR;
 	public static boolean ENABLE_FALLING_DAMAGE;
+	public static boolean ALLOW_FALL_FROM_WALLS;
+	public static CorrectSpawnsZ GEO_CORRECT_Z;
+	public static int CLIENT_SHIFTZ;
+	public static int MAX_Z_DIFF;
+	public static int MIN_LAYER_HEIGHT;
+	
+	public static int GEO_X_FIRST, GEO_Y_FIRST, GEO_X_LAST, GEO_Y_LAST;
+	public static long PATHFIND_MAX_TIME;
+	public static String GEOFILES_PATTERN;
+	public static boolean COMPACT_GEO;
+	
+	// stadar settings
+	public static int MAP_MIN_Z;
+	public static int MAP_MAX_Z;
+	
+	public static int REGION_EDGE_MAX_Z_DIFF;
+	
+	public static int SHIFT_BY;
+	public static int SHIFT_BY_Z;
+	
+	public static double WEIGHT1 = 0.5;
+	public static double WEIGHT2 = 2.0;
+	public static double WEIGHT3 = 1.0;
+	
+	// Pathfinding settings
+	public static boolean PATH_CLEAN;
+	public static boolean PATHFIND_DIAGONAL;
+	public static int PATHFIND_BOOST;
+	public static int PATHFIND_MAX_Z_DIFF;
+	public static String PATHFIND_BUFFERS;
 	
 	public static enum IdFactoryType
 	{
@@ -2048,9 +2066,10 @@ public final class Config extends AbstractConfigs
 			JAIL_DISABLE_TRANSACTION = General.getBoolean("JailDisableTransaction", false);
 			CUSTOM_SPAWNLIST_TABLE = General.getBoolean("CustomSpawnlistTable", false);
 			SAVE_GMSPAWN_ON_CUSTOM = General.getBoolean("SaveGmSpawnOnCustom", false);
-			CUSTOM_NPC_DATA = General.getBoolean("CustomNpcData", false);
+			CUSTOM_NPC_TABLE = General.getBoolean("CustomNpcTable", false);
+			CUSTOM_NPC_SKILLS_TABLE = General.getBoolean("CustomNpcSkillsTable", false);
 			CUSTOM_TELEPORT_TABLE = General.getBoolean("CustomTeleportTable", false);
-			CUSTOM_NPCBUFFER_TABLES = General.getBoolean("CustomNpcBufferTables", false);
+			CUSTOM_DROPLIST_TABLE = General.getBoolean("CustomDroplistTable", false);
 			CUSTOM_SKILLS_LOAD = General.getBoolean("CustomSkillsLoad", false);
 			CUSTOM_ITEMS_LOAD = General.getBoolean("CustomItemsLoad", false);
 			CUSTOM_MULTISELL_LOAD = General.getBoolean("CustomMultisellLoad", false);
@@ -2079,6 +2098,14 @@ public final class Config extends AbstractConfigs
 			BOTREPORT_REPORT_DELAY = General.getInt("BotReportDelay", 30) * 60000;
 			BOTREPORT_ALLOW_REPORTS_FROM_SAME_CLAN_MEMBERS = General.getBoolean("AllowReportsFromSameClanMembers", false);
 			
+			ALT_FISH_CHAMPIONSHIP_ENABLED = General.getBoolean("AltFishChampionshipEnabled", true);
+			ALT_FISH_CHAMPIONSHIP_REWARD_ITEM = General.getInt("AltFishChampionshipRewardItemId", 57);
+			ALT_FISH_CHAMPIONSHIP_REWARD_1 = General.getInt("AltFishChampionshipReward1", 800000);
+			ALT_FISH_CHAMPIONSHIP_REWARD_2 = General.getInt("AltFishChampionshipReward2", 500000);
+			ALT_FISH_CHAMPIONSHIP_REWARD_3 = General.getInt("AltFishChampionshipReward3", 300000);
+			ALT_FISH_CHAMPIONSHIP_REWARD_4 = General.getInt("AltFishChampionshipReward4", 200000);
+			ALT_FISH_CHAMPIONSHIP_REWARD_5 = General.getInt("AltFishChampionshipReward5", 100000);
+			
 			// Load NPC L2Properties file (if exists)
 			final PropertiesParser NPC = new PropertiesParser(NPC_CONFIG_FILE);
 			
@@ -2087,7 +2114,6 @@ public final class Config extends AbstractConfigs
 			ALT_ATTACKABLE_NPCS = NPC.getBoolean("AltAttackableNpcs", true);
 			ALT_GAME_VIEWNPC = NPC.getBoolean("AltGameViewNpc", false);
 			MAX_DRIFT_RANGE = NPC.getInt("MaxDriftRange", 300);
-			MAX_AGGRO_RANGE = NPC.getInt("MaxAggroRange", 500);
 			SHOW_NPC_LVL = NPC.getBoolean("ShowNpcLevel", false);
 			SHOW_CREST_WITHOUT_QUEST = NPC.getBoolean("ShowCrestWithoutQuest", false);
 			ENABLE_RANDOM_ENCHANT_EFFECT = NPC.getBoolean("EnableRandomEnchantEffect", false);
@@ -2097,9 +2123,9 @@ public final class Config extends AbstractConfigs
 			NPC_SKILL_DMG_PENALTY = parseConfigLine(NPC.getString("SkillDmgPenaltyForLvLDifferences", "0.8, 0.7, 0.65, 0.62"));
 			MIN_NPC_LVL_MAGIC_PENALTY = NPC.getInt("MinNPCLevelForMagicPenalty", 78);
 			NPC_SKILL_CHANCE_PENALTY = parseConfigLine(NPC.getString("SkillChancePenaltyForLvLDifferences", "2.5, 3.0, 3.25, 3.5"));
-			DECAY_TIME_TASK = NPC.getInt("DecayTimeTask", 5000);
 			DEFAULT_CORPSE_TIME = NPC.getInt("DefaultCorpseTime", 7);
 			SPOILED_CORPSE_EXTEND_TIME = NPC.getInt("SpoiledCorpseExtendTime", 10);
+			RAID_BOSS_DECAY_TIME = NPC.getInt("RaidBossDecayTime", 30);
 			CORPSE_CONSUME_SKILL_ALLOWED_TIME_BEFORE_DECAY = NPC.getInt("CorpseConsumeSkillAllowedTimeBeforeDecay", 2000);
 			ENABLE_DROP_VITALITY_HERBS = NPC.getBoolean("EnableVitalityHerbs", true);
 			GUARD_ATTACK_AGGRO_MOB = NPC.getBoolean("GuardAttackAggroMob", false);
@@ -2159,6 +2185,9 @@ public final class Config extends AbstractConfigs
 			RATE_PARTY_SP = RatesSettings.getFloat("RatePartySp", 1);
 			RATE_CONSUMABLE_COST = RatesSettings.getFloat("RateConsumableCost", 1);
 			RATE_EXTRACTABLE = RatesSettings.getFloat("RateExtractable", 1);
+			RATE_DROP_ITEMS = RatesSettings.getFloat("RateDropItems", 1);
+			RATE_DROP_ITEMS_BY_RAID = RatesSettings.getFloat("RateRaidDropItems", 1);
+			RATE_DROP_SPOIL = RatesSettings.getFloat("RateDropSpoil", 1);
 			RATE_DROP_MANOR = RatesSettings.getInt("RateDropManor", 1);
 			RATE_QUEST_DROP = RatesSettings.getFloat("RateQuestDrop", 1);
 			RATE_QUEST_REWARD = RatesSettings.getFloat("RateQuestReward", 1);
@@ -2210,67 +2239,36 @@ public final class Config extends AbstractConfigs
 			KARMA_RATE_DROP_EQUIP = RatesSettings.getInt("KarmaRateDropEquip", 40);
 			KARMA_RATE_DROP_EQUIP_WEAPON = RatesSettings.getInt("KarmaRateDropEquipWeapon", 10);
 			
-			RATE_DEATH_DROP_AMOUNT_MULTIPLIER = RatesSettings.getFloat("DeathDropAmountMultiplier", 1);
-			RATE_CORPSE_DROP_AMOUNT_MULTIPLIER = RatesSettings.getFloat("CorpseDropAmountMultiplier", 1);
-			RATE_HERB_DROP_AMOUNT_MULTIPLIER = RatesSettings.getFloat("HerbDropAmountMultiplier", 1);
-			RATE_RAID_DROP_AMOUNT_MULTIPLIER = RatesSettings.getFloat("RaidDropAmountMultiplier", 1);
-			RATE_DEATH_DROP_CHANCE_MULTIPLIER = RatesSettings.getFloat("DeathDropChanceMultiplier", 1);
-			RATE_CORPSE_DROP_CHANCE_MULTIPLIER = RatesSettings.getFloat("CorpseDropChanceMultiplier", 1);
-			RATE_RAID_DROP_CHANCE_MULTIPLIER = RatesSettings.getFloat("RaidDropChanceMultiplier", 1);
-			String[] dropAmountMultiplier = RatesSettings.getString("DropAmountMultiplierByItemId", "").split(";");
-			RATE_DROP_AMOUNT_MULTIPLIER = new HashMap<>(dropAmountMultiplier.length);
-			if (!dropAmountMultiplier[0].isEmpty())
+			String[] rateDropItemsById = RatesSettings.getString("RateDropItemsById", "").split(";");
+			RATE_DROP_ITEMS_ID = new HashMap<>(rateDropItemsById.length);
+			if (!rateDropItemsById[0].isEmpty())
 			{
-				for (String item : dropAmountMultiplier)
+				for (String item : rateDropItemsById)
 				{
 					String[] itemSplit = item.split(",");
 					if (itemSplit.length != 2)
 					{
-						_log.warn("Config.load(): invalid config property -> DropAmountMultiplierByItemId {}", item);
+						_log.warn(StringUtil.concat("Config.load(): invalid config property -> RateDropItemsById \"", item, "\""));
 					}
 					else
 					{
 						try
 						{
-							RATE_DROP_AMOUNT_MULTIPLIER.put(Integer.valueOf(itemSplit[0]), Float.valueOf(itemSplit[1]));
+							RATE_DROP_ITEMS_ID.put(Integer.valueOf(itemSplit[0]), Float.valueOf(itemSplit[1]));
 						}
 						catch (NumberFormatException nfe)
 						{
 							if (!item.isEmpty())
 							{
-								_log.warn("Config.load(): invalid config property -> DropAmountMultiplierByItemId {}", item);
+								_log.warn(StringUtil.concat("Config.load(): invalid config property -> RateDropItemsById \"", item, "\""));
 							}
 						}
 					}
 				}
 			}
-			
-			String[] dropChanceMultiplier = RatesSettings.getString("DropChanceMultiplierByItemId", "").split(";");
-			RATE_DROP_CHANCE_MULTIPLIER = new HashMap<>(dropChanceMultiplier.length);
-			if (!dropChanceMultiplier[0].isEmpty())
+			if (!RATE_DROP_ITEMS_ID.containsKey(Inventory.ADENA_ID))
 			{
-				for (String item : dropChanceMultiplier)
-				{
-					String[] itemSplit = item.split(",");
-					if (itemSplit.length != 2)
-					{
-						_log.warn("Config.load(): invalid config property -> DropChanceMultiplierByItemId {}", item);
-					}
-					else
-					{
-						try
-						{
-							RATE_DROP_CHANCE_MULTIPLIER.put(Integer.valueOf(itemSplit[0]), Float.valueOf(itemSplit[1]));
-						}
-						catch (NumberFormatException nfe)
-						{
-							if (!item.isEmpty())
-							{
-								_log.warn("Config.load(): invalid config property -> DropChanceMultiplierByItemId {}", item);
-							}
-						}
-					}
-				}
+				RATE_DROP_ITEMS_ID.put(Inventory.ADENA_ID, RATE_DROP_ITEMS); // for Adena rate if not defined
 			}
 			
 			// Load Champions L2Properties file (if exists)
@@ -2285,17 +2283,30 @@ public final class Config extends AbstractConfigs
 			L2JMOD_CHAMP_MAX_LVL = champions.getInt("ChampionMaxLevel", 60);
 			L2JMOD_CHAMPION_HP = champions.getInt("ChampionHp", 7);
 			L2JMOD_CHAMPION_HP_REGEN = champions.getFloat("ChampionHpRegen", 1);
+			L2JMOD_CHAMPION_REWARDS = champions.getInt("ChampionRewards", 8);
 			L2JMOD_CHAMPION_REWARDS_EXP = champions.getInt("ChampionRewardsExp", 8);
 			L2JMOD_CHAMPION_REWARDS_SP = champions.getInt("ChampionRewardsSp", 8);
-			L2JMOD_CHAMPION_REWARDS_CHANCE = champions.getFloat("ChampionRewardsChance", 8);
-			L2JMOD_CHAMPION_REWARDS_AMOUNT = champions.getFloat("ChampionRewardsAmount", 1);
-			L2JMOD_CHAMPION_ADENAS_REWARDS_CHANCE = champions.getFloat("ChampionAdenasRewardsChance", 1);
-			L2JMOD_CHAMPION_ADENAS_REWARDS_AMOUNT = champions.getFloat("ChampionAdenasRewardsAmount", 1);
+			L2JMOD_CHAMPION_ADENAS_REWARDS = champions.getFloat("ChampionAdenasRewards", 1);
 			L2JMOD_CHAMPION_ATK = champions.getFloat("ChampionAtk", 1);
 			L2JMOD_CHAMPION_SPD_ATK = champions.getFloat("ChampionSpdAtk", 1);
 			L2JMOD_CHAMPION_REWARD_LOWER_LVL_ITEM_CHANCE = champions.getInt("ChampionRewardLowerLvlItemChance", 0);
 			L2JMOD_CHAMPION_REWARD_HIGHER_LVL_ITEM_CHANCE = champions.getInt("ChampionRewardHigherLvlItemChance", 0);
-			L2JMOD_CHAMPION_REWARD_ID = champions.getInt("ChampionRewardItemID", 6393);
+			
+			String[] propertySplit5 = champions.getString("ChampionRewardItemIDs", "6393;57").trim().split(";");
+			L2JMOD_CHAMPION_REWARD_IDS = new int[propertySplit5.length];
+			try
+			{
+				int i = 0;
+				for (String itemId : propertySplit5)
+				{
+					L2JMOD_CHAMPION_REWARD_IDS[i++] = Integer.parseInt(itemId);
+				}
+			}
+			catch (NumberFormatException nfe)
+			{
+				_log.warn(nfe.getMessage(), nfe);
+			}
+			
 			L2JMOD_CHAMPION_REWARD_QTY = champions.getInt("ChampionRewardItemQty", 1);
 			L2JMOD_CHAMPION_ENABLE_VITALITY = champions.getBoolean("ChampionEnableVitality", false);
 			L2JMOD_CHAMPION_ENABLE_IN_INSTANCES = champions.getBoolean("ChampionEnableInInstances", false);
@@ -2519,6 +2530,8 @@ public final class Config extends AbstractConfigs
 				ALT_OLY_END_HOUR[i] = Integer.parseInt(times[i]);
 			}
 			
+			ENABLE_AUTO_CORRECT_LOCATION = Olympiad.getBoolean("OlympiadAutoCorrectLoc", false);
+			
 			// Load Debug L2Properties file (if exists)
 			final PropertiesParser Debug = new PropertiesParser(DEBUG_CONFIG_FILE);
 			
@@ -2548,44 +2561,53 @@ public final class Config extends AbstractConfigs
 			ALT_DEV_SHOW_SCRIPTS_LOAD_IN_LOGS = Debug.getBoolean("AltDevShowScriptsLoadInLogs", false);
 			
 			// Load General L2Properties file (if exists)
-			final PropertiesParser geoData = new PropertiesParser(GEODATA_CONFIG_FILE);
+			final PropertiesParser Geodata = new PropertiesParser(GEODATA_CONFIG_FILE);
 			
 			try
 			{
-				PATHNODE_DIR = new File(geoData.getString("PathnodeDirectory", "data/pathnode").replaceAll("\\\\", "/")).getCanonicalFile();
+				GEODATA_DIR = new File(Geodata.getString("GeodataDirectory", "geodata").replaceAll("\\\\", "/")).getCanonicalFile();
 			}
 			catch (IOException e)
 			{
-				_log.warn("Error setting pathnode directory!", e);
-				PATHNODE_DIR = new File("data/pathnode");
+				_log.warn("Error setting geodata directory!", e);
+				GEODATA_DIR = new File("geodata");
 			}
 			
-			PATHFINDING = geoData.getInt("PathFinding", 0);
-			PATHFIND_BUFFERS = geoData.getString("PathFindBuffers", "100x6;128x6;192x6;256x4;320x4;384x4;500x2");
-			LOW_WEIGHT = geoData.getFloat("LowWeight", 0.5f);
-			MEDIUM_WEIGHT = geoData.getFloat("MediumWeight", 2);
-			HIGH_WEIGHT = geoData.getFloat("HighWeight", 3);
-			ADVANCED_DIAGONAL_STRATEGY = geoData.getBoolean("AdvancedDiagonalStrategy", true);
-			DIAGONAL_WEIGHT = geoData.getFloat("DiagonalWeight", 0.707f);
-			MAX_POSTFILTER_PASSES = geoData.getInt("MaxPostfilterPasses", 3);
-			DEBUG_PATH = geoData.getBoolean("DebugPath", false);
-			FORCE_GEODATA = geoData.getBoolean("ForceGeoData", true);
-			ENABLE_FALLING_DAMAGE = geoData.getBoolean("EnableFallingDamage", true);
-			COORD_SYNCHRONIZE = geoData.getInt("CoordSynchronize", -1);
-			GEODATA_PATH = Paths.get(geoData.getString("geodataPath", "./data/geodata"));
-			TRY_LOAD_UNSPECIFIED_REGIONS = geoData.getBoolean("tryLoadUnspecifiedRegions", true);
-			GEODATA_REGIONS = new HashMap<>();
-			for (int regionX = L2World.TILE_X_MIN; regionX <= L2World.TILE_X_MAX; regionX++)
-			{
-				for (int regionY = L2World.TILE_Y_MIN; regionY <= L2World.TILE_Y_MAX; regionY++)
-				{
-					String key = regionX + "_" + regionY;
-					if (geoData.containskey(regionX + "_" + regionY))
-					{
-						GEODATA_REGIONS.put(key, geoData.getBoolean(key, false));
-					}
-				}
-			}
+			// Geodata
+			
+			GEO_X_FIRST = Geodata.getInt("GeoFirstX", 11);
+			GEO_Y_FIRST = Geodata.getInt("GeoFirstY", 10);
+			GEO_X_LAST = Geodata.getInt("GeoLastX", 26);
+			GEO_Y_LAST = Geodata.getInt("GeoLastY", 26);
+			
+			SHIFT_BY = Geodata.getInt("HShift", 12);
+			SHIFT_BY_Z = Geodata.getInt("VShift", 11);
+			
+			MAP_MIN_Z = Geodata.getInt("MapMinZ", -32768);
+			MAP_MAX_Z = Geodata.getInt("MapMaxZ", 32767);
+			
+			REGION_EDGE_MAX_Z_DIFF = Geodata.getInt("RegionEdgeMaxZDiff", 128);
+			
+			PATHFIND_MAX_TIME = Geodata.getInt("PathFindMaxTime", 10000000);
+			GEOFILES_PATTERN = Geodata.getString("GeoFilesPattern", "(\\d{2}_\\d{2})\\.l2j");
+			COMPACT_GEO = Geodata.getBoolean("CompactGeoData", false);
+			
+			GEODATA = Geodata.getBoolean("AllowGeoData", false);
+			ENABLE_FALLING_DAMAGE = Geodata.getBoolean("EnableFallingDamage", true);
+			ALLOW_FALL_FROM_WALLS = Geodata.getBoolean("AllowFallFromWalls", false);
+			
+			String correctZ = GEODATA ? Geodata.getString("GeoCorrectSpawnZ", "ALL") : "NONE";
+			GEO_CORRECT_Z = CorrectSpawnsZ.valueOf(correctZ.toUpperCase());
+			CLIENT_SHIFTZ = Geodata.getInt("GeoClientShiftZ", 16);
+			MAX_Z_DIFF = Geodata.getInt("MaxZDiff", 64);
+			MIN_LAYER_HEIGHT = Geodata.getInt("MinLayerHeight", 64);
+			
+			// Pathfinding
+			PATH_CLEAN = Geodata.getBoolean("PathFindClean", true);
+			PATHFIND_DIAGONAL = Geodata.getBoolean("PathFindDiagonal", false);
+			PATHFIND_BOOST = Geodata.getInt("PathFindBoost", 2);
+			PATHFIND_MAX_Z_DIFF = Geodata.getInt("PathFindMaxZDiff", 32);
+			PATHFIND_BUFFERS = Geodata.getString("PathFindBuffers", "8x96;8x128;8x160;8x192;4x224;4x256;4x288;2x320;2x384;2x352;1x512");
 			
 			final File hexIdFile = new File(HEXID_FILE);
 			if (hexIdFile.exists())
@@ -2786,15 +2808,6 @@ public final class Config extends AbstractConfigs
 			PRECISE_DROP_CALCULATION = dropsload.getBoolean("PreciseDropCalculation", true);
 			DEEPBLUE_DROP_RULES = dropsload.getBoolean("UseDeepBlueDropRules", true);
 			DEEPBLUE_DROP_RULES_RAID = dropsload.getBoolean("UseDeepBlueDropRulesRaid", true);
-			
-			DROP_ADENA_MIN_LEVEL_DIFFERENCE = dropsload.getInt("DropAdenaMinLevelDifference", 8);
-			DROP_ADENA_MAX_LEVEL_DIFFERENCE = dropsload.getInt("DropAdenaMaxLevelDifference", 15);
-			DROP_ADENA_MIN_LEVEL_GAP_CHANCE = dropsload.getDouble("DropAdenaMinLevelGapChance", 10);
-			
-			DROP_ITEM_MIN_LEVEL_DIFFERENCE = dropsload.getInt("DropItemMinLevelDifference", 5);
-			DROP_ITEM_MAX_LEVEL_DIFFERENCE = dropsload.getInt("DropItemMaxLevelDifference", 10);
-			DROP_ITEM_MIN_LEVEL_GAP_CHANCE = dropsload.getDouble("DropItemMinLevelGapChance", 10);
-			
 			AUTO_LOOT_HERBS = dropsload.getBoolean("AutoLootHerbs", false);
 			AUTO_LOOT = dropsload.getBoolean("AutoLoot", false);
 			AUTO_LOOT_RAIDS = dropsload.getBoolean("AutoLootRaids", false);
@@ -2987,8 +3000,17 @@ public final class Config extends AbstractConfigs
 			case "rateextractable":
 				RATE_EXTRACTABLE = Float.parseFloat(pValue);
 				break;
+			case "ratedropitems":
+				RATE_DROP_ITEMS = Float.parseFloat(pValue);
+				break;
 			case "ratedropadena":
-				RATE_DROP_AMOUNT_MULTIPLIER.put(Inventory.ADENA_ID, Float.parseFloat(pValue));
+				RATE_DROP_ITEMS_ID.put(Inventory.ADENA_ID, Float.parseFloat(pValue));
+				break;
+			case "rateraiddropitems":
+				RATE_DROP_ITEMS_BY_RAID = Float.parseFloat(pValue);
+				break;
+			case "ratedropspoil":
+				RATE_DROP_SPOIL = Float.parseFloat(pValue);
 				break;
 			case "ratedropmanor":
 				RATE_DROP_MANOR = Integer.parseInt(pValue);

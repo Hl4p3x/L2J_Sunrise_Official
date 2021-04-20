@@ -61,6 +61,12 @@ public final class PailakaSongOfIceAndFire extends AbstractInstance
 	private static final int ZONE = 20108;
 	
 	//@formatter:off
+	
+	private static final int[] MONSTERS =
+	{
+		18611, 18612, 18613, 18614, 18615
+	};
+	
 	private static final int[][] DROPLIST =
 	{
 		// must be sorted by npcId !
@@ -74,6 +80,22 @@ public final class PailakaSongOfIceAndFire extends AbstractInstance
 		{ BRAZIER, FIRE_ENHANCER, 40 },
 		{ BRAZIER, HEAL_POTION, 80 }
 	};
+	
+	private static final int[][] HP_HERBS_DROPLIST =
+	{
+		// itemId, count, chance
+		{ 8602, 1, 10 },
+		{ 8601, 1, 40 },
+		{ 8600, 1, 70 }
+	};
+	
+	private static final int[][] MP_HERBS_DROPLIST =
+	{
+		// itemId, count, chance
+		{ 8605, 1, 10 },
+		{ 8604, 1, 40 },
+		{ 8603, 1, 70 }
+	};
 	//@formatter:on
 	
 	public PailakaSongOfIceAndFire()
@@ -86,6 +108,8 @@ public final class PailakaSongOfIceAndFire extends AbstractInstance
 		addSeeCreatureId(GARGOS);
 		addSpawnId(BLOOM);
 		addKillId(BLOOM);
+		
+		addKillId(MONSTERS);
 	}
 	
 	@Override
@@ -186,6 +210,8 @@ public final class PailakaSongOfIceAndFire extends AbstractInstance
 	@Override
 	public final String onKill(L2Npc npc, L2PcInstance player, boolean isSummon)
 	{
+		npc.dropItem(player, getRandomBoolean() ? SHIELD_POTION : HEAL_POTION, getRandom(1, 7));
+		
 		switch (npc.getId())
 		{
 			case BOTTLE:
@@ -193,7 +219,12 @@ public final class PailakaSongOfIceAndFire extends AbstractInstance
 			case BLOOM:
 				dropItem(npc, player);
 				break;
+			default:
+				dropHerb(npc, player, HP_HERBS_DROPLIST);
+				dropHerb(npc, player, MP_HERBS_DROPLIST);
+				break;
 		}
+		
 		return super.onKill(npc, player, isSummon);
 	}
 	
@@ -247,6 +278,19 @@ public final class PailakaSongOfIceAndFire extends AbstractInstance
 			if (npcId < drop[0])
 			{
 				return; // not found
+			}
+		}
+	}
+	
+	private static final void dropHerb(L2Npc mob, L2PcInstance player, int[][] drop)
+	{
+		final int chance = Rnd.get(100);
+		for (int[] element : drop)
+		{
+			if (chance < element[2])
+			{
+				((L2MonsterInstance) mob).dropItem(player, element[0], element[1]);
+				return;
 			}
 		}
 	}

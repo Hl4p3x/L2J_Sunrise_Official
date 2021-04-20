@@ -106,7 +106,7 @@ public class L2NpcAction implements IActionHandler
 			}
 			else if (!npc.isAutoAttackable(activeChar))
 			{
-				if (!GeoData.getInstance().canSeeTarget(activeChar, npc) && (Util.calculateDistance(activeChar, npc, true) > 80))
+				if (!GeoData.getInstance().canSeeTarget(activeChar, npc) && (Util.calculateDistance(activeChar, npc, true) > L2Npc.INTERACTION_DISTANCE))
 				{
 					activeChar.getAI().setIntention(CtrlIntention.AI_INTENTION_INTERACT, npc);
 					return true;

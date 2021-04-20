@@ -61,6 +61,7 @@ import handlers.admincommandhandlers.AdminDelete;
 import handlers.admincommandhandlers.AdminDisconnect;
 import handlers.admincommandhandlers.AdminDoorControl;
 import handlers.admincommandhandlers.AdminEditChar;
+import handlers.admincommandhandlers.AdminEditNpc;
 import handlers.admincommandhandlers.AdminEffects;
 import handlers.admincommandhandlers.AdminElement;
 import handlers.admincommandhandlers.AdminEnchant;
@@ -68,7 +69,6 @@ import handlers.admincommandhandlers.AdminExpSp;
 import handlers.admincommandhandlers.AdminFightCalculator;
 import handlers.admincommandhandlers.AdminFortSiege;
 import handlers.admincommandhandlers.AdminGamePoints;
-import handlers.admincommandhandlers.AdminGeodata;
 import handlers.admincommandhandlers.AdminGm;
 import handlers.admincommandhandlers.AdminGmChat;
 import handlers.admincommandhandlers.AdminGraciaSeeds;
@@ -83,6 +83,7 @@ import handlers.admincommandhandlers.AdminInventory;
 import handlers.admincommandhandlers.AdminInvul;
 import handlers.admincommandhandlers.AdminKick;
 import handlers.admincommandhandlers.AdminKill;
+import handlers.admincommandhandlers.AdminKrateisCube;
 import handlers.admincommandhandlers.AdminLevel;
 import handlers.admincommandhandlers.AdminLogin;
 import handlers.admincommandhandlers.AdminLogsViewer;
@@ -94,7 +95,6 @@ import handlers.admincommandhandlers.AdminMobGroup;
 import handlers.admincommandhandlers.AdminMonsterRace;
 import handlers.admincommandhandlers.AdminOlympiad;
 import handlers.admincommandhandlers.AdminPForge;
-import handlers.admincommandhandlers.AdminPathNode;
 import handlers.admincommandhandlers.AdminPcCondOverride;
 import handlers.admincommandhandlers.AdminPetition;
 import handlers.admincommandhandlers.AdminPledge;
@@ -135,7 +135,6 @@ import handlers.bypasshandlers.ItemAuctionLink;
 import handlers.bypasshandlers.Link;
 import handlers.bypasshandlers.Loto;
 import handlers.bypasshandlers.Multisell;
-import handlers.bypasshandlers.NpcViewMod;
 import handlers.bypasshandlers.Observation;
 import handlers.bypasshandlers.OlympiadManagerLink;
 import handlers.bypasshandlers.OlympiadObservation;
@@ -363,6 +362,7 @@ public class MasterHandler
 		AdminDisconnect.class,
 		AdminDoorControl.class,
 		AdminEditChar.class,
+		AdminEditNpc.class,
 		AdminEffects.class,
 		AdminElement.class,
 		AdminEnchant.class,
@@ -370,7 +370,6 @@ public class MasterHandler
 		AdminFightCalculator.class,
 		AdminFortSiege.class,
 		AdminGamePoints.class,
-		AdminGeodata.class,
 		AdminGm.class,
 		AdminGmChat.class,
 		AdminGraciaSeeds.class,
@@ -385,6 +384,7 @@ public class MasterHandler
 		AdminInvul.class,
 		AdminKick.class,
 		AdminKill.class,
+		AdminKrateisCube.class,
 		AdminLevel.class,
 		AdminLogin.class,
 		AdminMammon.class,
@@ -394,7 +394,6 @@ public class MasterHandler
 		AdminMobGroup.class,
 		AdminMonsterRace.class,
 		AdminOlympiad.class,
-		AdminPathNode.class,
 		AdminPcCondOverride.class,
 		AdminPetition.class,
 		AdminPForge.class,
@@ -442,7 +441,6 @@ public class MasterHandler
 		Link.class,
 		Loto.class,
 		Multisell.class,
-		NpcViewMod.class,
 		Observation.class,
 		OlympiadManagerLink.class,
 		OlympiadObservation.class,

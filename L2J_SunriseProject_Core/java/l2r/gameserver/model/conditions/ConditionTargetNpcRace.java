@@ -21,7 +21,7 @@ package l2r.gameserver.model.conditions;
 import java.util.Set;
 
 import l2r.gameserver.enums.Race;
-import l2r.gameserver.model.actor.L2Npc;
+import l2r.gameserver.model.actor.L2Character;
 import l2r.gameserver.model.stats.Env;
 
 /**
@@ -44,7 +44,7 @@ public class ConditionTargetNpcRace extends Condition
 	@Override
 	public boolean testImpl(Env env)
 	{
-		final L2Npc npc = env.getTarget() instanceof L2Npc ? (L2Npc) env.getTarget() : null;
+		final L2Character npc = env.getTarget();
 		return (npc != null) && _races.contains(npc.getTemplate().getRace());
 	}
 }

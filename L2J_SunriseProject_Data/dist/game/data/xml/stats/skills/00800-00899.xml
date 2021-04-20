@@ -382,6 +382,7 @@
 		<set name="flyType" val="DUMMY" />
 		<set name="flyToBack" val="true" />
 		<set name="hitTime" val="100" />
+		<set name="power" val="-1" />
 		<set name="icon" val="icon.skill0821" />
 		<set name="magicLvl" val="40" />
 		<set name="mpConsume" val="50" />
@@ -390,7 +391,7 @@
 		<set name="reuseDelay" val="75000" />
 		<set name="targetType" val="ONE" />
 		<for>
-			<effect name="RemoveTarget" effectPower="100" noicon="1" />
+			<effect name="RemoveTarget" effectPower="-1" noicon="1" />
 		</for>
 	</skill>
 	<skill id="822" levels="3" name="Repair Golem">

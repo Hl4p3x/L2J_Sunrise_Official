@@ -21,10 +21,7 @@ package l2r.gameserver.network.clientpackets;
 import l2r.gameserver.model.Location;
 import l2r.gameserver.model.actor.instance.L2AirShipInstance;
 import l2r.gameserver.model.actor.instance.L2PcInstance;
-import l2r.gameserver.model.items.type.WeaponType;
 import l2r.gameserver.network.serverpackets.ActionFailed;
-import l2r.gameserver.network.serverpackets.ExMoveToLocationInAirShip;
-import l2r.gameserver.network.serverpackets.StopMoveInVehicle;
 
 /**
  * format: ddddddd X:%d Y:%d Z:%d OriginX:%d OriginY:%d OriginZ:%d
@@ -63,24 +60,6 @@ public class MoveToLocationInAirShip extends L2GameClientPacket
 			return;
 		}
 		
-		if ((_targetX == _originX) && (_targetY == _originY) && (_targetZ == _originZ))
-		{
-			activeChar.sendPacket(new StopMoveInVehicle(activeChar, _shipId));
-			return;
-		}
-		
-		if (activeChar.isAttackingNow() && (activeChar.getActiveWeaponItem() != null) && (activeChar.getActiveWeaponItem().getItemType() == WeaponType.BOW))
-		{
-			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
-			return;
-		}
-		
-		if (activeChar.isSitting() || activeChar.isMovementDisabled())
-		{
-			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
-			return;
-		}
-		
 		if (!activeChar.isInAirShip())
 		{
 			activeChar.sendPacket(ActionFailed.STATIC_PACKET);
@@ -94,8 +73,9 @@ public class MoveToLocationInAirShip extends L2GameClientPacket
 			return;
 		}
 		
-		activeChar.setInVehiclePosition(new Location(_targetX, _targetY, _targetZ));
-		activeChar.broadcastPacket(new ExMoveToLocationInAirShip(activeChar));
+		final Location pos = new Location(_targetX, _targetY, _targetZ);
+		final Location originPos = new Location(_originX, _originY, _originZ);
+		airShip.moveInBoat(activeChar, originPos, pos);
 	}
 	
 	@Override

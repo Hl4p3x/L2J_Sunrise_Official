@@ -23,9 +23,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import l2r.gameserver.model.holders.MinionHolder;
 import l2r.gameserver.model.holders.SkillHolder;
 import l2r.gameserver.model.interfaces.IParserAdvUtils;
 
@@ -310,7 +308,7 @@ public class StatsSet implements IParserAdvUtils
 		}
 		catch (Exception e)
 		{
-			throw new IllegalArgumentException("Long value required, but found: " + val);
+			throw new IllegalArgumentException("Integer value required, but found: " + val);
 		}
 	}
 	
@@ -319,7 +317,7 @@ public class StatsSet implements IParserAdvUtils
 		Object val = _set.get(key);
 		if (val == null)
 		{
-			throw new IllegalArgumentException("Long value required, but not specified");
+			throw new IllegalArgumentException("Integer value required, but not specified");
 		}
 		if (val instanceof Number)
 		{
@@ -362,7 +360,7 @@ public class StatsSet implements IParserAdvUtils
 		Object val = _set.get(key);
 		if (val == null)
 		{
-			throw new IllegalArgumentException("Integer value required, but not specified");
+			throw new IllegalArgumentException("Long value required, but not specified");
 		}
 		if (val instanceof Number)
 		{
@@ -396,7 +394,7 @@ public class StatsSet implements IParserAdvUtils
 		}
 		catch (Exception e)
 		{
-			throw new IllegalArgumentException("Integer value required, but found: " + val);
+			throw new IllegalArgumentException("Long value required, but found: " + val);
 		}
 	}
 	
@@ -568,11 +566,6 @@ public class StatsSet implements IParserAdvUtils
 		return (A) obj;
 	}
 	
-	public Optional<SkillHolder> getSkillHolder(int skillId)
-	{
-		return _set.values().stream().filter(object -> (object instanceof SkillHolder)).map(object -> (SkillHolder) object).filter(holder -> holder.getSkillId() == skillId).findFirst();
-	}
-	
 	public SkillHolder getSkillHolder(String key)
 	{
 		Object obj = _set.get(key);
@@ -582,18 +575,6 @@ public class StatsSet implements IParserAdvUtils
 		}
 		
 		return (SkillHolder) obj;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public List<MinionHolder> getMinionList(String key)
-	{
-		Object obj = _set.get(key);
-		if ((obj == null) || !(obj instanceof List<?>))
-		{
-			return Collections.EMPTY_LIST;
-		}
-		
-		return (List<MinionHolder>) obj;
 	}
 	
 	public void set(String name, Object value)

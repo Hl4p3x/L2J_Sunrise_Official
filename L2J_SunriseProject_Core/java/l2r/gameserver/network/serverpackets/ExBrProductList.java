@@ -16,8 +16,11 @@ public class ExBrProductList extends L2GameServerPacket
 		writeC(0xFE);
 		writeH(0xD6);
 		Collection<L2ProductItem> items = ProductItemData.getInstance().getAllItems();
-		writeD(items.size());
+		writeD(251);
 		
+		System.out.println(items.size());
+		
+		int count = 0;
 		for (L2ProductItem template : items)
 		{
 			if (System.currentTimeMillis() < template.getStartTimeSale())
@@ -43,6 +46,13 @@ public class ExBrProductList extends L2GameServerPacket
 			writeC(template.getEndMin()); // end min
 			writeD(0); // stock
 			writeD(-1); // max stock
+			
+			count++;
+			// System.out.println("adding: " + count);
+			if (count >= 251)
+			{
+				break;
+			}
 		}
 	}
 }
